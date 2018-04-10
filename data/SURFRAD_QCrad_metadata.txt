@@ -1,0 +1,382 @@
+File "Bondville_IL_1995_May_10.nc" 
+File type: Hierarchical Data Format, version 5 
+ 
+netcdf file:/Users/allison/GRAD/BEDI/Bondville_IL_1995_May_10.nc {
+   dimensions:
+  time = 479;
+   variables:
+   
+     int time(time=479);
+       :units = "seconds since 1995-5-10 00:00:00 0:00";
+       :long_name = "time in UTC (12:00am - 11:59pm)";
+       :standard_name = “time”
+       :epoch_time = 800064000
+       :_ChunkSizes = 479; // int
+ 
+     float solar_zenith_angle(Time=479);
+       :_FillValue = NaNf; // float
+       :units = "degrees";
+       :long_name = "Angle between Sun and the vertical";
+       :_ChunkSizes = 479; // int
+       :standard_name = "solar_zenith_angle";
+ 
+     float distance_from_sun(Time=479);
+       :_FillValue = NaNf; // float
+       :units = "astronomical_units";
+       :long_name = "Earth-Sun distance";
+       :_ChunkSizes = 479; // int
+       :standard_name = "distance_from_sun";
+ 
+     float best_estimate_shortwave_irradiance(time=479);
+       :_FillValue = NaNf; // float
+       :units = "W m-2";
+       :long_name = "Best Estimate shortwave irradiance, sum of direct plus diffuse irradiance";
+       :comments = "Sum of direct plus diffuse irradiance if both pass QC tests, else global shortwave if available";
+       :_ChunkSizes = 479; // int
+ 
+     float total_downwelling_shortwave_irradiance(time=479);
+       :_FillValue = NaNf; // float
+       :units = "W m-2";
+       :long_name = "Total downwelling shortwave irradiance";
+       :comments = "Total (global) shortwave irradiance from unshaded pyranometer";
+       :ancillary_variables = “QC_flag_01_thresholds_global_shortwave, QC_flag_07_global_shortwave_over_sum, QC_flag_07_global_shortwave_over_sum, global_shortwave_irloss_flag”
+       :standard_name = "downwelling_shortwave_flux_in_air”;
+       :_ChunkSizes = 479; // int
+ 
+     float diffuse_downwelling_shortwave_irradiance(time=479);
+       :_FillValue = NaNf; // float
+       :units = "W m-2";
+       :long_name = "Measured diffuse downwelling shortwave irradiance from shaded pyranometer";     
+       :ancillary_variables = “QC_flag_02_thresholds_diffuse_shortwave, QC_flag_08_diffuse_over_global_shortwave, diffuse_shortwave_irloss_flag”;
+       :standard_name = “diffuse_downwelling_shortwave_flux_in_air” ;
+       :_ChunkSizes = 479; // int
+ 
+     float direct_downwelling_shortwave_irradiance(time=479);
+       :_FillValue = NaNf; // float
+       :long_name = "Measured direct downwelling shortwave irradiance from pyrheliometer";
+       :units = "W m-2";
+       :ancillary_variables = “QC_flag_03_thresholds_direct_shortwave”
+       :standard_name = “direct_downwelling_shortwave_flux_in_air” ;
+       :_ChunkSizes = 479; // int
+ 
+     float upwelling_shortwave_irradiance(time=479);
+       :_FillValue = NaNf; // float
+       :units = "W m-2";
+       :long_name = "Measured upwelling shortwave irradiance from pyranometer";
+       :ancillary_variables = “QC_flag_04_thresholds_upwelling_shortwave, QC_flag_09_upwelling_shortwave_versus_sum”;
+       :standard_name = “upwelling_shortwave_flux_in_air”;
+       :_ChunkSizes = 479; // int
+
+     float downwelling_longwave_irradiance(time=479);
+       :_FillValue = NaNf; // float
+       :units = "W m-2";
+       :long_name = "Measured downwelling longwave irradiance from pyrgeometer";
+       :ancillary_variables = “C_flag_05_thresholds_downwelling_longwave, QC_flag_10_downwelling_longwave_to_temperature, QC_flag_12_downwelling_longwave_to_upwelling_longwave, QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature, QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature, QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature”;
+       :standard_name = “downwelling_longwave_flux_in_air”;
+       :_ChunkSizes = 479; // int
+ 
+     float upwelling_longwave_irradiance(time=479);
+       :_FillValue = NaNf; // float
+       :units = "W m-2";
+       :long_name = "Measured upwelling longwave irradiance from pyrgeometer";
+       :ancillary_variables = “QC_flag_06_thresholds_upwelling_longwave, QC_flag_11_upwelling_longwave_to_temperature, QC_flag_12_downwelling_longwave_to_upwelling_longwave, QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature, QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature, QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature”;
+       :standard_name = “upwelling_longwave_flux_in_air”;
+       :_ChunkSizes = 479; // int
+ 
+     float atmospheric_temperature(time=479);       
+       :_FillValue = NaNf; // float
+       :units = "K";
+       :long_name = "Air Temperature";
+       :ancillary_variables =”QC_flag_19_air temperature”;
+       :standard_name = “air_temperature”;
+       :comments = “Measured on cross-arms near top of tower”;
+       :_ChunkSizes = 479; // int
+ 
+     float relative_humidity(time=479);
+       :_FillValue = NaNf; // float
+       :units = "%";
+       :long_name = "Relative Humidity";
+       :standard_name = “relative_humidity”;
+       :comments = “Measured on cross-arms near top of tower”;
+       :_ChunkSizes = 479; // int
+ 
+     float surface_air_pressure(time=479);
+       :_FillValue = NaNf; // float
+       :units = "mb";
+       :long_name = "Surface air pressure";
+       :standard_name = “surface_air_pressure”;
+       :comments = "Not adjusted to sea level";
+       :_ChunkSizes = 479; // int
+ 
+     float downwelling_longwave_case_temperature(time=479);
+       :_FillValue = NaNf; // float
+       :units = "K";
+       :long_name = "Downwelling longwave pyrgeometer case temperature";
+       :_ChunkSizes = 479; // int
+ 
+     float downwelling_longwave_dome_temperature(time=479);
+       :_FillValue = NaNf; // float
+       :units = "K";
+       :long_name = "Downwelling longwave pyrgeometer dome temperature";
+       :_ChunkSizes = 479; // int
+ 
+     float upwelling_longwave_case_temperature(time=479);
+       :_FillValue = NaNf; // float
+       :units = "K";
+       :long_name = "Upwelling longwave pyrgeometer case temperature";
+       :_ChunkSizes = 479; // int
+ 
+     float upwelling_longwave_dome_temperature(time=479);
+       :_FillValue = NaNf; // float
+       :units = "K";
+       :long_name = "Upwelling longwave pyrgeometer dome temperature”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_01_thresholds_global_shortwave(time=479);
+       :units = “1”;
+       :long_name = “Is global shortwave missing, too high, or too low?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b, 9b; 
+       :flag_meanings = “missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_02_thresholds_diffuse_shortwave (time=479);
+       :units = “1”;
+       :long_name = “Is diffuse shortwave missing, too high, or too low?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b, 9b;
+       :flag_meanings = “missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off”
+:standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_03_thresholds_direct_shortwave (time=479);
+       :units = “1”;
+       :long_name = “Is direct shortwave missing, too high, or too low?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b, 9b;
+       :flag_meanings = “missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_04_thresholds_upwelling_shortwave (time=479);
+       :units = “1”;
+       :long_name = “Is upwelling shortwave missing, too high, or too low?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b, 9b;
+       :flag_meanings = “missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_05_thresholds_downwelling_longwave (time=479);
+       :units = “1”;
+    :long_name = “Is downwelling longwave missing, too high, or too low?”;
+	:flag_values = -1b 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b, 9b; 
+	:flag_meanings = “missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off”;
+	:standard_name = “status_flag”;
+	:_ChunkSizes = 479; // int
+ 
+     byte QC_flag_06_thresholds_upwelling_longwave (time=479);
+       :units = “1”;
+       :long_name = “ Is upwelling longwave missing, too high, or too low?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b, 9b;
+       :flag_meanings = “missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_07_global_shortwave_over_sum(time=479);
+       :units = “1”;
+       :long_name = “Is the ratio of the global shortwave (GSW) to direct plus diffuse (Sum) too high or too low?”;
+       :flag_values = -1b 0b, 1b, 2b;
+       :flag_meanings = “test_not_possible no_known_issue  SZA_<_75;_GSW/Sum_<_0.92,_or GSW/Sum_>_1.08,_Sum_>_50_Wm-2 93_>_SZA_>_75_and_Sum_>_50; GSW/Sum_<_0.85,_or_GSW/Sum_>_1.15,_Sum_>_50_Wm-2”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_08_diffuse_over_global_shortwave(time=479);
+       :units = “1”;
+       :long_name = “Is the ratio of the diffuse (Dif) to global shortwave (GSW) too high or too low?”;
+       :flag_values = -1b 0b, 1b, 2b;
+       :flag_meanings = “test_not_possible no_known_issue Z_<_75;_Dif/GSW_>_1.05,_GSW_>_50_Wm-2 93_>_Z_>_75;_Dif/GSW_>_1.10,_GSW_>_50_Wm-2“;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_09_upwelling_shortwave_versus_sum(time=479);
+       :units = “1”;
+       :long_name = “Is upwelling shortwave (SWup) too high (normal ground cover)?”;	
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b, 5b, 6b;
+       :flag_meanings = “test_not_possible no_known_issue Sum_or_GSW_>_50;_SWup_>_C9_*_Sum+25_Wm-2,_Ta_>=_Tsnw Sum_or_GSW__>_50;_SWup_>_C10_*_Sum+25_Wm-2,_Ta_<_Tsnw Sum_or_GSW_>_50;_SWup_>_D9_*_Sum+30_Wm-2,_Ta_>=_Tsnw Sum_or_GSW__>_50;_SWup_>_D10_*_Sum+30_Wm-2,_Ta_<_Tsnw Sum_or_GSW_>_50;_SWup_>_Sum_or_GSW+25;_Swup_bad Sum_and_GSW_>_50;_SWup_>_Both_Sum_and_GSW+25;_Swup_bad”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_10_downwelling_longwave_to_temperature(time=479);
+       :units = “1”;
+       :long_name = “Is downwelling longwave (LWdn) too high? (snow cover)?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b;
+       :flag_meanings = “ “test_not_possible no_known_issue LWdn_<_C11_*sigma*Ta4 LWdn_>_sigma*_Ta4+C12 LWdn_<_D11*sigma*Ta4 LWdn_>_sigma*_Ta4+_D12”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_11_upwelling_longwave_to_temperature (time=479);
+       :units = “1”;
+       :long_name = “Is upwelling longwave (LWup) too high or too low?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b, 5b, 6b;
+       :flag_meanings = “test_not_possible no_known_issue LWup_<_sigma*(Ta-C13)4 LWup_>_sigma*(Ta+C14)4 LWup_<_sigma*(Ta-D13)4 LWup_>_sigma*(Ta+D14)4“;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_12_downwelling_longwave_to_upwelling_longwave(time=479);
+       :units = “1”;
+       :long_name = “Are downwelling longwave (LWdn) and upwelling longwave (LWup) consistent relative to each other?”;
+	:flag_values = -1b 0b, 1b, 2b, 3b, 4b;
+	:flag_meanings = “test_not_possible no_known_issue LWdn_<_LWup-C15 LWdn_>_LWup+C16 LWdn_<_LWup-_D15 LWdn_>_LWup+_D16“;
+	:standard_name = “status_flag”;  
+	:_ChunkSizes = 479; // int
+ 
+     byte QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature(time=479);
+       :units = “1”;
+       :long_name = “Is the downwelling longwave case vs. air temperature within limits?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b;
+       :flag_meanings = “test_not_possible no_known_issue Tc_<_Ta_-_C17 Tc_>_Ta_+_C17 Tc_<_Tavg_-_15 Tc_>_Tavg_+_15”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature (time=479);
+       :units = “1”;
+       :long_name = “ Is the downwelling longwave dome vs. air temperature within limits?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b;
+       :flag_meanings = “test_not_possible no_known_issue Td_<_Ta_-_C17 Td_>_Ta_+_C17 Td_<_Tavg_-_15 Td_>_Tavg_+_15”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature (time=479);
+       :units = “1”;
+       :long_name = “ Is the upwelling longwave case vs. air temperature within limits?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b, 4b
+       :flag_meanings = “test_not_possible no_known_issue Tc_<_Ta_-_C17 Tc_>_Ta_+_C17 Tc_<_Tavg_-_15 Tc_>_Tavg_+_15”
+       :standard_name = “status_flag”
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature (time=479);
+       :units = “1”;
+       :long_name = “Is the upwelling longwave dome vs. air temperature within limits?”;
+       :flag_values = -1b 0b, 1b, 2b, 3b;
+       :flag_meanings = “test_not_possible no_known_issue Td_<_Ta_-_C17 Td_>_Ta_+_C17 Td_<_Tavg_-_15 Td_>_Tavg_+_15”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature (time=479);
+       :units = “1”;
+       :long_name = “Is the downwelling longwave case vs. dome temperature within limits?”;
+       :flag_values = -1b 0b, 3b, 4b;
+       :flag_meanings = “test_not_possible no_known_issue (Tc_-_Td)_<__C18 (Tc_-_Td)_>_C19”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature (time=479);
+       :units = “1”;
+       :long_name = “Is the upwelling longwave case vs. dome temperature within limits?”;
+       :flag_values = -1b 0b, 3b, 4b;
+       :flag_meanings = “test_not_possible no_known_issue (Tc_-_Td)_<_C18 (Tc_-_Td)_>_C19”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte QC_flag_19_air temperature(time=479);
+       :units = “1”;
+       :long_name = “Is the air temperature within limits?”;
+       :flag_values = -1b 0b, 3b, 4b;
+       :flag_meanings = “test_not_possible no_known_issue Ta_>_Tmax_or_Ta_<_Tmin Ta_more_than_Tavg_+/-_20_K”;
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     byte global_shortwave_irloss_flag (time=479);
+       :units = “1”;
+       :long_name = “Type of infrared (IR) loss correction applied to total (global)downwelling shortwave irradiance";
+       :flag_values = 0b, 1b, 2b, 3b, 4b;
+       :comments = "none full_dry full_moist detector_dry detector_moist";
+       :standard_name = “status_flag”
+       :_ChunkSizes = 479; // int
+ 
+     byte diffuse_sortwave_irloss_flag(time=479);
+       :units = "1";
+       :long_name = "Type of infrared (IR) loss correction applied to diffuse downwelling shortwave irradiance";
+       :flag_values = 0b, 1b, 2b, 3b, 4b;
+       :comments = " none full_dry full_moist detector_dry detector_moist";
+       :standard_name = “status_flag”;
+       :_ChunkSizes = 479; // int
+ 
+     float downwelling_shortwave_irradiance_assuming_clear_sky(time=479);
+       :_FillValue = NaNf; // float
+       :units = "W m-2";
+       :long_name = "Estimated clear-sky total downwelling shortwave";
+       :comments = "Estimated from user-set power law coefficient settings in configuration file";
+    :standard_name = "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky”;
+       :_ChunkSizes = 479; // int
+ 
+     float ir_loss_correction_to_diffuse_shortwave(Time=479);
+       :_FillValue = NaNf; // float
+       :units = "1";
+       :long_name = "Infrared (IR) loss correction applied to diffuse downwelling shortwave irradiance measurements";
+       :_ChunkSizes = 479; // int
+ 
+     float ir_loss_correction_to_global_shortwave(Time=479);
+       :_FillValue = NaNf; // float
+       :units = "1";
+       :long_name = "Infrared (IR) loss correction applied to global downwelling shortwave measurements";
+       :_ChunkSizes = 479; // int
+ 
+     float downwelling_erythemal_uvb_irradiance(time=479);
+       :_FillValue = NaNf; // float
+       :units = "mW m-2";
+       :long_name = "Erythemal UVB";
+       :comments = "Instrument is weighted by the erythemal action spectrum";
+       :_ChunkSizes = 479; // int
+ 
+     float photosynthetically_active_radiation(time=479);
+       :_FillValue = NaNf; // float
+       :units = "W m-2";
+       :long_name = "Photosynthetically Active Radiation (PAR)";
+       :comments = "Total (global) downwelling irradiance from 400 to 700 nanometers";
+       :standard_name = “surface_downwelling_photosynthetic_radiative_flux_in_air”;
+       :_ChunkSizes = 479; // int
+ 
+     float wind_speed(time=479);
+       :_FillValue = NaNf; // float
+       :units = "m s-1";
+       :long_name = "Wind speed";
+       :standard_name = “wind_speed”;
+       :comments = “measured near top of tower”;
+       :_ChunkSizes = 479; // int
+ 
+     float wind_direction(time=479);
+       :_FillValue = NaNf; // float
+       :units = "degree";
+       :long_name = "Direction of wind";
+       :standard_name = “wind_from_direction”;
+       :comments = “measured near top of tower”;
+       :_ChunkSizes = 479; // int
+
+     float latitude;
+       :_FillValue = NaNf: // float
+       :units = “degree_north” ;
+       :long_name = “North latitude”;
+       :standard_name = “latitude”;
+
+     float longitude;
+       :_FillValue = NaNf: // float
+       :units = “degree_west”;
+       :long_name = “West longitude”;
+       :standard_name = “longitude”;
+
+     float altitude;
+       :_FillValue = NaNf: // float
+       :units = “meter”;
+       :long_name = “Altitude”;
+       :standard_name = “altitude”; 
+
+   // global attributes:
+   :_NCProperties = "version=1|netcdflibversion=4.4.1|hdf5libversion=1.8.17";
+   :Conventions = "CF-1.6";
+   :title = "QCRad V3 Dataset from NOAA/ESRL/GMD/GRAD SURFRAD Data Archive";
+   :source = "NOAA/ESRL/GMD/GRAD SURFRAD Data Archive";
+   :references = "Online: https://www.esrl.noaa.gov/gmd/grad/surfrad/index.html";
+   :history = "[2017-08-11 14:24] Created compressed netCDF4 dataset";
+   :institution = "National Oceanic and Atmospheric Administration (NOAA) - David Skaggs Research Center - Boulder, CO";
+   :comments = "Raw data taken each minute and saved in daily files by test site";
+   :command_line = “surfrad_process –f option –c some other options…”
+ }
