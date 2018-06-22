@@ -1,0 +1,1 @@
+locations = [{'name': 'Bondville', 'state':'IL', 'abbriviations': ['bon'], 'lon:': 0, 'lat:': 0}]

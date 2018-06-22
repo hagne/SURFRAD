@@ -94,7 +94,7 @@ netcdf file:/Users/allison/GRAD/BEDI/Bondville_IL_1995_May_10.nc {
  
      float relative_humidity(time=479);
        :_FillValue = NaNf; // float
-       :units = "%";
+       :units = "%%";
        :long_name = "Relative Humidity";
        :standard_name = “relative_humidity”;
        :comments = “Measured on cross-arms near top of tower”;
@@ -352,7 +352,7 @@ netcdf file:/Users/allison/GRAD/BEDI/Bondville_IL_1995_May_10.nc {
        :_ChunkSizes = 479; // int
 
      float latitude;
-       :_FillValue = NaNf: // float
+       :_FillValue = NaNf; // float
        :units = “degree_north” ;
        :long_name = “North latitude”;
        :standard_name = “latitude”;
