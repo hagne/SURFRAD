@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+
+from SurfRadPy import NCEI as ncei
+import argparse
+
+txt = """Process qcrad data to conform with NCEI requirements. This includes conversion to netCDF, archiving, and the generation of a manifest file."""
+parser = argparse.ArgumentParser(prog='qcrad2ncei', description=txt)
+
+default_input_folder = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/'
+default_output_folder= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI/'
+default_tar_folder= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/'
+
+parser.add_argument('-i','--folder_in',
+                    default=default_input_folder,
+                    help='Change the input folder. This is the basefolder containing all qcrad data. Default: {}.'.format(default_input_folder))
+parser.add_argument('-o','--folder_out',
+                    default=default_output_folder,
+                    help='Change the output folder. This is the basefolder where all the netCDF files will be stored in. Default: {}.'.format(default_output_folder))
+parser.add_argument('-a','--folder_tar',
+                    default=default_tar_folder,
+                    help='Change the archive folder. This is the basefolder where all the data archives (tar) will be stored. Default: {}.'.format(default_tar_folder))
+parser.add_argument('-w','--overwrite',
+                    action="store_true",
+                    help='Overwrite existing output (netCDF) files.')
+parser.add_argument('-s','--station',
+                    default = None,
+                    help='Stations to process (default is all stations). Options: {}'.format(', '.join([i['abbriviations'][-1] for i in ncei._locations])))
+parser.add_argument('-y','--year',
+                   default = None,
+                   type=int,
+                   help='Year to process (default is all years). Format: yyyy')
+parser.add_argument('-m','--month',
+                   default = None,
+                   type=int,
+                   help='Month to process (default is all month). Format: mm')
+parser.add_argument('-t', '--test',
+                   action="store_true",
+                   help='Suppresses the processing, but print files that would be processed.')
+parser.add_argument('-v', '--verbose',
+                   action="store_true",
+                   help='Increase output verbosity.')
+parser.add_argument('--suppress_netcdf',
+                   action='store_false',
+                   help='Suppress the generation of the netCDF generation. E.g. if only the archives are supposed to be generated.')
+parser.add_argument('--suppress_archive',
+                   action='store_false',
+                   help='Suppress the generation of the archives (tar files).')
+parser.add_argument('--suppress_manifest',
+                   action='store_false',
+                   help='Suppress the generation of manifest files.')
+# parser.print_help()
+
+# args = parser.parse_args(['-t','-y','1995','-m','01'])
+args = parser.parse_args()
+df = ncei.qcrad2ncei(folder_in = args.folder_in,
+           folder_out= args.folder_out,
+           folder_out_tar= args.folder_tar,
+           station_abb = args.station,
+           year = args.year,
+           month = args.month,
+           overwrite = args.overwrite,
+           do_qcrad2nc = args.suppress_netcdf,
+           do_tar = args.suppress_archive,
+           do_manifest = args.suppress_manifest,
+           test = args.test,
+           verbose = args.verbose)

@@ -1,4 +1,3 @@
-import string as _string
 import pandas as _pd
 import numpy as _np
 import xarray as _xr
@@ -7,6 +6,7 @@ import tarfile as _tarfile
 from .surfrad import locations as _locations
 import platform as _platform
 import hashlib as _hashlib
+from pathlib import Path
 
 columntransrules = {'solar_zenith_angle': 'Z',
                     'distance_from_sun': 'AU',
@@ -54,16 +54,6 @@ columntransrules = {'solar_zenith_angle': 'Z',
                     'wind_direction': 'WindDr',
                     }
 
-# location_values = {'latitude': 40.05192,
-#                    'longitude': 271.62692,
-#                    'altitude': 230.}
-
-
-def filename2info(filename):
-    abbr, rest = filename.split('_')
-    date = rest.split('.')[0]
-    date_pd = _pd.to_datetime(date)
-    return abbr, date_pd
 
 def parse_CDL_file(fname = '../data/SURFRAD_QCrad_metadata.cdl'):
 
@@ -167,288 +157,160 @@ def read_data(fname='../data/bon_19950510.qdat', missing_data=((-9999.0, -9999.9
     return data
 
 
-# def generate_dataset(time_dimension=480):
-#     template_file = '../data/template_{}.nc'.format(time_dimension)
-#     ds = _xr.open_dataset(template_file, autoclose=True,
-#                           chunks={'time': time_dimension}
-#                           )
-#
-#     for var in ds.variables:
-#         enc = ds[var].encoding
-#         enc['chunksizes'] = enc['original_shape']
-#         enc['contiguous'] = False
-#         enc['complevel'] = 9
-#         enc['zlib'] = True
-#     return ds
+def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, verbose=False):
+    def save2netcdf(ds, fname='../data/Bondville_IL_1995_May_10.new.nc', compression=False):
+        # turns out the compression results in a larger file tstststs
+        ## set encoding
+        if compression:
+            for var in ds.variables:
+                enc = ds[var].encoding
+                enc['chunksizes'] = ds[var].shape
+                enc['contiguous'] = False
+                enc['complevel'] = 9
+                enc['zlib'] = False
+            #     # incase hdf5 is used at some point:
+            #     enc['compression'] = 'gzip'
+            #     enc['compression_opts'] = 9
+        # creates folders as required
+        _os.makedirs(_os.path.dirname(fname), exist_ok=True)
+        # save
+        ds.to_netcdf(fname,
+                     format='NETCDF4_CLASSIC',
+                     )
+    def df2ds(data, variable_list, global_atts, location):
+        ds = _xr.Dataset(data, attrs=global_atts)
 
-
-# def populate_dataset(dataset, data):
-#     """
-#     TODO
-#     ----
-#     outsource the testing!
-#     """
-#
-#     ds = dataset
-#     ds['time'].values = data.index
-#
-#     invalid = _string.punctuation
-#     for i in {'_', '-', '.', '+', '@'}:
-#         invalid = invalid.replace(i, '')
-#
-#     e = 1
-#     verbose = True
-#     for varname, colname in columntransrules.items():
-#         #     print(varname)
-#         #     break
-#         ds[varname].values = data.loc[:, colname].values.astype(ds[varname].dtype)
-#         if 'flag_values' in ds[varname].attrs:
-#             flag_values_len = len(ds[varname].attrs['flag_values'])
-#             try:
-#                 flag_meaning_len = len(ds[varname].attrs['flag_meanings'].split())
-#             except KeyError:
-#                 print('-----')
-#                 print('{}) {}: no flag_meanings found'.format(e, varname))
-#                 e += 1
-#                 if verbose:
-#                     print('\tflag_values: {}'.format(ds[varname].attrs['flag_values']))
-#                 continue
-#             if flag_values_len != flag_meaning_len:
-#                 print('-----')
-#                 print(('{}) {}: number of flag_values ({}) different than number',
-#                        ' of flag_meanings ({}).'.format(e, varname, flag_values_len, flag_meaning_len)))
-#                 e += 1
-#                 if verbose:
-#                     print('\tflag_values: {}'.format(ds[varname].attrs['flag_values']))
-#                     print('\tflag_meanings: {}'.format(ds[varname].attrs['flag_meanings']))
-#
-#             invinstring = []
-#             for char in ds[varname].attrs['flag_meanings']:
-#                 if char in invalid:
-#                     invinstring.append(char)
-#
-#                     #                 print('------')
-#                     #                 print(ds['QC_flag_07_global_shortwave_over_sum'].attrs['flag_meanings'])
-#                     #                 assert False
-#
-#             invinstring = set(invinstring)
-#             #         if any(char in invalid for char in ds[varname].attrs['flag_meanings']):
-#             if len(invinstring) > 0:
-#                 print('-----')
-#                 print('{}) {}: invalid character(s) {} found in flag_meaning'.format(e, varname, ''.join(invinstring)))
-#                 e += 1
-#                 if verbose:
-#                     print('\tflag_meanings: {}'.format(ds[varname].attrs['flag_meanings']))
-#
-#         if 'ancillary_variables' in ds[varname].attrs:
-#             #         raise ValueError()
-#             for avar in ds[varname].attrs['ancillary_variables'].split():
-#                 if avar not in ds.variables:
-#                     print('-----')
-#                     print(('{}) {}: the ancillary_variables {} is not a valid variable',
-#                            '... spell check.'.format(e, varname, avar)))
-#                     e += 1
-#
-#     for varname, value in location_values.items():
-#         ds[varname].values = value
-
-
-# def save_dataset2netcdf(dataset: _xr.Dataset, fname: str) -> bool:
-#     ds = dataset
-#     ds.to_netcdf(fname,
-#                  format='NETCDF4_CLASSIC'
-#                  )
-#     return True
-
-
-def df2ds(data, variable_list, global_atts, location):
-    ds = _xr.Dataset(data, attrs=global_atts)
-
-    # add variable attributes
-    for var in ds.variables:
-        if var == 'time':
-            continue
-        atts = [v for v in variable_list if v['name_nc'] == var][0]['attributes'].copy()
-        if '_FillValue' in atts.keys():
-            if atts['_FillValue'] == 'NaNf':
-                atts['_FillValue'] = _np.nan
-        ds.variables[var].attrs = atts
-
-    # set location variables
-    # in case the lat, lon, alt is used instead of full names:
-    if 'lat' in location.keys():
-        location = dict(latitude=location['lat'], longitude=location['lon'], altitude=location['alt'])
-    for lv in location:
-        ds[lv] = location[lv]
-    return ds
-
-def save2netcdf(ds, fname = '../data/Bondville_IL_1995_May_10.new.nc', compression = False):
-    # turns out the compression results in a larger file tstststs
-    ## set encoding
-    if compression:
+        # add variable attributes
         for var in ds.variables:
-            enc = ds[var].encoding
-            enc['chunksizes'] = ds[var].shape
-            enc['contiguous'] = False
-            enc['complevel'] = 9
-            enc['zlib'] = False
-        #     # incase hdf5 is used at some point:
-        #     enc['compression'] = 'gzip'
-        #     enc['compression_opts'] = 9
-
-    ## save
-    ds.to_netcdf(fname,
-                 format = 'NETCDF4_CLASSIC',
-                )
-
-
-def qcrad2netcdf(fname, output_folder, path2CDL, overwrite=False, verbose=False):
-    # folder_in = '/Volumes/HTelg_4TB_Backup/SURFRAD/qcrad_v3/bon/1995/'
-    # folder_out = '/Volumes/HTelg_4TB_Backup/SURFRAD/NCEI/'
-    # overwrite = False
-    # verbose = True
-
-    cdl_dict = parse_CDL_file(path2CDL)
-    folder_in = fname
-    folder_out = output_folder
-
-    if _os.path.isfile(fname):
-        folder_in, fn = _os.path.split(folder_in)
-        folder_in += '/'
-        fnames = [fn]
-    elif _os.path.isdir(fname):
-        fnames = _os.listdir(folder_in)
-    else:
-        raise ValueError('fname is neither a file nore a folder (fname = {})'.format(fname))
-    # clean files
-    fnames = [i for i in fnames if '.qdat' in i]
-
-    # find files that need processing
-    process_list = []
-    for fn in fnames:
-        # generate output folder and name
-        ## get info from file name
-        abbr, date_pd = filename2info(fn)
-
-        # find location based on abbriviation
-        # abbr = 'bon'
-        loc = [i for i in _locations if abbr in i['abbriviations']][0]
-
-        # generate file name
-        file_out = '{name}_{state}_{year}_{month}_{day:02d}.nc'.format(name=loc['name'], state=loc['state'],
-                                                                       year=date_pd.year,
-                                                                       month=date_pd.month_name()[:3], day=date_pd.day)
-
-        # generate folder name
-        ## check if final folder is already the year
-        if folder_out.strip('/').split('/')[-1] != str(date_pd.year):
-            folder_out = folder_out + '{}/'.format(date_pd.year)
-
-        # check if folder exists, if not create it
-        if not _os.path.isdir(folder_out):
-            _os.makedirs(folder_out)
-
-        path_out = folder_out + file_out
-
-        if not overwrite:
-            if _os.path.isfile(path_out):
+            if var == 'time':
                 continue
-        out = {'path_in': folder_in + fn, 'path_out': path_out, 'location':loc}
-        process_list.append(out)
-    # print list of files that need to be processed
-    if 0:
-        print('\n'.join([i['path_in'] for i in process_list]))
+            atts = [v for v in variable_list if v['name_nc'] == var][0]['attributes'].copy()
+            if '_FillValue' in atts.keys():
+                if atts['_FillValue'] == 'NaNf':
+                    atts['_FillValue'] = _np.nan
+            ds.variables[var].attrs = atts
 
-    # process and save all designated files
-    if len(process_list) == 0:
-        print('process_list is empty ... nothing to do here')
-    for todo in process_list:
-        if verbose:
-            print('processing {}\n ......'.format(todo['path_in']), end=' ')
-        data = read_data(todo['path_in'])
-        ds = df2ds(data, cdl_dict['variable_list'], cdl_dict['global_atts_dict'], todo['location'])
-        if save2netcdf(ds, todo['path_out']):
-            if verbose:
-                print('done! netCDF saved to {}'.format(todo['path_out']))
+        # set location variables
+        # in case the lat, lon, alt is used instead of full names:
+        if 'lat' in location.keys():
+            location = dict(latitude=location['lat'], longitude=location['lon'], altitude=location['alt'])
+        for lv in location:
+            ds[lv] = location[lv]
+        return ds
+    if verbose:
+        print('pcrad2netcdf: {} -> {}'.format(data_path_in, nc_path_out), end = '...')
+    data = read_data(data_path_in)
+    location = [e for e in _locations if data_path_in.name.split('_')[0] in e['abbriviations']][0]
+    ds = df2ds(data, cdl_dict['variable_list'], cdl_dict['global_atts_dict'], location)
+    save2netcdf(ds, nc_path_out)
+    if verbose:
+        print('done')
+    return location
 
-def generate_md5_checksum(fname):
-    with open(fname, "rb") as file_to_check:
-        data = file_to_check.read()
-        md5 = _hashlib.md5(data).hexdigest()
+def tar_nc(pot, todo, manifest = True, verbose = False):
+    def generate_md5_checksum(fname):
+        with open(fname, "rb") as file_to_check:
+            data = file_to_check.read()
+            md5 = _hashlib.md5(data).hexdigest()
 
-    f_size = _os.stat(fname).st_size
+        f_size = _os.stat(fname).st_size
 
-    fname_out = fname + '.mnf'
+        fname_out = fname + '.mnf'
 
-    file_content = [_os.path.split(fname)[-1], str(md5), str(f_size)]
+        file_content = [_os.path.split(fname)[-1], str(md5), str(f_size)]
 
-    with open(fname_out, 'w') as fout:
-        fout.write(','.join(file_content))
+        with open(fname_out, 'w') as fout:
+            fout.write(','.join(file_content))
+    tar_mode = 'w:gz'
+    # make sure folder exists:
+    _os.makedirs(_os.path.dirname(pot), exist_ok=True)
+    if verbose:
+        print('tar_nc: {}'.format(pot), end = '...')
+    tar = _tarfile.open(pot, mode=tar_mode)
 
-def tar_netcdf_files(input_folder, output_folder, compression=True, overwrite = False, test = True, manifest = True, verbose = False):
-    # some definitions
-    tar_mode = 'w:'
-    if compression:
-        f_ext = '_tar_gz'
-        fl_ext = '.tar.gz'
-        tar_mode += 'gz'
+    for po in todo.path_out:
+        tar.add(po, arcname = po.name)
+    tar.close()
+    if manifest:
+        generate_md5_checksum(pot)
+    if verbose:
+        print('done')
+
+def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
+               folder_out= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI/',
+               folder_out_tar= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/',
+               station_abb = 'bon',
+               year = 1995,
+               month = 1,
+               overwrite = False,
+               do_qcrad2nc = True,
+               do_tar = True,
+               do_manifest = True,
+               test = False,
+               verbose = False
+              ):
+
+    fl_ext = '.tar.gz'
+
+    # generate a DataFrame with all files in sub folder and populate with relevant data
+    paths_in = list(Path(folder_in).rglob("*.qdat"))
+    index = [_pd.to_datetime(i.name.split('_')[1].split('.')[0]) for i in paths_in]
+    station = [i.name.split('_')[0] for i in paths_in]
+    station_name = [[e for e in _locations if i in e['abbriviations']][0]['name'] for i in station]
+    station_state = [[e for e in _locations if i in e['abbriviations']][0]['state'] for i in station]
+
+    df = _pd.DataFrame({'path_in': paths_in,
+    #                     'path_out': paths_out,
+    #                     'path_out_exists': paths_out_exist,
+                        'station': station,
+                        'station_name': station_name,
+                        'station_state': station_state},
+                       index = index)
+
+    df['year'] = [i.year for i in df.index]
+    df['month'] = [i.month for i in df.index]
+    df['day'] = [i.day for i in df.index]
+    df['month_name'] = [i.month_name()[:3] for i in df.index]
+    df['path_out'] = df.apply(lambda x: Path('{}{}/{}_{}_{}_{}_{:02d}{}'.format(folder_out, x.station, x.station_name, x.station_state, x.year, x.month_name, x.day, '.nc')), axis = 1)
+    df['path_out_exists'] = df.path_out.apply(lambda i: i.is_file())
+    df['path_out_tar'] = df.apply(lambda x: '{}{}/{}_{}_{}_{}{}'.format(folder_out_tar, x.station, x.station_name, x.station_state, x.year, x.month_name, fl_ext), axis = 1)
+
+    # the full list is neaded in case a tar is produced ...
+    # this way a new tar is created when a new file belongs into an existing tar
+    df_full = df.copy()
+
+    # check existing for overwrite
+    if not overwrite:
+        df = df[df.path_out_exists == False]
+
+    # select particular things ... like stations or times
+
+    if station_abb:
+        df = df[df.station == station_abb]
+    if year:
+        df = df[df.year == year]
+    if month:
+        df = df[df.month == month]
+
+    # qcrad2netcdf the remaining todos in df
+    if test:
+        print('Files to be processed:')
+        for fn in df.path_in:
+            print('\t{}'.format(fn.as_posix()))
+        return df
+    if do_qcrad2nc:
+        cdl_dict = parse_CDL_file()
+        for idx,line in df.iterrows():
+            qcrad2netcdf(line.path_in, line.path_out, cdl_dict, verbose=verbose)
     else:
-        f_ext = '_tar'
-        fl_ext = '.tar'
+        if verbose:
+            print('No NetCDF files created since do_qcrad2nc == False')
+    # get all filles from the full file list that match the desired tar file
+    if do_tar:
+        for pot in _np.unique(df.path_out_tar):
+            todo = df_full[df_full.path_out_tar == pot]
+            tar_nc(pot, todo, manifest=do_manifest, verbose= verbose)
+    else:
+        if verbose:
+            print('No archives created since do_tar == False')
 
-    # generate output_folder name and create the folder if needed
-    fnt = input_folder.strip('/').split('/')[-1]
-    # year = fnt
-    fnt += f_ext
-    if output_folder.strip('/').split('/')[-1] != fnt:
-        output_folder = output_folder + fnt + '/'
-
-    if not _os.path.isdir(output_folder):
-        _os.makedirs(output_folder)
-
-    # get file names and provide attribute of month for grouping
-    fnames = _os.listdir(input_folder)
-    fnames = [fn for fn in fnames if '.nc' in fn]
-
-    dft = _pd.DataFrame(_np.array([fnames]).transpose(), columns=['filename'])
-    # df['month'] = [fn.split('_')[-2] for fn in df.filename]
-    # df['year'] = [int(fn.split('_')[-3]) for fn in df.filename]
-
-    df = dft.filename.apply(lambda x: _pd.Series(x.split('_'), index=['filename', 'state', 'year', 'month', 'day']))
-    df['filename'] = dft.filename
-    df['day'] = df.day.apply(lambda x: x.split('.')[0])
-    df.index = df.apply(lambda x: _pd.to_datetime('{}-{}-{}'.format(x.year, x.month, x.day)), axis=1)
-    df.sort_index(inplace=True)
-
-    # remove all files from the last month -> a tar is only created if the next month has started
-    last = df.index[-1]
-    last = last - _pd.to_timedelta(last.day, 'd')
-    df = df.truncate(after=last)
-
-    # return df
-    # write a tar of monthly files
-    for month in _np.unique(df.month):
-        fns = df[df.month == month].filename.values
-        name, state, year, month = fns[0].split('_')[:-1]
-        archive_name = '{}_{}_{}_{}{}'.format(name, state, year, month, fl_ext)
-        if test:
-            print('============')
-            print('archive_name: {}'.format(output_folder + archive_name))
-            for fn in fns:
-                print('\t {}'.format(fn))
-        else:
-            archive_path = output_folder + archive_name
-            if not overwrite:
-                if _os.path.isfile(archive_path):
-                    if verbose:
-                        print('File {} already exists ... go to next'.format(archive_path))
-                    continue
-            tar = _tarfile.open(archive_path, mode=tar_mode)
-
-            for fn in fns:
-                tar.add(input_folder + fn, arcname = fn)
-
-            tar.close()
-            if manifest:
-                generate_md5_checksum(archive_path)
-    return df
