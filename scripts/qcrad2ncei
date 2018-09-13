@@ -10,7 +10,7 @@ import os
 # get the configuration
 ini_p = Path(Path.home().as_posix() + '/.SurfRadPy/config.ini')
 
-if  ini_p.is_file():
+if not ini_p.is_file():
     os.makedirs(os.path.dirname(ini_p), exist_ok=True)
     with open(ini_p, 'w') as rein:
         txt =  ('[scripts]\n'
@@ -72,8 +72,21 @@ parser.add_argument('--suppress_archive',
 parser.add_argument('--suppress_manifest',
                    action='store_false',
                    help='Suppress the generation of manifest files.')
+parser.add_argument('--update_defaults',
+                    action='store_true',
+                    help='If one of the folders is set (with -i, -o, or -a, this will update the default settings to this folder')
 
 args = parser.parse_args()
+
+########
+# update the settings if --update_default is selected
+if args.update_defaults:
+    config['scripts.qcrad2ncei']['input_folder'] = args.folder_in
+    config['scripts.qcrad2ncei']['output_folder'] = args.folder_out
+    config['scripts.qcrad2ncei']['tar_folder'] = args.folder_tar
+    with open(ini_p, 'w') as raus:
+        config.write(raus)
+
 ########
 # execute the program
 

@@ -254,6 +254,8 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
 
     # generate a DataFrame with all files in sub folder and populate with relevant data
     paths_in = list(_Path(folder_in).rglob("*.qdat"))
+    if len(paths_in) == 0:
+        raise ValueError('There are no valid qcrad data files (with extention .qdat) in this folder or its sub-folders. Make sure the input-folder is correct.')
     index = [_pd.to_datetime(i.name.split('_')[1].split('.')[0]) for i in paths_in]
     station = [i.name.split('_')[0] for i in paths_in]
     station_name = [[e for e in _locations if i in e['abbriviations']][0]['name'] for i in station]
