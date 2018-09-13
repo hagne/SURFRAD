@@ -4,11 +4,8 @@ required_verion = (3,)
 if sys.version_info < required_verion:
     raise ValueError('SurfRadPy needs at least python {}! You are trying to install it under python {}'.format('.'.join(str(i) for i in required_verion), sys.version))
 
-# import ez_setup
-# ez_setup.use_setuptools()
-
-from setuptools import setup
-# from distutils.core import setup
+# from setuptools import setup
+from distutils.core import setup
 setup(
     name="SurfRadPy",
     version="0.1",
@@ -18,8 +15,9 @@ setup(
     description="...",
     license="MIT",
     # keywords="matplotlib",
-    url="https://github.com/hagne/SURFRAD", install_requires=['pandas', 'numpy', 'xarray']
-    # install_requires=['numpy','pandas'],
+    url="https://github.com/hagne/SURFRAD",
+    install_requires=['pandas', 'numpy', 'xarray'],
+    scripts=['scripts/qcrad2ncei']
     # extras_require={'plotting': ['matplotlib'],
     #                 'testing': ['scipy']},
     # test_suite='nose.collector',

@@ -2,13 +2,37 @@
 
 from SurfRadPy import NCEI as ncei
 import argparse
+import configparser
+from pathlib import Path
+import os
+
+########
+# get the configuration
+ini_p = Path(Path.home().as_posix() + '/.SurfRadPy/config.ini')
+
+if  ini_p.is_file():
+    os.makedirs(os.path.dirname(ini_p), exist_ok=True)
+    with open(ini_p, 'w') as rein:
+        txt =  ('[scripts]\n'
+                '[scripts.qcrad2ncei]\n'
+                'input_folder  = /Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/\n'
+                'output_folder = /Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI/\n'
+                'tar_folder    = /Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/\n')
+        rein.write(txt)
+
+config = configparser.ConfigParser()
+config.read(ini_p)
+
+default_input_folder = config['scripts.qcrad2ncei']['input_folder']
+default_output_folder= config['scripts.qcrad2ncei']['output_folder']
+default_tar_folder= config['scripts.qcrad2ncei']['tar_folder']
+
+########
+# parse arguments
 
 txt = """Process qcrad data to conform with NCEI requirements. This includes conversion to netCDF, archiving, and the generation of a manifest file."""
 parser = argparse.ArgumentParser(prog='qcrad2ncei', description=txt)
 
-default_input_folder = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/'
-default_output_folder= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI/'
-default_tar_folder= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/'
 
 parser.add_argument('-i','--folder_in',
                     default=default_input_folder,
@@ -48,10 +72,11 @@ parser.add_argument('--suppress_archive',
 parser.add_argument('--suppress_manifest',
                    action='store_false',
                    help='Suppress the generation of manifest files.')
-# parser.print_help()
 
-# args = parser.parse_args(['-t','-y','1995','-m','01'])
 args = parser.parse_args()
+########
+# execute the program
+
 df = ncei.qcrad2ncei(folder_in = args.folder_in,
            folder_out= args.folder_out,
            folder_out_tar= args.folder_tar,

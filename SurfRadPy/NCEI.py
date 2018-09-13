@@ -6,7 +6,7 @@ import tarfile as _tarfile
 from .surfrad import locations as _locations
 import platform as _platform
 import hashlib as _hashlib
-from pathlib import Path
+from pathlib import Path as _Path
 
 columntransrules = {'solar_zenith_angle': 'Z',
                     'distance_from_sun': 'AU',
@@ -253,7 +253,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
     fl_ext = '.tar.gz'
 
     # generate a DataFrame with all files in sub folder and populate with relevant data
-    paths_in = list(Path(folder_in).rglob("*.qdat"))
+    paths_in = list(_Path(folder_in).rglob("*.qdat"))
     index = [_pd.to_datetime(i.name.split('_')[1].split('.')[0]) for i in paths_in]
     station = [i.name.split('_')[0] for i in paths_in]
     station_name = [[e for e in _locations if i in e['abbriviations']][0]['name'] for i in station]
@@ -271,7 +271,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
     df['month'] = [i.month for i in df.index]
     df['day'] = [i.day for i in df.index]
     df['month_name'] = [i.month_name()[:3] for i in df.index]
-    df['path_out'] = df.apply(lambda x: Path('{}{}/{}_{}_{}_{}_{:02d}{}'.format(folder_out, x.station, x.station_name, x.station_state, x.year, x.month_name, x.day, '.nc')), axis = 1)
+    df['path_out'] = df.apply(lambda x: _Path('{}{}/{}_{}_{}_{}_{:02d}{}'.format(folder_out, x.station, x.station_name, x.station_state, x.year, x.month_name, x.day, '.nc')), axis = 1)
     df['path_out_exists'] = df.path_out.apply(lambda i: i.is_file())
     df['path_out_tar'] = df.apply(lambda x: '{}{}/{}_{}_{}_{}{}'.format(folder_out_tar, x.station, x.station_name, x.station_state, x.year, x.month_name, fl_ext), axis = 1)
 
