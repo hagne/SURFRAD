@@ -315,7 +315,7 @@ def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, statio
     for dtp in _np.unique(df.loc[df.do_tar].path_out_tar):
         ttp = df.path_out_tar == dtp
         tdf = df.loc[ttp]
-        newname = '{fot}{st}/ESRL-GMD-GRAD_v{version}_SURFRADQCRAD_{stu}_s{year}{month:02d}{day_s:02d}_e{year}{month:02d}{day_e:02d}_c{year_c}{month_c:02d}{day_e:02d}.tar.gz'.format(
+        newname = '{fot}{st}/ESRL-GMD-GRAD_v{version}_SURFRADQCRAD_{stu}_s{year}{month:02d}{day_s:02d}_e{year}{month:02d}{day_e:02d}_c{year_c}{month_c:02d}{day_c:02d}.tar.gz'.format(
             fot=folder_out_tar,
             version=1.0,
             st=tdf.station[0],
