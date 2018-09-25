@@ -100,11 +100,15 @@ def parse_CDL_file(fname = '../data/SURFRAD_QCrad_metadata.cdl'):
                 # this will convert string numbers to int ... unless when it is a unit
                 if attname != 'units':
                     try:
-
                         value = eval(value)
                     except:
                         pass
-                var['attributes'][attname.strip()] = value
+
+                attname = attname.strip()
+                if attname == 'flag_values':
+                    value = _np.array([bi.replace('b', '').strip() for bi in value.split(',')]).astype(
+                        _np.int8)
+                var['attributes'][attname] = value
         if what_is_it == 'global_attributes':
             attname, value = l.strip().strip(':').strip(';').split('=', maxsplit=1)
             global_atts[attname.strip()] = value.strip().strip('"')
@@ -177,17 +181,31 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, verbose=False):
         ds.to_netcdf(fname,
                      format='NETCDF4_CLASSIC',
                      )
+    def clean_atts(atts):
+        if '_FillValue' in atts.keys():
+            if atts['_FillValue'] == 'NaNf':
+                atts['_FillValue'] = _np.nan
+        # Chunck size just creates trouble ... remove it
+        try:
+            atts.pop('_ChunkSize')
+        except KeyError:
+            pass
+        return atts
+
     def df2ds(data, variable_list, global_atts, location):
         ds = _xr.Dataset(data, attrs=global_atts)
 
         # add variable attributes
         for var in ds.variables:
-            if var == 'time':
-                continue
+            # if var == 'time':
+            #     continue
             atts = [v for v in variable_list if v['name_nc'] == var][0]['attributes'].copy()
-            if '_FillValue' in atts.keys():
-                if atts['_FillValue'] == 'NaNf':
-                    atts['_FillValue'] = _np.nan
+
+            atts = clean_atts(atts)
+            # if '_FillValue' in atts.keys():
+            #     if atts['_FillValue'] == 'NaNf':
+            #         atts['_FillValue'] = _np.nan
+
             ds.variables[var].attrs = atts
 
         # set location variables
@@ -195,8 +213,16 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, verbose=False):
         if 'lat' in location.keys():
             location = dict(latitude=location['lat'], longitude=location['lon'], altitude=location['alt'])
         for lv in location:
-            ds[lv] = location[lv]
+            ds[lv] = _np.float32(location[lv])
+            atts = [v for v in variable_list if v['name_nc'] == lv][0]['attributes']
+            atts = clean_atts(atts)
+            # if '_FillValue' in atts.keys():
+            #     if atts['_FillValue'] == 'NaNf':
+            #         atts['_FillValue'] = _np.nan
+            ds[lv].attrs = atts
+
         return ds
+
     if verbose:
         print('pcrad2netcdf: {} -> {}'.format(data_path_in, nc_path_out), end = '...')
     data = read_data(data_path_in)
@@ -215,7 +241,7 @@ def tar_nc(pot, todo, manifest = True, verbose = False):
 
         f_size = _os.stat(fname).st_size
 
-        fname_out = fname + '.mnf'
+        fname_out = _Path(fname.as_posix() + '.mnf')
 
         file_content = [_os.path.split(fname)[-1], str(md5), str(f_size)]
 
@@ -236,6 +262,89 @@ def tar_nc(pot, todo, manifest = True, verbose = False):
     if verbose:
         print('done')
 
+def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, station_abb = None, year = None, month = None):
+    paths_in = list(_Path(folder_in).rglob("*.qdat"))
+    if len(paths_in) == 0:
+        raise ValueError(
+            'There are no valid qcrad data files (with extention .qdat) in this folder or its sub-folders. Make sure the input-folder is correct.')
+
+    # select files with a valid format and station
+    valid_stations = ["bon", "tbl", "dra", "fpk", "gwn", "psu", "sxf"]
+    paths_in = [pi for pi in paths_in if pi.name.split('_')[0] in valid_stations]
+
+    # create the full list
+    index = [_pd.to_datetime(i.name.split('_')[1].split('.')[0]) for i in paths_in]
+    station = [i.name.split('_')[0] for i in paths_in]
+    station_name = [[e for e in _locations if i in e['abbriviations']][0]['name'].replace(' ', '') for i in station]
+    station_state = [[e for e in _locations if i in e['abbriviations']][0]['state'] for i in station]
+
+    df = _pd.DataFrame({'path_in': paths_in,
+                        #                     'path_out': paths_out,
+                        #                     'path_out_exists': paths_out_exist,
+                        'station': station,
+                        'station_name': station_name,
+                        'station_state': station_state},
+                       index=index)
+    df.sort_index(inplace=True)
+    df['year'] = [i.year for i in df.index]
+    df['month'] = [i.month for i in df.index]
+    df['day'] = [i.day for i in df.index]
+    df['month_name'] = [i.month_name()[:3] for i in df.index]
+    df['path_out'] = df.apply(lambda x: _Path(
+        '{}{}/{}_{}_{}_{}_{:02d}{}'.format(folder_out, x.station, x.station_name, x.station_state, x.year,
+                                           x.month_name, x.day, '.nc')), axis=1)
+    # take care of tar-archive
+    ## generate a temporary tar file name
+    df['path_out_tar'] = df.apply(
+        lambda x: '{}{}/{}_{}_{}_{}'.format(folder_out_tar, x.station, 'ESRL-GMD-GRAD_v1.0_SURFRADQCRAD',
+                                            x.station.upper(), x.year,
+                                            x.month_name), axis=1)
+
+    ## for each station set last month to do not process
+    df['do_tar'] = True
+    df['do_process'] = True
+    for st in _np.unique(df.station):
+        last = df.loc[df.station == st, :].iloc[-1]
+        tst = df.station == st
+        ty = df.year == last.year
+        tm = df.month == last.month
+        df.loc[tst & ty & tm, 'do_tar'] = False
+
+    ## for all other generate the final name
+    now = _pd.datetime.now()
+    for dtp in _np.unique(df.loc[df.do_tar].path_out_tar):
+        ttp = df.path_out_tar == dtp
+        tdf = df.loc[ttp]
+        newname = '{fot}{st}/ESRL-GMD-GRAD_v{version}_SURFRADQCRAD_{stu}_s{year}{month:02d}{day_s:02d}_e{year}{month:02d}{day_e:02d}_c{year_c}{month_c:02d}{day_e:02d}.tar.gz'.format(
+            fot=folder_out_tar,
+            version=1.0,
+            st=tdf.station[0],
+            stu=tdf.station[0].upper(),
+            year=tdf.year[0],
+            month=tdf.month[0],
+            day_s=tdf.day[0],
+            day_e=tdf.day[-1],
+            year_c=now.year,
+            month_c=now.month,
+            day_c=now.day)  # x.year[0], x.month[0], x.day[0], x.day[-1])
+        df.loc[ttp, 'path_out_tar'] = _Path(newname)
+
+    if not overwrite:
+        df.loc[df.do_process,'do_process'] = ~df.loc[df.do_process, 'path_out'].apply(lambda i: i.is_file())
+        df.loc[df.do_tar, 'do_tar'] = ~df.loc[df.do_tar, 'path_out_tar'].apply(lambda i: i.is_file())
+
+    # select particular things ... like stations or times
+    if station_abb:
+        tst = df.station == station_abb
+        df.loc[~tst, ['do_process','do_tar']] = False
+    if year:
+        ty = df.year == year
+        df.loc[~ty, ['do_process','do_tar']] = False
+    if month:
+        tm = df.month == month
+        df.loc[~tm, ['do_process','do_tar']] = False
+    return df
+
 def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                folder_out= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI/',
                folder_out_tar= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/',
@@ -250,67 +359,31 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                verbose = False
               ):
 
-    fl_ext = '.tar.gz'
+
 
     # generate a DataFrame with all files in sub folder and populate with relevant data
-    paths_in = list(_Path(folder_in).rglob("*.qdat"))
-    if len(paths_in) == 0:
-        raise ValueError('There are no valid qcrad data files (with extention .qdat) in this folder or its sub-folders. Make sure the input-folder is correct.')
-    index = [_pd.to_datetime(i.name.split('_')[1].split('.')[0]) for i in paths_in]
-    station = [i.name.split('_')[0] for i in paths_in]
-    station_name = [[e for e in _locations if i in e['abbriviations']][0]['name'] for i in station]
-    station_state = [[e for e in _locations if i in e['abbriviations']][0]['state'] for i in station]
-
-    df = _pd.DataFrame({'path_in': paths_in,
-    #                     'path_out': paths_out,
-    #                     'path_out_exists': paths_out_exist,
-                        'station': station,
-                        'station_name': station_name,
-                        'station_state': station_state},
-                       index = index)
-
-    df['year'] = [i.year for i in df.index]
-    df['month'] = [i.month for i in df.index]
-    df['day'] = [i.day for i in df.index]
-    df['month_name'] = [i.month_name()[:3] for i in df.index]
-    df['path_out'] = df.apply(lambda x: _Path('{}{}/{}_{}_{}_{}_{:02d}{}'.format(folder_out, x.station, x.station_name, x.station_state, x.year, x.month_name, x.day, '.nc')), axis = 1)
-    df['path_out_exists'] = df.path_out.apply(lambda i: i.is_file())
-    df['path_out_tar'] = df.apply(lambda x: '{}{}/{}_{}_{}_{}{}'.format(folder_out_tar, x.station, x.station_name, x.station_state, x.year, x.month_name, fl_ext), axis = 1)
-
-    # the full list is neaded in case a tar is produced ...
-    # this way a new tar is created when a new file belongs into an existing tar
-    df_full = df.copy()
-
-    # check existing for overwrite
-    if not overwrite:
-        df = df[df.path_out_exists == False]
-
-    # select particular things ... like stations or times
-
-    if station_abb:
-        df = df[df.station == station_abb]
-    if year:
-        df = df[df.year == year]
-    if month:
-        df = df[df.month == month]
+    df = create_todo(folder_in, folder_out, folder_out_tar, overwrite = overwrite, station_abb = station_abb, year = year, month = month)
 
     # qcrad2netcdf the remaining todos in df
     if test:
         print('Files to be processed:')
-        for fn in df.path_in:
+        for fn in df.path_in[df.do_process]:
+            print('\t{}'.format(fn.as_posix()))
+        print('Files tar-archives to be created:')
+        for fn in _np.unique(df.path_out_tar[df.do_tar]):
             print('\t{}'.format(fn.as_posix()))
         return df
     if do_qcrad2nc:
         cdl_dict = parse_CDL_file()
-        for idx,line in df.iterrows():
+        for idx,line in df[df.do_process].iterrows():
             qcrad2netcdf(line.path_in, line.path_out, cdl_dict, verbose=verbose)
     else:
         if verbose:
             print('No NetCDF files created since do_qcrad2nc == False')
     # get all filles from the full file list that match the desired tar file
     if do_tar:
-        for pot in _np.unique(df.path_out_tar):
-            todo = df_full[df_full.path_out_tar == pot]
+        for pot in _np.unique(df[df.do_tar].path_out_tar):
+            todo = df[df.path_out_tar == pot]
             tar_nc(pot, todo, manifest=do_manifest, verbose= verbose)
     else:
         if verbose:
