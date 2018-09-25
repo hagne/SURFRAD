@@ -348,6 +348,7 @@ def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, statio
 def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                folder_out= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI/',
                folder_out_tar= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/',
+               fname_cdl = '../data/SURFRAD_QCrad_metadata.cdl',
                station_abb = 'bon',
                year = 1995,
                month = 1,
@@ -374,7 +375,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
             print('\t{}'.format(fn.as_posix()))
         return df
     if do_qcrad2nc:
-        cdl_dict = parse_CDL_file()
+        cdl_dict = parse_CDL_file(fname = fname_cdl)#'../data/SURFRAD_QCrad_metadata.cdl')
         for idx,line in df[df.do_process].iterrows():
             qcrad2netcdf(line.path_in, line.path_out, cdl_dict, verbose=verbose)
     else:
