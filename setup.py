@@ -18,7 +18,7 @@ setup(
     url="https://github.com/hagne/SURFRAD",
     install_requires=['pandas', 'numpy', 'xarray'],
     scripts=['scripts/qcrad2ncei'],
-    data_files=[('data', ['data/SURFRAD_QCrad_metadata.cdl'])]
+    data_files=[('data', ['./data/SURFRAD_QCrad_metadata.cdl'])]
     # extras_require={'plotting': ['matplotlib'],
     #                 'testing': ['scipy']},
     # test_suite='nose.collector',
