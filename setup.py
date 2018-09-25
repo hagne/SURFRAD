@@ -4,8 +4,8 @@ required_verion = (3,)
 if sys.version_info < required_verion:
     raise ValueError('SurfRadPy needs at least python {}! You are trying to install it under python {}'.format('.'.join(str(i) for i in required_verion), sys.version))
 
-# from setuptools import setup
-from distutils.core import setup
+from setuptools import setup
+# from distutils.core import setup
 setup(
     name="SurfRadPy",
     version="0.1",
@@ -18,7 +18,8 @@ setup(
     url="https://github.com/hagne/SURFRAD",
     install_requires=['pandas', 'numpy', 'xarray'],
     scripts=['scripts/qcrad2ncei'],
-    data_files=[('data', ['./data/SURFRAD_QCrad_metadata.cdl'])]
+    package_data=[('data', ['./data/SURFRAD_QCrad_metadata.cdl'])],
+    include_package_data=True,
     # extras_require={'plotting': ['matplotlib'],
     #                 'testing': ['scipy']},
     # test_suite='nose.collector',
