@@ -1,0 +1,381 @@
+netcdf SURFRAD_QCrad_metadata {
+
+dimensions:
+	time = 480;
+
+variables:
+	int time(time);
+		time:long_name = "time in UTC (12:00am - 11:59pm)";
+		time:standard_name = "time";
+		time:epoch_time = 800064000;
+		time:_ChunkSize = 480; // int
+ 
+	float solar_zenith_angle(time);
+		solar_zenith_angle:_FillValue = NaNf ;
+		solar_zenith_angle:units = "degrees";
+		solar_zenith_angle:long_name = "Angle between Sun and the vertical";
+		solar_zenith_angle:_ChunkSize = 480; // int
+
+	float distance_from_sun(time);
+		distance_from_sun:_FillValue = NaNf; // float
+		distance_from_sun:units = "astronomical_units";
+		distance_from_sun:long_name = "Earth-Sun distance";
+		distance_from_sun:_ChunkSize = 480; // int
+
+	float best_estimate_shortwave_irradiance(time);
+		best_estimate_shortwave_irradiance:_FillValue = NaNf; // float
+		best_estimate_shortwave_irradiance:units = "W m-2";
+		best_estimate_shortwave_irradiance:long_name = "Best Estimate shortwave irradiance, sum of direct plus diffuse irradiance";
+		best_estimate_shortwave_irradiance:comments = "Sum of direct plus diffuse irradiance if both pass QC tests, else global shortwave if available";
+		best_estimate_shortwave_irradiance:_ChunkSize = 480; // int
+
+	float total_downwelling_shortwave_irradiance(time);
+		total_downwelling_shortwave_irradiance:_FillValue = NaNf; // float
+		total_downwelling_shortwave_irradiance:units = "W m-2";
+		total_downwelling_shortwave_irradiance:long_name = "Total downwelling shortwave irradiance";
+		total_downwelling_shortwave_irradiance:comments = "Total (global) shortwave irradiance from unshaded pyranometer";
+		total_downwelling_shortwave_irradiance:ancillary_variables = "QC_flag_01_thresholds_global_shortwave QC_flag_07_global_shortwave_over_sum global_shortwave_irloss_flag";
+		total_downwelling_shortwave_irradiance:standard_name = "downwelling_shortwave_flux_in_air";
+		total_downwelling_shortwave_irradiance:_ChunkSize = 480; // int
+
+	float diffuse_downwelling_shortwave_irradiance(time);
+		diffuse_downwelling_shortwave_irradiance:_FillValue = NaNf; // float
+		diffuse_downwelling_shortwave_irradiance:units = "W m-2";
+		diffuse_downwelling_shortwave_irradiance:long_name = "Measured diffuse downwelling shortwave irradiance from shaded pyranometer";     
+		diffuse_downwelling_shortwave_irradiance:ancillary_variables = "QC_flag_02_thresholds_diffuse_shortwave QC_flag_08_diffuse_over_global_shortwave diffuse_shortwave_irloss_flag";
+		diffuse_downwelling_shortwave_irradiance:standard_name = "diffuse_downwelling_shortwave_flux_in_air";
+		diffuse_downwelling_shortwave_irradiance:_ChunkSize = 480; // int
+
+	float direct_downwelling_shortwave_irradiance(time);
+		direct_downwelling_shortwave_irradiance:_FillValue = NaNf; // float
+		direct_downwelling_shortwave_irradiance:long_name = "Measured direct downwelling shortwave irradiance from pyrheliometer";
+		direct_downwelling_shortwave_irradiance:units = "W m-2";
+		direct_downwelling_shortwave_irradiance:ancillary_variables = "QC_flag_03_thresholds_direct_shortwave";
+		direct_downwelling_shortwave_irradiance:_ChunkSize = 480; // int
+
+	float upwelling_shortwave_irradiance(time);
+		upwelling_shortwave_irradiance:_FillValue = NaNf; // float
+		upwelling_shortwave_irradiance:units = "W m-2";
+		upwelling_shortwave_irradiance:long_name = "Measured upwelling shortwave irradiance from pyranometer";
+		upwelling_shortwave_irradiance:ancillary_variables = "QC_flag_04_thresholds_upwelling_shortwave QC_flag_09_upwelling_shortwave_versus_sum";
+		upwelling_shortwave_irradiance:standard_name = "upwelling_shortwave_flux_in_air";
+		upwelling_shortwave_irradiance:_ChunkSize = 480; // int
+
+	float downwelling_longwave_irradiance(time);
+		downwelling_longwave_irradiance:_FillValue = NaNf; // float
+		downwelling_longwave_irradiance:units = "W m-2";
+		downwelling_longwave_irradiance:long_name = "Measured downwelling longwave irradiance from pyrgeometer";
+		downwelling_longwave_irradiance:ancillary_variables = "QC_flag_05_thresholds_downwelling_longwave QC_flag_10_downwelling_longwave_to_temperature QC_flag_12_downwelling_longwave_to_upwelling_longwave QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature";
+		downwelling_longwave_irradiance:standard_name = "downwelling_longwave_flux_in_air";
+		downwelling_longwave_irradiance:_ChunkSize = 480; // int
+
+	float upwelling_longwave_irradiance(time);
+		upwelling_longwave_irradiance:_FillValue = NaNf; // float
+		upwelling_longwave_irradiance:units = "W m-2";
+		upwelling_longwave_irradiance:long_name = "Measured upwelling longwave irradiance from pyrgeometer";
+		upwelling_longwave_irradiance:ancillary_variables = "QC_flag_06_thresholds_upwelling_longwave QC_flag_11_upwelling_longwave_to_temperature QC_flag_12_downwelling_longwave_to_upwelling_longwave QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature";
+		upwelling_longwave_irradiance:standard_name = "upwelling_longwave_flux_in_air";
+		upwelling_longwave_irradiance:_ChunkSize = 480; // int
+
+	float atmospheric_temperature(time);       
+		atmospheric_temperature:_FillValue = NaNf; // float
+		atmospheric_temperature:units = "K";
+		atmospheric_temperature:long_name = "Air Temperature";
+		atmospheric_temperature:ancillary_variables ="QC_flag_19_air_temperature";
+		atmospheric_temperature:standard_name = "air_temperature";
+		atmospheric_temperature:comments = "Measured on cross-arms near top of tower";
+		atmospheric_temperature:_ChunkSize = 480; // int
+
+	float relative_humidity(time);
+		relative_humidity:_FillValue = NaNf; // float
+		relative_humidity:units = "%";
+		relative_humidity:long_name = "Relative Humidity";
+		relative_humidity:standard_name = "relative_humidity";
+		relative_humidity:comments = "Measured on cross-arms near top of tower";
+		relative_humidity:_ChunkSize = 480; // int
+
+	float surface_air_pressure(time);
+		surface_air_pressure:_FillValue = NaNf; // float
+		surface_air_pressure:units = "Pa";
+		surface_air_pressure:long_name = "Surface air pressure";
+		surface_air_pressure:standard_name = "surface_air_pressure";
+		surface_air_pressure:comments = "Not adjusted to sea level";
+		surface_air_pressure:_ChunkSize = 480; // int
+
+	float downwelling_longwave_case_temperature(time);
+		downwelling_longwave_case_temperature:_FillValue = NaNf; // float
+		downwelling_longwave_case_temperature:units = "K";
+		downwelling_longwave_case_temperature:long_name = "Downwelling longwave pyrgeometer case temperature";
+		downwelling_longwave_case_temperature:_ChunkSize = 480; // int
+
+	float downwelling_longwave_dome_temperature(time);
+		downwelling_longwave_dome_temperature:_FillValue = NaNf; // float
+		downwelling_longwave_dome_temperature:units = "K";
+		downwelling_longwave_dome_temperature:long_name = "Downwelling longwave pyrgeometer dome temperature";
+		downwelling_longwave_dome_temperature:_ChunkSize = 480; // int
+
+	float upwelling_longwave_case_temperature(time);
+		upwelling_longwave_case_temperature:_FillValue = NaNf; // float
+		upwelling_longwave_case_temperature:units = "K";
+		upwelling_longwave_case_temperature:long_name = "Upwelling longwave pyrgeometer case temperature";
+		upwelling_longwave_case_temperature:_ChunkSize = 480; // int
+
+	float upwelling_longwave_dome_temperature(time);
+		upwelling_longwave_dome_temperature:_FillValue = NaNf; // float
+		upwelling_longwave_dome_temperature:units = "K";
+		upwelling_longwave_dome_temperature:long_name = "Upwelling longwave pyrgeometer dome temperature";
+		upwelling_longwave_dome_temperature:_ChunkSize = 480; // int
+
+	byte QC_flag_01_thresholds_global_shortwave(time);
+	       QC_flag_01_thresholds_global_shortwave:units = "1";
+	       QC_flag_01_thresholds_global_shortwave:long_name = "Is global shortwave missing, too high, or too low?";
+	       QC_flag_01_thresholds_global_shortwave:flag_values = -1b, 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b; 
+	       QC_flag_01_thresholds_global_shortwave:flag_meanings = "missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off";
+	       QC_flag_01_thresholds_global_shortwave:standard_name = "status_flag";
+	       QC_flag_01_thresholds_global_shortwave:_ChunkSize = 480; // int
+ 
+	byte QC_flag_02_thresholds_diffuse_shortwave(time);
+		QC_flag_02_thresholds_diffuse_shortwave:units = "1";
+		QC_flag_02_thresholds_diffuse_shortwave:long_name = "Is diffuse shortwave missing, too high, or too low?";
+		QC_flag_02_thresholds_diffuse_shortwave:flag_values = -1b, 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b;
+		QC_flag_02_thresholds_diffuse_shortwave:flag_meanings = "missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off";
+		QC_flag_02_thresholds_diffuse_shortwave:standard_name = "status_flag";
+		QC_flag_02_thresholds_diffuse_shortwave:_ChunkSize = 480; // int
+
+	byte QC_flag_03_thresholds_direct_shortwave(time);
+		QC_flag_03_thresholds_direct_shortwave:units = "1";
+		QC_flag_03_thresholds_direct_shortwave:long_name = "Is direct shortwave missing, too high, or too low?";
+		QC_flag_03_thresholds_direct_shortwave:flag_values = -1b, 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b;
+		QC_flag_03_thresholds_direct_shortwave:flag_meanings = "missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off";
+		QC_flag_03_thresholds_direct_shortwave:standard_name = "status_flag";
+		QC_flag_03_thresholds_direct_shortwave:_ChunkSize = 480; // int
+
+	byte QC_flag_04_thresholds_upwelling_shortwave(time);
+		QC_flag_04_thresholds_upwelling_shortwave:units = "1";
+		QC_flag_04_thresholds_upwelling_shortwave:long_name = "Is upwelling shortwave missing, too high, or too low?";
+		QC_flag_04_thresholds_upwelling_shortwave:flag_values = -1b, 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b;
+		QC_flag_04_thresholds_upwelling_shortwave:flag_meanings = "missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off";
+		QC_flag_04_thresholds_upwelling_shortwave:standard_name = "status_flag";
+		QC_flag_04_thresholds_upwelling_shortwave:_ChunkSize = 480; // int
+
+	byte QC_flag_05_thresholds_downwelling_longwave(time);	
+		QC_flag_05_thresholds_downwelling_longwave:units = "1";
+		QC_flag_05_thresholds_downwelling_longwave:long_name = "Is downwelling longwave missing, too high, or too low?";
+		QC_flag_05_thresholds_downwelling_longwave:flag_values = -1b, 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b; 
+		QC_flag_05_thresholds_downwelling_longwave:flag_meanings = "missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off";
+		QC_flag_05_thresholds_downwelling_longwave:standard_name = "status_flag";
+		QC_flag_05_thresholds_downwelling_longwave:_ChunkSize = 480; // int
+
+	byte QC_flag_06_thresholds_upwelling_longwave(time);
+		QC_flag_06_thresholds_upwelling_longwave:units = "1";
+		QC_flag_06_thresholds_upwelling_longwave:long_name = " Is upwelling longwave missing, too high, or too low?";
+		QC_flag_06_thresholds_upwelling_longwave:flag_values = -1b, 0b, 1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b;
+		QC_flag_06_thresholds_upwelling_longwave:flag_meanings = "missing_data_or_test_not_possible no_known_issue global_shortwave_irradiance_too_high too_high_user_configurable too_low_extremely_rare too_high_extremely_rare too_low_physical_limits too_high_physical_limits fail_Rayleigh_limit_test tracker_off";
+		QC_flag_06_thresholds_upwelling_longwave:standard_name = "status_flag";
+		QC_flag_06_thresholds_upwelling_longwave:_ChunkSize = 480; // int
+
+	byte QC_flag_07_global_shortwave_over_sum(time);
+		QC_flag_07_global_shortwave_over_sum:units = "1";
+		QC_flag_07_global_shortwave_over_sum:long_name = "Is the ratio of the global shortwave (GSW) to direct plus diffuse (Sum) too high or too low?";
+		QC_flag_07_global_shortwave_over_sum:flag_values = -1b, 0b, 1b, 2b;
+		QC_flag_07_global_shortwave_over_sum:flag_meanings = "test_not_possible no_known_issue SZA_lt_75_and_GSW_over_Sum_lt_0.92_or_GSW_over_Sum_gt_1.08_and_Sum_gt_50_Wm-2 93_gt_SZA_gt_75_and_Sum_gt_50_and_GSW_over_Sum_lt_0.85_or_GSW_over_Sum_gt_1.15_and_Sum_gt_50Wm-2";
+		QC_flag_07_global_shortwave_over_sum:standard_name = "status_flag";
+		QC_flag_07_global_shortwave_over_sum:_ChunkSize = 480; // int
+
+	byte QC_flag_08_diffuse_over_global_shortwave(time);
+		QC_flag_08_diffuse_over_global_shortwave:units = "1";
+		QC_flag_08_diffuse_over_global_shortwave:long_name = "Is the ratio of the diffuse (Dif) to global shortwave (GSW) too high or too low?";
+		QC_flag_08_diffuse_over_global_shortwave:flag_values = -1b, 0b, 1b, 2b;
+		QC_flag_08_diffuse_over_global_shortwave:flag_meanings = "test_not_possible no_known_issue SZA_lt_75_and_Dif_over_GSW_gt_1.05_and_GSW_gt_50Wm-2 93_gt_SZA_gt_75_and_Dif_over_GSW_gt_1.10_and_GSW_gt_50Wm-2";
+		QC_flag_08_diffuse_over_global_shortwave:standard_name = "status_flag";
+		QC_flag_08_diffuse_over_global_shortwave:_ChunkSize = 480; // int
+
+	byte QC_flag_09_upwelling_shortwave_versus_sum(time);
+		QC_flag_09_upwelling_shortwave_versus_sum:units = "1";
+		QC_flag_09_upwelling_shortwave_versus_sum:long_name = "Is upwelling shortwave (SWup) too high (normal ground cover)?";	
+		QC_flag_09_upwelling_shortwave_versus_sum:flag_values = -1b, 0b, 1b, 2b, 3b, 4b, 5b, 6b;
+		QC_flag_09_upwelling_shortwave_versus_sum:flag_meanings = "test_not_possible no_known_issue Sum_or_GSW_gt_50_and_SWup_gt_C9_times_Sum+25Wm-2_and_Ta_gteq_Tsnw Sum_or_GSW__gt_50_and_SWup_gt_C10_times_Sum+25Wm-2_and_Ta_lt_Tsnw Sum_or_GSW_gt_50_and_SWup_gt_D9_times_Sum+30Wm-2_and_Ta_gteq_Tsnw Sum_or_GSW__gt_50_and_SWup_gt_D10_times_Sum+30Wm-2_and_Ta_lt_Tsnw Sum_or_GSW_gt_50_and_SWup_gt_Sum_or_GSW+25Wm-2_and_Swup_bad Sum_and_GSW_gt_50_and_SWup_gt_Both_Sum_and_GSW+25Wm-2_and_Swup_bad";
+		QC_flag_09_upwelling_shortwave_versus_sum:standard_name = "status_flag";
+		QC_flag_09_upwelling_shortwave_versus_sum:_ChunkSize = 480; // int
+
+	byte QC_flag_10_downwelling_longwave_to_temperature(time);
+		QC_flag_10_downwelling_longwave_to_temperature:units = "1";
+		QC_flag_10_downwelling_longwave_to_temperature:long_name = "Is downwelling longwave (LWdn) too high? (snow cover)?";
+		QC_flag_10_downwelling_longwave_to_temperature:flag_values = -1b, 0b, 1b, 2b, 3b, 4b;
+		QC_flag_10_downwelling_longwave_to_temperature:flag_meanings = "test_not_possible no_known_issue LWdn_lt_C11_times_sigma_times_Ta4 LWdn_gt_sigma_times_Ta4+C12 LWdn_lt_D11_times_sigma_times_Ta4 LWdn_gt_sigma_times_Ta4+D12";
+		QC_flag_10_downwelling_longwave_to_temperature:standard_name = "status_flag";
+		QC_flag_10_downwelling_longwave_to_temperature:_ChunkSize = 480; // int
+
+	byte QC_flag_11_upwelling_longwave_to_temperature(time);
+		QC_flag_11_upwelling_longwave_to_temperature:units = "1";
+		QC_flag_11_upwelling_longwave_to_temperature:long_name = "Is upwelling longwave (LWup) too high or too low?";
+		QC_flag_11_upwelling_longwave_to_temperature:flag_values = -1b, 0b, 1b, 2b, 3b, 4b;
+		QC_flag_11_upwelling_longwave_to_temperature:flag_meanings = "test_not_possible no_known_issue LWup_lt_sigma_times_Ta-C13_power_4 LWup_gt_sigma_times_Ta+C14_power_4 LWup_lt_sigma_times_Ta-D13_power_4 LWup_gt_sigma_times_Ta+D14_power_4";
+		QC_flag_11_upwelling_longwave_to_temperature:standard_name = "status_flag";
+		QC_flag_11_upwelling_longwave_to_temperature:_ChunkSize = 480; // int
+
+	byte QC_flag_12_downwelling_longwave_to_upwelling_longwave(time);
+		QC_flag_12_downwelling_longwave_to_upwelling_longwave:units = "1";
+		QC_flag_12_downwelling_longwave_to_upwelling_longwave:long_name = "Are downwelling longwave (LWdn) and upwelling longwave (LWup) consistent relative to each other?";
+		QC_flag_12_downwelling_longwave_to_upwelling_longwave:flag_values = -1b, 0b, 1b, 2b, 3b, 4b;
+		QC_flag_12_downwelling_longwave_to_upwelling_longwave:flag_meanings = "test_not_possible no_known_issue LWdn_lt_LWup-C15 LWdn_gt_LWup+C16 LWdn_lt_LWup-D15 LWdn_gt_LWup+D16";
+		QC_flag_12_downwelling_longwave_to_upwelling_longwave:standard_name = "status_flag";  
+		QC_flag_12_downwelling_longwave_to_upwelling_longwave:_ChunkSize = 480; // int
+
+	byte QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature(time);
+		QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature:units = "1";
+		QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature:long_name = "Is the downwelling longwave case vs. air temperature within limits?";
+		QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature:flag_values = -1b, 0b, 3b, 4b, 5b, 6b;
+		QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature:flag_meanings = "test_not_possible no_known_issue Tc_lt_Ta-C17 Tc_gt_Ta+C17 Tc_lt_Tavg-15 Tc_gt_Tavg+15";
+		QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature:standard_name = "status_flag";
+		QC_flag_13_downwelling_longwave_case_temperature_vs_air_temperature:_ChunkSize = 480; // int
+
+	byte QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature(time);
+		QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature:units = "1";
+		QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature:long_name = " Is the downwelling longwave dome vs. air temperature within limits?";
+		QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature:flag_values = -1b, 0b, 3b, 4b, 5b, 6b;
+		QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature:flag_meanings = "test_not_possible no_known_issue Td_lt_Ta-C17 Td_gt_Ta+C17 Td_lt_Tavg-15 Td_gt_Tavg+15";
+		QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature:standard_name = "status_flag";
+		QC_flag_14_downwelling_longwave_dome_temperature_vs_air_temperature:_ChunkSize = 480; // int
+
+	byte QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature(time);
+		QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature:units = "1";
+		QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature:long_name = " Is the upwelling longwave case vs. air temperature within limits?";
+		QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature:flag_values = -1b, 0b, 3b, 4b, 5b, 6b;
+		QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature:flag_meanings = "test_not_possible no_known_issue Tc_lt_Ta-C17 Tc_gt_Ta+C17 Tc_lt_Tavg-15 Tc_gt_Tavg+15";
+		QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature:standard_name = "status_flag";
+		QC_flag_15_upwelling_longwave_case_temperature_vs_air_temperature:_ChunkSize = 480; // int
+
+	byte QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature(time);
+		QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature:units = "1";
+		QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature:long_name = "Is the upwelling longwave dome vs. air temperature within limits?";
+		QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature:flag_values = -1b, 0b, 3b, 4b, 5b, 6b;
+		QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature:flag_meanings = "test_not_possible no_known_issue Td_lt_Ta-C17 Td_gt_Ta+C17 Td_lt_Tavg-15 Td_gt_Tavg+15";
+		QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature:standard_name = "status_flag";
+		QC_flag_16_upwelling_longwave_dome_temperature_vs_air_temperature:_ChunkSize = 480; // int
+
+	byte QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature(time);
+		QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature:units = "1";
+		QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature:long_name = "Is the downwelling longwave case vs. dome temperature within limits?";
+		QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature:flag_values = -1b, 0b, 3b, 4b;
+		QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature:flag_meanings = "test_not_possible no_known_issue Tc-Td_lt_C18 Tc-Td_gt_C19";
+		QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature:standard_name = "status_flag";
+		QC_flag_17_downwelling_longwave_case_temperature_vs_dome_temperature:_ChunkSize = 480; // int
+
+	byte QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature(time);
+		QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature:units = "1";
+		QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature:long_name = "Is the upwelling longwave case vs. dome temperature within limits?";
+		QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature:flag_values = -1b, 0b, 3b, 4b;
+		QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature:flag_meanings = "test_not_possible no_known_issue Tc-Td_lt_C18 Tc-Td_gt_C19";
+		QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature:standard_name = "status_flag";
+		QC_flag_18_upwelling_longwave_case_temperature_vs_dome_temperature:_ChunkSize = 480; // int
+
+	byte QC_flag_19_air_temperature(time);
+		QC_flag_19_air_temperature:units = "1";
+		QC_flag_19_air_temperature:long_name = "Is the air temperature within limits?";
+		QC_flag_19_air_temperature:flag_values = -1b, 0b, 3b, 4b;
+		QC_flag_19_air_temperature:flag_meanings = "test_not_possible no_known_issue Ta_gt_Tmax_or_Ta_lt_Tmin Ta_gt_Tavg_plus_or_minus_20_K";
+		QC_flag_19_air_temperature:standard_name = "status_flag";
+		QC_flag_19_air_temperature:_ChunkSize = 480; // int
+
+	byte global_shortwave_irloss_flag(time);
+		global_shortwave_irloss_flag:units = "1";
+		global_shortwave_irloss_flag:long_name = "Type of infrared (IR) loss correction applied to total (global)downwelling shortwave irradiance";
+		global_shortwave_irloss_flag:flag_values = 0b, 1b, 2b, 3b, 4b;
+		global_shortwave_irloss_flag:flag_meanings = "none full_dry full_moist detector_dry detector_moist";
+		global_shortwave_irloss_flag:comments = "none full_dry full_moist detector_dry detector_moist";
+		global_shortwave_irloss_flag:standard_name = "status_flag";
+		global_shortwave_irloss_flag:_ChunkSize = 480; // int
+
+	byte diffuse_shortwave_irloss_flag(time);
+		diffuse_shortwave_irloss_flag:units = "1";
+		diffuse_shortwave_irloss_flag:long_name = "Type of infrared (IR) loss correction applied to diffuse downwelling shortwave irradiance";
+		diffuse_shortwave_irloss_flag:flag_values = 0b, 1b, 2b, 3b, 4b;
+		diffuse_shortwave_irloss_flag:flag_meanings = "none full_dry full_moist detector_dry detector_moist";
+		diffuse_shortwave_irloss_flag:comments = " none full_dry full_moist detector_dry detector_moist";
+		diffuse_shortwave_irloss_flag:standard_name = "status_flag";
+		diffuse_shortwave_irloss_flag:_ChunkSize = 480; // int
+
+	float downwelling_shortwave_irradiance_assuming_clear_sky(time);
+		downwelling_shortwave_irradiance_assuming_clear_sky:_FillValue = NaNf; // float
+		downwelling_shortwave_irradiance_assuming_clear_sky:units = "W m-2";
+		downwelling_shortwave_irradiance_assuming_clear_sky:long_name = "Estimated clear-sky total downwelling shortwave";
+		downwelling_shortwave_irradiance_assuming_clear_sky:comments = "Estimated from user-set power law coefficient settings in configuration file";
+		downwelling_shortwave_irradiance_assuming_clear_sky:standard_name = "surface_downwelling_shortwave_flux_in_air_assuming_clear_sky";
+		downwelling_shortwave_irradiance_assuming_clear_sky:_ChunkSize = 480; // int
+
+	float ir_loss_correction_to_diffuse_shortwave(time);
+		ir_loss_correction_to_diffuse_shortwave:_FillValue = NaNf; // float
+		ir_loss_correction_to_diffuse_shortwave:units = "1";
+		ir_loss_correction_to_diffuse_shortwave:long_name = "Infrared (IR) loss correction applied to diffuse downwelling shortwave irradiance measurements";
+		ir_loss_correction_to_diffuse_shortwave:_ChunkSize = 480; // int
+
+	float ir_loss_correction_to_global_shortwave(time);
+		ir_loss_correction_to_global_shortwave:_FillValue = NaNf; // float
+		ir_loss_correction_to_global_shortwave:units = "1";
+		ir_loss_correction_to_global_shortwave:long_name = "Infrared (IR) loss correction applied to global downwelling shortwave measurements";
+		ir_loss_correction_to_global_shortwave:_ChunkSize = 480; // int
+
+	float downwelling_erythemal_uvb_irradiance(time);
+		downwelling_erythemal_uvb_irradiance:_FillValue = NaNf; // float
+		downwelling_erythemal_uvb_irradiance:units = "mW m-2";
+		downwelling_erythemal_uvb_irradiance:long_name = "Erythemal UVB";
+		downwelling_erythemal_uvb_irradiance:comments = "Instrument is weighted by the erythemal action spectrum";
+		downwelling_erythemal_uvb_irradiance:_ChunkSize = 480; // int
+
+	float photosynthetically_active_radiation(time);
+		photosynthetically_active_radiation:_FillValue = NaNf; // float
+		photosynthetically_active_radiation:units = "W m-2";
+		photosynthetically_active_radiation:long_name = "Photosynthetically Active Radiation (PAR)";
+		photosynthetically_active_radiation:comments = "Total (global) downwelling irradiance from 400 to 700 nanometers";
+		photosynthetically_active_radiation:standard_name = "surface_downwelling_photosynthetic_radiative_flux_in_air";
+		photosynthetically_active_radiation:_ChunkSize = 480; // int
+
+	float wind_speed(time);
+		wind_speed:_FillValue = NaNf; // float
+		wind_speed:units = "m s-1";
+		wind_speed:long_name = "Wind speed";
+		wind_speed:standard_name = "wind_speed";
+		wind_speed:comment = "measured at top of tower";
+		wind_speed:_ChunkSize = 480; // int
+
+	float wind_direction(time);
+		wind_direction:_FillValue = NaNf; // float
+		wind_direction:units = "degree";
+		wind_direction:long_name = "Direction of wind";
+		wind_direction:standard_name = "wind_from_direction";
+		wind_direction:comment = "measured at top of tower";
+		wind_direction:_ChunkSize = 480; // int
+
+	float latitude;
+		latitude:_FillValue = NaNf; // float
+		latitude:units = "degree_north" ;
+		latitude:long_name = "North latitude";
+		latitude:standard_name = "latitude";
+
+	float longitude;
+		longitude:_FillValue = NaNf; // float
+		longitude:units = "degrees_east";
+		longitude:long_name = "East longitude";
+		longitude:standard_name = "longitude";
+
+	float altitude;
+		altitude:_FillValue = NaNf; // float
+		altitude:units = "meter";
+		altitude:long_name = "Altitude";
+		altitude:standard_name = "altitude"; 
+		altitude:positive = "up"; 
+
+// global Attributes:
+		:_NCProperties = "version=1|netcdflibversion=4.5.0|hdf5libversion=1.10.1";
+		:Conventions = "CF-1.7";
+		:title = "QCRad V3 Dataset from NOAA/ESRL/GMD/GRAD SURFRAD Data Archive";
+		:source = "NOAA/ESRL/GMD/GRAD SURFRAD Data Archive";
+		:references = "Online: https://www.esrl.noaa.gov/gmd/grad/surfrad/index.html";
+		:history = "This file was created on 2018-041-2 15:25:56 on the machine Danube";
+		:institution = "National Oceanic and Atmospheric Administration (NOAA) - David Skaggs Research Center - Boulder, CO";
+		:comment = "Raw data taken each minute and saved in daily files by test site";
+		:command_line = "surfrad_process –f option –c some other options…";
+ }
+ 
+
