@@ -1,4 +1,5 @@
 import pandas as _pd
+from pandas import errors as _pderrors
 import numpy as _np
 import xarray as _xr
 import os as _os
@@ -399,7 +400,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
         for idx,line in df[df.do_process].iterrows():
             try:
                 qcrad2netcdf(line.path_in, line.path_out, cdl_dict, messages= messages, verbose=verbose)
-            except _pd.error.ParserError:
+            except _pderrors.ParserError:
                 txt = 'Failed to read data! Probably badly shaped.'
                 if messages:
                     messages.append(txt)
