@@ -118,12 +118,15 @@ except:
     error, error_txt, trace = sys.exc_info()
     tm = ['{}: {}'.format(error.__name__, error_txt.args[0])] + traceback.format_tb(trace)
     txt = '\n'.join(tm)
+    print(txt)
     messages.append(txt)
 # with open(log_p, 'a') as log:
 #     log.write('============\nrun finished {}\n\n'.format(pd.Timestamp(datetime.datetime.now())))
 messages.append('============\nrun finished {}\n\n'.format(pd.Timestamp(datetime.datetime.now())))
 
 message_txt = '\n'.join(messages)
+
+
 
 with open(log_p, 'a') as log:
     log.write(message_txt)

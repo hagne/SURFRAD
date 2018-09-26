@@ -230,6 +230,8 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=F
     txt = 'pcrad2netcdf: {} -> {}'.format(data_path_in, nc_path_out)
     if verbose:
         print(txt, end = '...')
+    if messages:
+        messages.append(txt)
     data = read_data(data_path_in)
     location = [e for e in _locations if data_path_in.name.split('_')[0] in e['abbriviations']][0]
     ds = df2ds(data, cdl_dict['variable_list'], cdl_dict['global_atts_dict'], location)
@@ -237,7 +239,7 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=F
     if verbose:
         print('done')
     if messages:
-        messages.append(txt)
+        messages[-1] += ' ... done'
     return location
 
 def tar_nc(pot, todo, manifest = True, messages = None, verbose = False):
@@ -261,6 +263,9 @@ def tar_nc(pot, todo, manifest = True, messages = None, verbose = False):
     txt = 'tar_nc: {}'.format(pot)
     if verbose:
         print(txt, end = '...')
+    if messages:
+        messages.append(txt)
+
     tar = _tarfile.open(pot, mode=tar_mode)
 
     for po in todo.path_out:
@@ -271,7 +276,7 @@ def tar_nc(pot, todo, manifest = True, messages = None, verbose = False):
     if verbose:
         print('done')
     if messages:
-        messages.append(txt)
+        messages[-1] += ' ... done'
 
 def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, station_abb = None, year = None, month = None):
     paths_in = list(_Path(folder_in).rglob("*.qdat"))
@@ -392,7 +397,14 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
     if do_qcrad2nc:
         cdl_dict = parse_CDL_file(fname = fname_cdl)#'../data/SURFRAD_QCrad_metadata.cdl')
         for idx,line in df[df.do_process].iterrows():
-            qcrad2netcdf(line.path_in, line.path_out, cdl_dict, messages= messages, verbose=verbose)
+            try:
+                qcrad2netcdf(line.path_in, line.path_out, cdl_dict, messages= messages, verbose=verbose)
+            except _pd.error.ParserError:
+                txt = 'Failed to read data! Probably badly shaped.'
+                if messages:
+                    messages.append(txt)
+                if verbose:
+                    print(txt)
     else:
         if verbose:
             print('No NetCDF files created since do_qcrad2nc == False')
