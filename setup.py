@@ -19,8 +19,8 @@ setup(
     # keywords="matplotlib",
     url="https://github.com/hagne/SURFRAD",
     install_requires=['pandas', 'numpy', 'xarray'],
-    scripts=['scripts/qcrad2ncei'],
-    # entry_points = {'console_scripts': ['qcrad2ncei=SurfRadPy.NCEI:qcrad2ncei'],},
+    scripts=['scripts/qcrad2ncei.py'],
+    # entry_points = {'console_scripts': ['qcrad2ncei.py=SurfRadPy.NCEI:qcrad2ncei.py'],},
     package_data={'': ['*.cdl']},
     include_package_data=True,
     zip_safe=False

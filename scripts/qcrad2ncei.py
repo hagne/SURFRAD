@@ -14,7 +14,7 @@ if not ini_p.is_file():
     os.makedirs(os.path.dirname(ini_p), exist_ok=True)
     with open(ini_p, 'w') as rein:
         txt =  ('[scripts]\n'
-                '[scripts.qcrad2ncei]\n'
+                '[scripts.qcrad2ncei.py]\n'
                 'input_folder  = /Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/\n'
                 'output_folder = /Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI/\n'
                 'tar_folder    = /Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/\n')
@@ -23,15 +23,15 @@ if not ini_p.is_file():
 config = configparser.ConfigParser()
 config.read(ini_p)
 
-default_input_folder = config['scripts.qcrad2ncei']['input_folder']
-default_output_folder= config['scripts.qcrad2ncei']['output_folder']
-default_tar_folder= config['scripts.qcrad2ncei']['tar_folder']
+default_input_folder = config['scripts.qcrad2ncei.py']['input_folder']
+default_output_folder= config['scripts.qcrad2ncei.py']['output_folder']
+default_tar_folder= config['scripts.qcrad2ncei.py']['tar_folder']
 
 ########
 # parse arguments
 
 txt = """Process qcrad data to conform with NCEI requirements. This includes conversion to netCDF, archiving, and the generation of a manifest file."""
-parser = argparse.ArgumentParser(prog='qcrad2ncei', description=txt)
+parser = argparse.ArgumentParser(prog='qcrad2ncei.py', description=txt)
 
 
 parser.add_argument('-i','--folder_in',
@@ -81,9 +81,9 @@ args = parser.parse_args()
 ########
 # update the settings if --update_default is selected
 if args.update_defaults:
-    config['scripts.qcrad2ncei']['input_folder'] = args.folder_in
-    config['scripts.qcrad2ncei']['output_folder'] = args.folder_out
-    config['scripts.qcrad2ncei']['tar_folder'] = args.folder_tar
+    config['scripts.qcrad2ncei.py']['input_folder'] = args.folder_in
+    config['scripts.qcrad2ncei.py']['output_folder'] = args.folder_out
+    config['scripts.qcrad2ncei.py']['tar_folder'] = args.folder_tar
     with open(ini_p, 'w') as raus:
         config.write(raus)
 
