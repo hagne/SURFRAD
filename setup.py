@@ -21,7 +21,8 @@ setup(
     install_requires=['pandas', 'numpy', 'xarray'],
     scripts=['scripts/qcrad2ncei'],
     package_data={'': ['*.cdl']},
-    # include_package_data=True,
+    include_package_data=True,
+    zip_safe=False
     # extras_require={'plotting': ['matplotlib'],
     #                 'testing': ['scipy']},
     # test_suite='nose.collector',
