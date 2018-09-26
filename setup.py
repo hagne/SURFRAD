@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="SurfRadPy",
-    # version="0.1", #setting this caused a huge hadeache ... basically the script wasn't found when the version was set
+    version="0.1.1", #setting this caused a huge hadeache ... basically the script wasn't found when the version was set
     packages=find_packages(),
     author="Hagen Telg",
     author_email="hagen@hagnet.net",
