@@ -5,27 +5,20 @@ if sys.version_info < required_verion:
     raise ValueError('SurfRadPy needs at least python {}! You are trying to install it under python {}'.format('.'.join(str(i) for i in required_verion), sys.version))
 
 from setuptools import setup, find_packages
-# from distutils.core import setup
+
 setup(
     name="SurfRadPy",
-    # version="0.1",
+    # version="0.1", #setting this caused a huge hadeache ... basically the script wasn't found when the version was set
     packages=find_packages(),
-    # package_dir={'':''},
-    # packages=['SurfRadPy'],
     author="Hagen Telg",
     author_email="hagen@hagnet.net",
     description="...",
     license="MIT",
-    # keywords="matplotlib",
     url="https://github.com/hagne/SURFRAD",
-    # install_requires=['pandas', 'numpy', 'xarray'],
+    install_requires=['pandas', 'numpy', 'xarray'],
     scripts=['qcrad2ncei'],
     # entry_points = {'console_scripts': ['qcrad2ncei=SurfRadPy.NCEI:qcrad2ncei'],},
-    # package_data={'': ['*.cdl']},
-    # include_package_data=True,
-    # zip_safe=False
-    # extras_require={'plotting': ['matplotlib'],
-    #                 'testing': ['scipy']},
-    # test_suite='nose.collector',
-    # tests_require=['nose'],
+    package_data={'': ['*.cdl']},
+    include_package_data=True,
+    zip_safe=False
 )
