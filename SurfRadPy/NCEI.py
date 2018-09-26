@@ -359,11 +359,14 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                test = False,
                verbose = False
               ):
-
-    fname_cdl = _os.path.join(_os.path.split(__file__)[0],'data', 'SURFRAD_QCrad_metadata.cdl')#'../data/SURFRAD_QCrad_metadata.cdl'
+    fname_cdl = _os.path.join(_os.path.split(__file__)[0], 'SURFRAD_QCrad_metadata.cdl')#'../data/SURFRAD_QCrad_metadata.cdl'
 
     # generate a DataFrame with all files in sub folder and populate with relevant data
+    if verbose:
+        print('creating todo list', end = '....')
     df = create_todo(folder_in, folder_out, folder_out_tar, overwrite = overwrite, station_abb = station_abb, year = year, month = month)
+    if verbose:
+        print('done')
 
     # qcrad2netcdf the remaining todos in df
     if test:
