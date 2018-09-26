@@ -348,7 +348,7 @@ def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, statio
 def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                folder_out= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI/',
                folder_out_tar= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/',
-               fname_cdl = '../data/SURFRAD_QCrad_metadata.cdl',
+               # fname_cdl = '../data/SURFRAD_QCrad_metadata.cdl',
                station_abb = 'bon',
                year = 1995,
                month = 1,
@@ -360,7 +360,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                verbose = False
               ):
 
-
+    fname_cdl = _os.path.join(_os.path.split(__file__)[0], 'SURFRAD_QCrad_metadata.cdl')#'../data/SURFRAD_QCrad_metadata.cdl'
 
     # generate a DataFrame with all files in sub folder and populate with relevant data
     df = create_todo(folder_in, folder_out, folder_out_tar, overwrite = overwrite, station_abb = station_abb, year = year, month = month)

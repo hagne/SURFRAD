@@ -4,6 +4,7 @@ import argparse
 import configparser
 from pathlib import Path
 import os
+from SurfRadPy import NCEI
 
 ########
 # get the configuration
