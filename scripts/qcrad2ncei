@@ -89,12 +89,12 @@ if args.update_defaults:
 
 ########
 # execute the program
-package_dir, _ = os.path.split(NCEI.__file__)
-path_cdl = os.path.join(package_dir, "data", "SURFRAD_QCrad_metadata.cdl")
+# package_dir, _ = os.path.split(NCEI.__file__)
+# path_cdl = os.path.join(package_dir, "data", "SURFRAD_QCrad_metadata.cdl")
 df = NCEI.qcrad2ncei(folder_in = args.folder_in,
                      folder_out= args.folder_out,
                      folder_out_tar= args.folder_tar,
-                     fname_cdl = path_cdl,
+                     # fname_cdl = path_cdl,
                      station_abb = args.station,
                      year = args.year,
                      month = args.month,
