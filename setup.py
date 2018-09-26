@@ -23,7 +23,7 @@ setup(
     # entry_points = {'console_scripts': ['qcrad2ncei.py=SurfRadPy.NCEI:qcrad2ncei.py'],},
     package_data={'': ['*.cdl']},
     include_package_data=True,
-    zip_safe=False
+    # zip_safe=False
     # extras_require={'plotting': ['matplotlib'],
     #                 'testing': ['scipy']},
     # test_suite='nose.collector',
