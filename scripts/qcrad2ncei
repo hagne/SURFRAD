@@ -5,11 +5,14 @@ import configparser
 from pathlib import Path
 import os
 from SurfRadPy import NCEI
-
+import datetime
+import pandas as pd
+import sys
+import traceback
 ########
 # get the configuration
 ini_p = Path(Path.home().as_posix() + '/.SurfRadPy/config.ini')
-
+log_p = Path(Path.home().as_posix() + '/.SurfRadPy/qcrad2ncei.log')
 if not ini_p.is_file():
     os.makedirs(os.path.dirname(ini_p), exist_ok=True)
     with open(ini_p, 'w') as rein:
@@ -91,16 +94,63 @@ if args.update_defaults:
 # execute the program
 # package_dir, _ = os.path.split(NCEI.__file__)
 # path_cdl = os.path.join(package_dir, "data", "SURFRAD_QCrad_metadata.cdl")
-df = NCEI.qcrad2ncei(folder_in = args.folder_in,
-                     folder_out= args.folder_out,
-                     folder_out_tar= args.folder_tar,
-                     # fname_cdl = path_cdl,
-                     station_abb = args.station,
-                     year = args.year,
-                     month = args.month,
-                     overwrite = args.overwrite,
-                     do_qcrad2nc = args.suppress_netcdf,
-                     do_tar = args.suppress_archive,
-                     do_manifest = args.suppress_manifest,
-                     test = args.test,
-                     verbose = args.verbose)
+# with open(log_p, 'a') as log:
+#     log.write('run started {}\n========='.format(pd.Timestamp(datetime.datetime.now())))
+messages = ['run started {}\n========='.format(pd.Timestamp(datetime.datetime.now()))]
+try:
+    df = NCEI.qcrad2ncei(folder_in = args.folder_in,
+                         folder_out= args.folder_out,
+                         folder_out_tar= args.folder_tar,
+                         # fname_cdl = path_cdl,
+                         station_abb = args.station,
+                         year = args.year,
+                         month = args.month,
+                         overwrite = args.overwrite,
+                         do_qcrad2nc = args.suppress_netcdf,
+                         do_tar = args.suppress_archive,
+                         do_manifest = args.suppress_manifest,
+                         messages= messages,
+                         test = args.test,
+                         verbose = args.verbose)
+    passed = 'passed'
+except:
+    passed = 'FAILED! '
+    error, error_txt, trace = sys.exc_info()
+    tm = ['{}: {}'.format(error.__name__, error_txt.args[0])] + traceback.format_tb(trace)
+    txt = '\n'.join(tm)
+    messages.append(txt)
+# with open(log_p, 'a') as log:
+#     log.write('============\nrun finished {}\n\n'.format(pd.Timestamp(datetime.datetime.now())))
+messages.append('============\nrun finished {}\n\n'.format(pd.Timestamp(datetime.datetime.now())))
+
+message_txt = '\n'.join(messages)
+
+with open(log_p, 'a') as log:
+    log.write(message_txt)
+
+# Import smtplib for the actual sending function
+try:
+    import smtplib
+
+    # Import the email modules we'll need
+    from email.mime.text import MIMEText
+
+    # Open a plain text file for reading.  For this example, assume that
+    # the text file contains only ASCII characters.
+    # with open(textfile) as fp:
+    #     # Create a text/plain message
+    msg = MIMEText(message_txt)
+
+    # me == the sender's email address
+    # you == the recipient's email address
+    address  = 'hagen.telg@noaa.gov'
+    msg['Subject'] = '{}: qcrad2ncei run {}'.format(passed, pd.Timestamp(datetime.datetime.now()))
+    msg['From'] = address
+    msg['To'] = address
+
+    # Send the message via our own SMTP server.
+    s = smtplib.SMTP('localhost')
+    s.send_message(msg)
+    s.quit()
+except:
+    print('sending email failed')

@@ -160,8 +160,12 @@ def read_data(fname='../data/bon_19950510.qdat', missing_data=((-9999.0, -9999.9
 
     return data
 
+# def make_log_entry(fname_log, txt):
+#     with open(fname_log, 'a') as log:
+#         timestamp = _pd.Timestamp(_pd.datetime.now())
+#         log.write('{} {} {}'.format(timestamp, txt, '\n'))
 
-def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, verbose=False):
+def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=False):
     def save2netcdf(ds, fname='../data/Bondville_IL_1995_May_10.new.nc', compression=False):
         # turns out the compression results in a larger file tstststs
         ## set encoding
@@ -223,17 +227,20 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, verbose=False):
 
         return ds
 
+    txt = 'pcrad2netcdf: {} -> {}'.format(data_path_in, nc_path_out)
     if verbose:
-        print('pcrad2netcdf: {} -> {}'.format(data_path_in, nc_path_out), end = '...')
+        print(txt, end = '...')
     data = read_data(data_path_in)
     location = [e for e in _locations if data_path_in.name.split('_')[0] in e['abbriviations']][0]
     ds = df2ds(data, cdl_dict['variable_list'], cdl_dict['global_atts_dict'], location)
     save2netcdf(ds, nc_path_out)
     if verbose:
         print('done')
+    if messages:
+        messages.append(txt)
     return location
 
-def tar_nc(pot, todo, manifest = True, verbose = False):
+def tar_nc(pot, todo, manifest = True, messages = None, verbose = False):
     def generate_md5_checksum(fname):
         with open(fname, "rb") as file_to_check:
             data = file_to_check.read()
@@ -250,8 +257,10 @@ def tar_nc(pot, todo, manifest = True, verbose = False):
     tar_mode = 'w:gz'
     # make sure folder exists:
     _os.makedirs(_os.path.dirname(pot), exist_ok=True)
+
+    txt = 'tar_nc: {}'.format(pot)
     if verbose:
-        print('tar_nc: {}'.format(pot), end = '...')
+        print(txt, end = '...')
     tar = _tarfile.open(pot, mode=tar_mode)
 
     for po in todo.path_out:
@@ -261,6 +270,8 @@ def tar_nc(pot, todo, manifest = True, verbose = False):
         generate_md5_checksum(pot)
     if verbose:
         print('done')
+    if messages:
+        messages.append(txt)
 
 def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, station_abb = None, year = None, month = None):
     paths_in = list(_Path(folder_in).rglob("*.qdat"))
@@ -349,6 +360,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                folder_out= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI/',
                folder_out_tar= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/',
                # fname_cdl = '../data/SURFRAD_QCrad_metadata.cdl',
+               messages = None,
                station_abb = 'bon',
                year = 1995,
                month = 1,
@@ -380,7 +392,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
     if do_qcrad2nc:
         cdl_dict = parse_CDL_file(fname = fname_cdl)#'../data/SURFRAD_QCrad_metadata.cdl')
         for idx,line in df[df.do_process].iterrows():
-            qcrad2netcdf(line.path_in, line.path_out, cdl_dict, verbose=verbose)
+            qcrad2netcdf(line.path_in, line.path_out, cdl_dict, messages= messages, verbose=verbose)
     else:
         if verbose:
             print('No NetCDF files created since do_qcrad2nc == False')
@@ -388,7 +400,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
     if do_tar:
         for pot in _np.unique(df[df.do_tar].path_out_tar):
             todo = df[df.path_out_tar == pot]
-            tar_nc(pot, todo, manifest=do_manifest, verbose= verbose)
+            tar_nc(pot, todo, manifest=do_manifest, messages= messages, verbose= verbose)
     else:
         if verbose:
             print('No archives created since do_tar == False')
