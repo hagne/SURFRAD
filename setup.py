@@ -9,8 +9,8 @@ from setuptools import setup, find_packages
 setup(
     name="SurfRadPy",
     version="0.1",
-    packages=find_packages('packages'),
-    package_dir={'':'packages'},
+    packages=find_packages(''),
+    package_dir={'':''},
     # packages=['SurfRadPy'],
     author="Hagen Telg",
     author_email="hagen@hagnet.net",
