@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from SurfRadPy import NCEI as ncei
 import argparse
 import configparser
 from pathlib import Path
@@ -48,7 +47,7 @@ parser.add_argument('-w','--overwrite',
                     help='Overwrite existing output (netCDF) files.')
 parser.add_argument('-s','--station',
                     default = None,
-                    help='Stations to process (default is all stations). Options: {}'.format(', '.join([i['abbriviations'][-1] for i in ncei._locations])))
+                    help='Stations to process (default is all stations). Options: {}'.format(', '.join([i['abbriviations'][-1] for i in NCEI._locations])))
 parser.add_argument('-y','--year',
                    default = None,
                    type=int,
@@ -89,18 +88,18 @@ if args.update_defaults:
 
 ########
 # execute the program
-package_dir, _ = os.path.split(ncei.__file__)
+package_dir, _ = os.path.split(NCEI.__file__)
 path_cdl = os.path.join(package_dir, "data", "SURFRAD_QCrad_metadata.cdl")
-df = ncei.qcrad2ncei(folder_in = args.folder_in,
-           folder_out= args.folder_out,
-           folder_out_tar= args.folder_tar,
-           fname_cdl = path_cdl,
-           station_abb = args.station,
-           year = args.year,
-           month = args.month,
-           overwrite = args.overwrite,
-           do_qcrad2nc = args.suppress_netcdf,
-           do_tar = args.suppress_archive,
-           do_manifest = args.suppress_manifest,
-           test = args.test,
-           verbose = args.verbose)
+df = NCEI.qcrad2ncei(folder_in = args.folder_in,
+                     folder_out= args.folder_out,
+                     folder_out_tar= args.folder_tar,
+                     fname_cdl = path_cdl,
+                     station_abb = args.station,
+                     year = args.year,
+                     month = args.month,
+                     overwrite = args.overwrite,
+                     do_qcrad2nc = args.suppress_netcdf,
+                     do_tar = args.suppress_archive,
+                     do_manifest = args.suppress_manifest,
+                     test = args.test,
+                     verbose = args.verbose)
