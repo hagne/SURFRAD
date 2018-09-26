@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 # from distutils.core import setup
 setup(
     name="SurfRadPy",
-    version="0.1",
+    # version="0.1",
     packages=find_packages(),
     # package_dir={'':''},
     # packages=['SurfRadPy'],
@@ -18,11 +18,11 @@ setup(
     license="MIT",
     # keywords="matplotlib",
     url="https://github.com/hagne/SURFRAD",
-    install_requires=['pandas', 'numpy', 'xarray'],
+    # install_requires=['pandas', 'numpy', 'xarray'],
     scripts=['qcrad2ncei.py'],
     # entry_points = {'console_scripts': ['qcrad2ncei.py=SurfRadPy.NCEI:qcrad2ncei.py'],},
-    package_data={'': ['*.cdl']},
-    include_package_data=True,
+    # package_data={'': ['*.cdl']},
+    # include_package_data=True,
     # zip_safe=False
     # extras_require={'plotting': ['matplotlib'],
     #                 'testing': ['scipy']},
