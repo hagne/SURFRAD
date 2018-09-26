@@ -1,1 +1,1 @@
-import .NCEI
+from . import NCEI
