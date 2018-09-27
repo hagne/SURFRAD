@@ -97,6 +97,7 @@ if args.update_defaults:
 # with open(log_p, 'a') as log:
 #     log.write('run started {}\n========='.format(pd.Timestamp(datetime.datetime.now())))
 messages = ['run started {}\n========='.format(pd.Timestamp(datetime.datetime.now()))]
+errors = []
 try:
     df = NCEI.qcrad2ncei(folder_in = args.folder_in,
                          folder_out= args.folder_out,
@@ -110,22 +111,26 @@ try:
                          do_tar = args.suppress_archive,
                          do_manifest = args.suppress_manifest,
                          messages= messages,
+                         errors = errors,
                          test = args.test,
                          verbose = args.verbose)
-    passed = 'passed'
 except:
-    passed = 'FAILED! '
     error, error_txt, trace = sys.exc_info()
     tm = ['{}: {}'.format(error.__name__, error_txt.args[0])] + traceback.format_tb(trace)
     txt = '\n'.join(tm)
     print(txt)
     messages.append(txt)
+    errors.append(txt)
 # with open(log_p, 'a') as log:
 #     log.write('============\nrun finished {}\n\n'.format(pd.Timestamp(datetime.datetime.now())))
 messages.append('============\nrun finished {}\n\n'.format(pd.Timestamp(datetime.datetime.now())))
 
 message_txt = '\n'.join(messages)
 
+if len(errors) !=0:
+    error_txt = '\n\n======================\nERRORS\n=======================\n'
+    error_txt += '\n=======================================\n=========================================='.join(errors)
+    message_txt += error_txt
 
 
 with open(log_p, 'a') as log:
@@ -147,6 +152,10 @@ try:
     # me == the sender's email address
     # you == the recipient's email address
     address  = 'hagen.telg@noaa.gov'
+    if len(errors) == 0:
+        passed = 'Clean'
+    else:
+        passed = 'Errors ({})'.format(len(errors))
     msg['Subject'] = '{}: qcrad2ncei run {}'.format(passed, pd.Timestamp(datetime.datetime.now()))
     msg['From'] = address
     msg['To'] = address

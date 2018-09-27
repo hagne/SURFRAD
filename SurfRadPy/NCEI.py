@@ -243,7 +243,7 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=F
         messages[-1] += ' ... done'
     return location
 
-def tar_nc(pot, todo, manifest = True, messages = None, verbose = False):
+def tar_nc(pot, todo, manifest = True, messages = None, errors = [], verbose = False):
     def generate_md5_checksum(fname):
         with open(fname, "rb") as file_to_check:
             data = file_to_check.read()
@@ -270,14 +270,28 @@ def tar_nc(pot, todo, manifest = True, messages = None, verbose = False):
     tar = _tarfile.open(pot, mode=tar_mode)
 
     for po in todo.path_out:
-        tar.add(po, arcname = po.name)
+        try:
+            tar.add(po, arcname = po.name)
+            txt_ext = ' ... done.'
+            remove = False
+        except FileNotFoundError:
+            txt_ext = 'FileNotFoundError: {}'.format(po)
+            errors.append('{}: {}'.format(pot, txt_ext))
+            remove = True
+
     tar.close()
-    if manifest:
-        generate_md5_checksum(pot)
+
+    # remove tar if error accured
+    if remove:
+        _os.remove(pot)
+    else:
+        if manifest:
+            generate_md5_checksum(pot)
+
     if verbose:
-        print('done')
+        print(txt_ext)
     if messages:
-        messages[-1] += ' ... done'
+        messages[-1] += txt_ext
 
 def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, station_abb = None, year = None, month = None):
     paths_in = list(_Path(folder_in).rglob("*.qdat"))
@@ -367,6 +381,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                folder_out_tar= '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/NCEI_tar/',
                # fname_cdl = '../data/SURFRAD_QCrad_metadata.cdl',
                messages = None,
+               errors = [],
                station_abb = 'bon',
                year = 1995,
                month = 1,
@@ -406,6 +421,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                     messages.append(txt)
                 if verbose:
                     print(txt)
+                errors.append('{}: {}'.format(line.path_in.as_posix(), txt))
     else:
         if verbose:
             print('No NetCDF files created since do_qcrad2nc == False')
@@ -413,7 +429,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
     if do_tar:
         for pot in _np.unique(df[df.do_tar].path_out_tar):
             todo = df[df.path_out_tar == pot]
-            tar_nc(pot, todo, manifest=do_manifest, messages= messages, verbose= verbose)
+            tar_nc(pot, todo, manifest=do_manifest, messages= messages, errors=errors, verbose= verbose)
     else:
         if verbose:
             print('No archives created since do_tar == False')
