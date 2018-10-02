@@ -257,6 +257,7 @@ def tar_nc(pot, todo, manifest = True, messages = None, errors = [], verbose = F
 
         with open(fname_out, 'w') as fout:
             fout.write(','.join(file_content))
+
     tar_mode = 'w:gz'
     # make sure folder exists:
     _os.makedirs(_os.path.dirname(pot), exist_ok=True)
@@ -330,7 +331,7 @@ def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, statio
         lambda x: '{}{}/{}_{}_{}_{}'.format(folder_out_tar, x.station, 'ESRL-GMD-GRAD_v1.0_SURFRADQCRAD',
                                             x.station.upper(), x.year,
                                             x.month_name), axis=1)
-
+    df['old_tar'] = False
     ## for each station set last month to do not process
     df['do_tar'] = True
     df['do_process'] = True
@@ -360,9 +361,21 @@ def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, statio
             day_c=now.day)  # x.year[0], x.month[0], x.day[0], x.day[-1])
         df.loc[ttp, 'path_out_tar'] = _Path(newname)
 
-    if not overwrite:
-        df.loc[df.do_process,'do_process'] = ~df.loc[df.do_process, 'path_out'].apply(lambda i: i.is_file())
-        df.loc[df.do_tar, 'do_tar'] = ~df.loc[df.do_tar, 'path_out_tar'].apply(lambda i: i.is_file())
+    def tar_exists(i, return_fname = False):
+        pattern = '{}*.tar.gz'.format(i.name.split('_c')[0])
+        matches = list(i.parent.glob(pattern))
+        if len(matches) == 1:
+            if return_fname:
+                return matches[0]
+            else:
+                return True
+        elif len(matches) > 1:
+            mt = [m.as_posix() for m in matches]
+            txtt = '\n'.join(mt)
+            txt = 'This should not be possible, there can not be more then one other version of this tar!\n{}'.format(txtt)
+            raise ValueError(txt)
+        else:
+            return False
 
     # select particular things ... like stations or times
     if station_abb:
@@ -374,6 +387,12 @@ def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, statio
     if month:
         tm = df.month == month
         df.loc[~tm, ['do_process','do_tar']] = False
+
+    if not overwrite:
+        df.loc[df.do_process,'do_process'] = ~df.loc[df.do_process, 'path_out'].apply(lambda i: i.is_file())
+        df.loc[df.do_tar, 'do_tar'] = ~df.loc[df.do_tar, 'path_out_tar'].apply(tar_exists)
+    else:
+        df.loc[df.do_tar, 'old_tar'] = df.loc[df.do_tar, 'path_out_tar'].apply(lambda i: tar_exists(i, return_fname=True))
     return df
 
 def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
@@ -428,6 +447,15 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
     # get all filles from the full file list that match the desired tar file
     if do_tar:
         for pot in _np.unique(df[df.do_tar].path_out_tar):
+            #remove existing tars (which are defined in todo.tar_old
+            for ot in df.old_tar:
+                if ot:
+                    if ot.is_file():
+                        if verbose:
+                            print('removing old tar and mnf')
+                        _Path(ot.as_posix() + '.mnf').unlink()
+                        ot.unlink()
+            # generate the new tars
             todo = df[df.path_out_tar == pot]
             tar_nc(pot, todo, manifest=do_manifest, messages= messages, errors=errors, verbose= verbose)
     else:
