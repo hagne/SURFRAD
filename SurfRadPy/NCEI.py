@@ -260,7 +260,8 @@ def tar_nc(pot, todo, manifest = True, messages = None, errors = [], verbose = F
 
     tar_mode = 'w:gz'
     # make sure folder exists:
-    _os.makedirs(_os.path.dirname(pot), exist_ok=True)
+    if not _os.path.isdir(_os.path.dirname(pot)):
+        _os.makedirs(_os.path.dirname(pot), exist_ok=True)
 
     txt = 'tar_nc: {}'.format(pot)
     if verbose:
