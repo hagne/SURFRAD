@@ -457,6 +457,8 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                         _Path(ot.as_posix() + '.mnf').unlink()
                         ot.unlink()
             # generate the new tars
+            if verbose:
+                print(f'Generate new tar file: {pot}')
             todo = df[df.path_out_tar == pot]
             tar_nc(pot, todo, manifest=do_manifest, messages= messages, errors=errors, verbose= verbose)
     else:
