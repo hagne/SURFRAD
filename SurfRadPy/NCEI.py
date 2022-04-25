@@ -184,7 +184,8 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=F
         _os.makedirs(_os.path.dirname(fname), exist_ok=True)
         # save
         ds.to_netcdf(fname,
-                     format='NETCDF4_CLASSIC',
+                     # format='NETCDF4_CLASSIC',
+                     format='NETCDF4',
                      )
     def clean_atts(atts):
         if '_FillValue' in atts.keys():
@@ -419,7 +420,7 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
         print('creating todo list', end = '....')
     df = create_todo(folder_in, folder_out, folder_out_tar, overwrite = overwrite, station_abb = station_abb, year = year, month = month)
     if verbose:
-        print('done')
+        print(f'done ... shape to be done: {df[df.do_process].shape}')
 
     # qcrad2netcdf the remaining todos in df
     if test:
