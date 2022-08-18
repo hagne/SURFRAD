@@ -114,7 +114,8 @@ def parse_CDL_file(fname = '../data/SURFRAD_QCrad_metadata.cdl'):
             attname, value = l.strip().strip(':').strip(';').split('=', maxsplit=1)
             global_atts[attname.strip()] = value.strip().strip('"')
 
-    now = _pd.datetime.utcnow()
+    # now = _pd.datetime.utcnow()
+    now = _pd.Timestamp.now('UTC')
     global_atts['history'] = 'This file was created {:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d} on {} by {}.'.format(now.year, now.month, now.day, now.hour, now.minute, now.second, _platform.node(), _os.environ['LOGNAME'])
 
     # The _NCProperties parameter seams to be somewhat protected so I pop it out for now
@@ -345,7 +346,7 @@ def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, statio
         df.loc[tst & ty & tm, 'do_tar'] = False
 
     ## for all other generate the final name
-    now = _pd.datetime.now()
+    now = _pd.Timestamp.now()
     for dtp in _np.unique(df.loc[df.do_tar].path_out_tar):
         ttp = df.path_out_tar == dtp
         tdf = df.loc[ttp]
