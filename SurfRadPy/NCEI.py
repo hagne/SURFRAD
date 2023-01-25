@@ -114,7 +114,7 @@ def parse_CDL_file(fname = '../data/SURFRAD_QCrad_metadata.cdl'):
             attname, value = l.strip().strip(':').strip(';').split('=', maxsplit=1)
             global_atts[attname.strip()] = value.strip().strip('"')
 
-    now = _pd.datetime.utcnow()
+    now = _pd.Timestamp.utcnow()
     global_atts['history'] = 'This file was created {:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d} on {} by {}.'.format(now.year, now.month, now.day, now.hour, now.minute, now.second, _platform.node(), _os.environ['LOGNAME'])
 
     # The _NCProperties parameter seams to be somewhat protected so I pop it out for now
@@ -166,7 +166,31 @@ def read_data(fname='../data/bon_19950510.qdat', missing_data=((-9999.0, -9999.9
 #         timestamp = _pd.Timestamp(_pd.datetime.now())
 #         log.write('{} {} {}'.format(timestamp, txt, '\n'))
 
-def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=False):
+def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=False, save = True):
+    """
+    Converts a single qdat file into a netcdf file.
+
+    Parameters
+    ----------
+    data_path_in : TYPE
+        DESCRIPTION.
+    nc_path_out : TYPE
+        DESCRIPTION.
+    cdl_dict : TYPE
+        DESCRIPTION.
+    messages : TYPE, optional
+        DESCRIPTION. The default is None.
+    verbose : TYPE, optional
+        DESCRIPTION. The default is False.
+    save: bool
+        For testing. In case saving fails, this will allow to not save but only return the xarray dataset
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
     def save2netcdf(ds, fname='../data/Bondville_IL_1995_May_10.new.nc', compression=False):
         # turns out the compression results in a larger file tstststs
         ## set encoding
@@ -236,12 +260,13 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=F
     data = read_data(data_path_in)
     location = [e for e in _locations if data_path_in.name.split('_')[0] in e['abbriviations']][0]
     ds = df2ds(data, cdl_dict['variable_list'], cdl_dict['global_atts_dict'], location)
-    save2netcdf(ds, nc_path_out)
+    if save:
+        save2netcdf(ds, nc_path_out)
     if verbose:
         print('done')
     if messages:
         messages[-1] += ' ... done'
-    return location
+    return ds
 
 def tar_nc(pot, todo, manifest = True, messages = None, errors = [], verbose = False):
     def generate_md5_checksum(fname):
@@ -299,7 +324,7 @@ def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, statio
     paths_in = list(_Path(folder_in).rglob("*.qdat"))
     if len(paths_in) == 0:
         raise ValueError(
-            'There are no valid qcrad data files (with extention .qdat) in this folder or its sub-folders. Make sure the input-folder is correct.')
+            f'There are no valid qcrad data files (with extention .qdat) in this folder or its sub-folders. Make sure the input-folder is correct: {folder_in}')
 
     # select files with a valid format and station
     valid_stations = ["bon", "tbl", "dra", "fpk", "gwn", "psu", "sxf"]
@@ -344,7 +369,7 @@ def create_todo(folder_in, folder_out, folder_out_tar, overwrite = False, statio
         df.loc[tst & ty & tm, 'do_tar'] = False
 
     ## for all other generate the final name
-    now = _pd.datetime.now()
+    now = _pd.Timestamp.now()
     for dtp in _np.unique(df.loc[df.do_tar].path_out_tar):
         ttp = df.path_out_tar == dtp
         tdf = df.loc[ttp]
