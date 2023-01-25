@@ -119,7 +119,7 @@ def parse_CDL_file(fname = '../data/SURFRAD_QCrad_metadata.cdl'):
     global_atts['history'] = 'This file was created {:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d} on {} by {}.'.format(now.year, now.month, now.day, now.hour, now.minute, now.second, _platform.node(), _os.environ['LOGNAME'])
 
     # The _NCProperties parameter seams to be somewhat protected so I pop it out for now
-    bla = global_atts.pop('_NCProperties')
+    global_atts.pop('_NCProperties')
     out = dict(variable_list = varlist,
               global_atts_dict = global_atts)
     return out
