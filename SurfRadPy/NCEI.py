@@ -224,6 +224,8 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=F
         return atts
 
     def df2ds(data, variable_list, global_atts, location):
+        # the timezone can cause trouble ... the next line removes the timezone
+        data = data.tz_localize(None)
         ds = _xr.Dataset(data, attrs=global_atts)
 
         # add variable attributes
@@ -251,7 +253,7 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=F
             #     if atts['_FillValue'] == 'NaNf':
             #         atts['_FillValue'] = _np.nan
             ds[lv].attrs = atts
-
+        
         return ds
 
     txt = 'pcrad2netcdf: {} -> {}'.format(data_path_in, nc_path_out)
@@ -268,7 +270,12 @@ def qcrad2netcdf(data_path_in, nc_path_out, cdl_dict, messages = None, verbose=F
         print('done')
     if messages:
         messages[-1] += ' ... done'
-    return ds
+        
+    out = {}
+    out['ds'] = ds
+    out['data'] = data
+    out['location'] = location
+    return out
 
 def tar_nc(pot, todo, manifest = True, messages = None, errors = [], verbose = False):
     def generate_md5_checksum(fname):
