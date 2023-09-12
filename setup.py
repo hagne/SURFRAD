@@ -16,7 +16,7 @@ setup(
     license="MIT",
     url="https://github.com/hagne/SURFRAD",
     # install_requires=['pandas', 'numpy', 'xarray'],
-    scripts=['scripts/qcrad2ncei'],
+    scripts=['scripts/qcrad2ncei', 'scripts/produce_realtime_aod', 'scripts/produce_aodinversion'],
     # entry_points = {'console_scripts': ['qcrad2ncei=SurfRadPy.NCEI:qcrad2ncei'],},
     package_data={'': ['*.cdl']},
     include_package_data=True,
