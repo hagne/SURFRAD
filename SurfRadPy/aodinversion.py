@@ -9,6 +9,8 @@ import xarray as xr
 import pathlib as pl
 import atmPy.aerosols.physics.column_optical_properties as atmcop
 import pandas as pd
+import productomator.lab as prolab
+
 
 class AODInversion(object):
     def __init__(self, 
@@ -17,6 +19,7 @@ class AODInversion(object):
                  channels = [500, 670, 870, 1625],
                  sites = ['tbl',],
                  p2fldaod = '/export/htelg/data/grad/surfrad/aod_3/3.0/',
+                 p2fldout = '/export/htelg/data/grad/surfrad/AODinversion/',
                  ignore_in_cloud = False,
                  test = False,
                  verbose = False,
@@ -24,7 +27,7 @@ class AODInversion(object):
         self.version = version
         self.channels_used = channels
         self.p2fldaod = pl.Path(p2fldaod)
-        self.p2fldout = pl.Path('/export/htelg/data/grad/surfrad/AODinversion/')
+        self.p2fldout = pl.Path(p2fldout)
         self.sites = sites
         self.name_format = 'srf_aodinv_{site}_{year:04d}{month:02d}{day:02d}.nc'
         self.start = '20190101'
@@ -43,11 +46,18 @@ class AODInversion(object):
 
             #remove folders
             #files = [f for f in files if f.is_file()]
-            
+            verbose = False
             files = []
             p2fldsites = list(self.p2fldaod.glob('*'))
+            if verbose:
+                print(f'no of sites found: {len(p2fldsites)}')
+                
             for p2fs in p2fldsites:
                 site = p2fs.name
+                
+                if verbose:
+                    print(f'site: {site}')
+                
                 if not site in self.sites:
                     # print(f'{site} not in sites')
                     continue
@@ -56,20 +66,42 @@ class AODInversion(object):
                 #remove folders
                 filest = [f for f in filest if f.is_file()]
                 files += filest
+                if verbose:
+                    print(f'\tno of files: {len(filest)}')
+            
             
             df = pd.DataFrame(files, columns=['p2in',])
-            
+            if verbose:
+                print(f'shape with all files: {df.shape}')
             df.index = df.apply(lambda row: pd.to_datetime(row.p2in.name.split('.')[0].split('_')[-1]), axis = 1)
             
             df.sort_index(inplace=True)
             
             df = df.truncate(self.start, self.end)
-            
+            if verbose:
+                print(f'shape in time range: {df.shape}')
             # add site column
             df['site'] = df.apply(lambda row: row.p2in.parent.name, axis = 1)
             
+            if df.shape[0] == 0:
+                print('Noting to do!')
+                
             # pars output path
-            df['p2out'] = df.apply(lambda row: self.p2fldout.joinpath(f'{self.version:0.1f}').joinpath(row.site).joinpath(f'{row.name.year:04d}').joinpath(self.name_format.format(site = row.site, year = row.name.year, month = row.name.month, day = row.name.day)), axis = 1)
+            def parse_p2out(row):
+                p2fld = self.p2fldout.joinpath(f'{self.version:0.1f}').joinpath(row.site).joinpath(f'{row.name.year:04d}')
+                fname = self.name_format.format(site = row.site, year = row.name.year, month = row.name.month, day = row.name.day)
+                p2f = p2fld.joinpath(fname)
+                # print(row)
+                # print(p2fld)
+                # print(fname)
+                # print(p2f)
+                return p2f
+            
+            #parse_p2out(df.iloc[0])
+            # assert(False)
+            
+            
+            df['p2out'] = df.apply(parse_p2out, axis = 1)
             
             # remove if file exists
             df = df[~(df.apply(lambda row: row.p2out.is_file(), axis = 1))]
@@ -82,6 +114,7 @@ class AODInversion(object):
         for idx, row in self.workplan.iterrows():
             if not isinstance(self.reporter, type(None)):
                 self.reporter.log()
+                self.reporter.clean_increment()
             self.run_single_row(row)
     
     def run_single_row(self, row, verbose = False):
@@ -152,3 +185,22 @@ class AODInversion(object):
         dsn.to_netcdf(row.p2out)
         
         return dsn
+    
+#### Functions that are executed by the scripts!    
+def produce_aodinversion1_01():
+    reporter = prolab.Reporter('aodinversion1',
+                             log_folder='/home/grad/htelg/.processlogs/',
+                             reporting_frequency=(6, 'h'),
+                            )
+    run = AODInversion( version=1.0,
+                                    channels=[415,500, 670, 870, 1625],
+                                    sites = ['tbl'],
+                                    p2fldaod='/home/grad/htelg/data/grad/surfrad/aod1/v1.0',
+                                    p2fldout = '/home/grad/htelg/data/grad/surfrad/aod1/v1.0',
+                                    ignore_in_cloud  = True,
+                                    test = False,
+                                    verbose = False,
+                                    reporter = reporter)
+    print(f'workplan.shape: {run.workplan.shape}')
+    run.run_product()
+    return

@@ -7,22 +7,8 @@ Created on Wed Sep  6 09:44:01 2023
 This script is performing the inversion based on Johns retrieval (AOD1)
 """
 
-import productomator.lab as prolab
 import SurfRadPy.aodinversion as sfraodinv
 
 if __name__ == '__main__':
-    reporter = prolab.Reporter('aodinversion',
-                             log_folder='/home/grad/htelg/.processlogs/',
-                             reporting_frequency=(6, 'h'),
-                            )
-    run = sfraodinv.AODInversion( version=1.0,
-                                    channels=[415,500, 670, 870, 1625],
-                                    sites = ['tbl'],
-                                    p2fldaod='/export/htelg/data/grad/surfrad/aod/netcdf/v1.0/',
-                                    ignore_in_cloud  = True,
-                                    test = False,
-                                    verbose = False,
-                                    reporter = reporter)
-    print(f'workplan.shape: {run.workplan.shape}')
-    run.run_product()
+    sfraodinv.produce_aodinversion1_01()
     
