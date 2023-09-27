@@ -18,6 +18,8 @@ class AODInversion(object):
                  version = 0.1, 
                  channels = [500, 670, 870, 1625],
                  sites = ['tbl',],
+                 start = '20190101',
+                 end = '20200101',
                  p2fldaod = '/export/htelg/data/grad/surfrad/aod_3/3.0/',
                  p2fldout = '/export/htelg/data/grad/surfrad/AODinversion/',
                  ignore_in_cloud = False,
@@ -30,8 +32,8 @@ class AODInversion(object):
         self.p2fldout = pl.Path(p2fldout)
         self.sites = sites
         self.name_format = 'srf_aodinv_{site}_{year:04d}{month:02d}{day:02d}.nc'
-        self.start = '20190101'
-        self.end = '20200101'
+        self.start = start
+        self.end = end
         self.ignore_in_cloud = ignore_in_cloud
         self.reporter = reporter
         self.test = test
@@ -195,6 +197,8 @@ def produce_aodinversion1_01():
     run = AODInversion( version=1.0,
                                     channels=[415,500, 670, 870, 1625],
                                     sites = ['tbl'],
+                                    start = '20180101',
+                                    end = '20200101',
                                     p2fldaod='/home/grad/htelg/data/grad/surfrad/aod1/v1.0',
                                     p2fldout = '/home/grad/htelg/data/grad/surfrad/aod1/v1.0',
                                     ignore_in_cloud  = True,
