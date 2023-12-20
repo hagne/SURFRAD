@@ -48,13 +48,78 @@ class Aod2Netcdf(object):
 
         # private varibles
         self._workplan = None
+    
+    def process(self, if_error = 'raise',
+                verbose = False,
+                reporter = None):
+        """
+        
 
-    def process_single(path2file_in, site, version):
+        Parameters
+        ----------
+        if_error : str, optional
+            What to do if an error is encountered. The default is 'raise'.
+            raise: raise the error
+            skip: file is skipped, the error will be forwarded to the reporter.
+        reporter: productomator.Reporter instance
+        verbose : TYPE, optional
+            DESCRIPTION. The default is False.
+
+        Returns
+        -------
+        None.
+
+        """
+        # print(df.shape)
+        save = True
+        # verbose = False
+        for idx,row in self.workplan.iterrows():
+            try:
+                if verbose:
+                    print(idx, end = ', ')
+                else:
+                    print('|', end = '')
+                if row.path2file_out.is_file():
+                    if not self.overwrite:
+                        if not isinstance(reporter, type(None)):
+                            reporter.warnings_increment()
+                        continue
+            
+                out = self.process_single(row.path2file_in, row.site, self.version)
+                ds = out['ds']
+            
+                if not row.path2file_out.parent.is_dir():
+                    row.path2file_out.parent.mkdir()
+            
+                if save:
+                    ds.to_netcdf(row.path2file_out)
+                if not isinstance(reporter, type(None)):      
+                    reporter.clean_increment()
+            except:
+                if if_error == 'raise':
+                    raise
+                elif if_error == 'skip':
+                    if not isinstance(reporter, type(None)):      
+                        reporter.errors_increment()
+                    continue
+            
+            if not isinstance(reporter, type(None)):      
+                reporter.log()
+                
+        if not isinstance(reporter, type(None)): 
+            # aod is rarely process, in order to not have it kicked of the graphic 
+            # i generate a warning if nothing was processed.
+            if reporter.clean == 0:
+                reporter.warnings_increment()
+            reporter.log(reset_counters=False, overwrite_reporting_frequency=True)
+        
+        print('Done')  
+    
+    def process_single(self, path2file_in, site, version):
         aod = srf.open_path(path2file_in,
                             product = 'None',
                             cloud_sceened = False,
-                            local2UTC=True)
-    
+                            local2UTC=True,)
         if site == 'bon':
             site = 'bnd'
         site = srf.network.stations.find_site(site)
@@ -146,3 +211,7 @@ class Aod2Netcdf(object):
             # remove if file exists
             if not self.overwrite:
                 df = df[~df.apply(lambda row: row.path2file_out.is_file(), axis = 1)]
+            
+            self._workplan = df
+            
+        return self._workplan

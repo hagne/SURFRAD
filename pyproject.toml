@@ -1,3 +1,25 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=46.4.0", "wheel", "setuptools_scm"]
+#requires = ["setuptools", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "surfradpy"
+authors = [{ name = "Hagen Telg", email = "hagen.telg@gmail.com" }]
+description = "Python library with tools for SURFRAD data processing."
+license = { file = "LICENSE" }
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://github.com/hagne/SURFRAD"  # or your documentation URL
+Repository = "https://github.com/hagne/SURFRAD"
+
+[tool.setuptools]
+packages = ["surfradpy"]
+
+[tool.setuptools_scm]
+write_to = "_version.py"  # Path to write the version file
+
+[project.scripts]
+produce_aod2netcdf = "surfradpy.scripts.aod2netcdf:run"
+qcrad2ncei = "surfradpy.scripts.qcrad2ncei:main"

@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Dec 20 12:11:40 2023
+
+@author: hagen
+"""
+
+import surfradpy.script_backends.aod2netcdf as aod2nc
+
+if __name__ == "__main__":
+    aod2nc.run()

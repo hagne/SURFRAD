@@ -6,7 +6,7 @@ import configparser
 import pathlib as pl
 import os
 from surfradpy import NCEI
-import datetime
+# import datetime
 import pandas as pd
 import sys
 import traceback
@@ -34,7 +34,7 @@ def read_config(ini_p):
     default_tar_folder= config['scripts.qcrad2ncei']['tar_folder']
     return config,default_input_folder, default_output_folder, default_tar_folder
 
-if __name__ == '__main__':
+def main():
     #### create log file
     fnlog = pl.Path('/home/grad/htelg/.processlogs/qcrad2ncei.log')
     if not fnlog.is_file():
@@ -111,7 +111,8 @@ if __name__ == '__main__':
     # path_cdl = os.path.join(package_dir, "data", "SURFRAD_QCrad_metadata.cdl")
     # with open(log_p, 'a') as log:
     #     log.write('run started {}\n========='.format(pd.Timestamp(datetime.datetime.now())))
-    messages = ['run started {}\n========='.format(pd.Timestamp(datetime.datetime.now()))]
+    now = pd.Timestamp.now()
+    messages = ['run started {}\n========='.format(now)]
     errors = []
     try:
         df = NCEI.qcrad2ncei(folder_in = args.folder_in,
@@ -195,3 +196,6 @@ if __name__ == '__main__':
     except:
         raise
         print('sending email failed')
+        
+if __name__ == '__main__':
+    main()
