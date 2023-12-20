@@ -9,7 +9,6 @@ import xarray as xr
 import pathlib as pl
 import atmPy.aerosols.physics.column_optical_properties as atmcop
 import pandas as pd
-import productomator.lab as prolab
 
 
 class AODInversion(object):
@@ -188,23 +187,3 @@ class AODInversion(object):
         
         return dsn
     
-#### Functions that are executed by the scripts!    
-def produce_aodinversion1_01():
-    reporter = prolab.Reporter('aodinversion1',
-                             log_folder='/home/grad/htelg/.processlogs/',
-                             reporting_frequency=(6, 'h'),
-                            )
-    run = AODInversion( version=1.0,
-                                    channels=[415,500, 670, 870, 1625],
-                                    sites = ['tbl'],
-                                    start = '20180101',
-                                    end = '20200101',
-                                    p2fldaod='/home/grad/htelg/data/grad/surfrad/aod1/v1.0',
-                                    p2fldout = '/home/grad/htelg/data/grad/surfrad/aod1/v1.0',
-                                    ignore_in_cloud  = True,
-                                    test = False,
-                                    verbose = False,
-                                    reporter = reporter)
-    print(f'workplan.shape: {run.workplan.shape}')
-    run.run_product()
-    return

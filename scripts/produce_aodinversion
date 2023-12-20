@@ -10,11 +10,5 @@ import productomator.lab as prolab
 import SurfRadPy.aodinversion as sfraodinv
 
 if __name__ == '__main__':
-    reporter = prolab.Reporter('aodinversion',
-                             log_folder='/home/grad/htelg/.processlogs/',
-                             reporting_frequency=(6, 'h'),
-                            )
-    run = sfraodinv.AODInversion(reporter = reporter)
-    print(f'workplan.shape: {run.workplan.shape}')
-    run.run_product()
+
     
