@@ -12,5 +12,10 @@ __version__: str
 __version_tuple__: VERSION_TUPLE
 version_tuple: VERSION_TUPLE
 
+<<<<<<< Updated upstream
 __version__ = version = '0.1.1.dev1+g5bc44e8.d20231227'
 __version_tuple__ = version_tuple = (0, 1, 1, 'dev1', 'g5bc44e8.d20231227')
+=======
+__version__ = version = '0.1.1.dev1+g5bc44e8.d20231220'
+__version_tuple__ = version_tuple = (0, 1, 1, 'dev1', 'g5bc44e8.d20231220')
+>>>>>>> Stashed changes
