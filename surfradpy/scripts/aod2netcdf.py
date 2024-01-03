@@ -12,10 +12,13 @@ Objectives:
 """
 import productomator.lab as prolab
 import surfradpy.aod2netcdf as aod2nc
+import pandas as pd
 
 def run():
-    
+    starttime = pd.Timestamp.now()
+    print(f'start time: {starttime}')
     a2n = aod2nc.Aod2Netcdf(site = 'all', 
+                            path2basefld_in = '/nfs/grad/surfrad/aod/',
                             path2basefld_out='/nfs/grad/surfrad/products_level2/aod_netcdf/v{version}/',
                             # overwrite=True
                            )
@@ -33,6 +36,11 @@ def run():
     print(f'clean: {reporter.clean}')
     print(f'warnings: {reporter.warnings}')
     print(f'errors: {reporter.errors}')
+    
+    endtime = pd.Timestamp.now()
+    print(f'end time: {endtime}')
+    print(f'total execution time: {endtime - starttime}')
+        
     
 if __name__ == "__main__":
     run()

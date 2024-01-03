@@ -23,7 +23,7 @@ class Aod2Netcdf(object):
                          # 'dra', 'fpk', 'gwn', 'psu', 'sxf', 'tbl'
                         # ]
                 start_date = '2019-01-01',
-                end_date = '2024-01-01',
+                end_date = None, #'2024-01-01',
                 version = '1.0',
                 path2basefld_in = '/nfs/grad/surfrad/aod/',
                 path2basefld_out = '/export/htelg/data/grad/surfrad/aod/netcdf/v{version}/',
@@ -37,12 +37,15 @@ class Aod2Netcdf(object):
         self.end_date = end_date
         self.version = version
         self.path2basefld_in = pl.Path(path2basefld_in)
-        self.path2basefld_out = pl.Path('/export/htelg/data/grad/surfrad/aod/netcdf/v{version}/'.format(version = version))
+        self.path2basefld_out = pl.Path(path2basefld_out.format(version = version))
         self.path2basefld_out.mkdir(exist_ok=True)
 
         path2current = self.path2basefld_out.parent.joinpath('current')
         if path2current.resolve() != self.path2basefld_out:
-            path2current.unlink()
+            try:
+                path2current.unlink()
+            except FileNotFoundError:
+                pass
             path2current.symlink_to(self.path2basefld_out)
             print('current was linked to new folder')
 
@@ -206,6 +209,7 @@ class Aod2Netcdf(object):
                 
             # sleect time range
             df.sort_index(inplace=True)
+            
             df = df.truncate(before=self.start_date, after = self.end_date)
             
             # remove if file exists
