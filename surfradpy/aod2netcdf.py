@@ -22,7 +22,7 @@ class Aod2Netcdf(object):
                             # ['tbl', 'bon',
                          # 'dra', 'fpk', 'gwn', 'psu', 'sxf', 'tbl'
                         # ]
-                start_date = '2019-01-01',
+                start_date = None,# '2019-01-01',
                 end_date = None, #'2024-01-01',
                 version = '1.0',
                 path2basefld_in = '/nfs/grad/surfrad/aod/',
@@ -219,3 +219,7 @@ class Aod2Netcdf(object):
             self._workplan = df
             
         return self._workplan
+    
+    @workplan.setter
+    def workplan(self, value):
+        self._workplan = value
