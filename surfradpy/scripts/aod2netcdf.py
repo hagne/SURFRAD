@@ -13,8 +13,12 @@ Objectives:
 import productomator.lab as prolab
 import surfradpy.aod2netcdf as aod2nc
 import pandas as pd
+import warnings
 
 def run():
+    #### FIXME: address warnings below!!! .... uncommend to see them, then fix them
+    warnings.filterwarnings('ignore',category=pd.errors.PerformanceWarning)
+    
     starttime = pd.Timestamp.now()
     print(f'start time: {starttime}')
     a2n = aod2nc.Aod2Netcdf(site = 'all', 
