@@ -12,8 +12,8 @@ Objectives:
 """
 import productomator.lab as prolab
 import surfradpy.aod2netcdf as aod2nc
-# import pandas as pd
-# import warnings
+import pandas as pd
+import warnings
 
 def run():
     reporter = prolab.Reporter('aod2netcdf', 
@@ -21,7 +21,7 @@ def run():
                                # reporting_frequency=(1,'min'),
                               )
     #### FIXME: address warnings below!!! .... uncommend to see them, then fix them
-    # warnings.filterwarnings('ignore',category=pd.errors.PerformanceWarning)
+    warnings.filterwarnings('ignore',category=pd.errors.PerformanceWarning)
     
     a2n = aod2nc.Aod2Netcdf(site = 'all', 
                             path2basefld_in = '/nfs/grad/surfrad/aod/',
