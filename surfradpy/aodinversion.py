@@ -111,6 +111,10 @@ class AODInversion(object):
         
         return self._workplan
     
+    @workplan.setter 
+    def workplan(self, value):
+        self._workplan = value
+        
     def run_product(self):
         for idx, row in self.workplan.iterrows():
             if not isinstance(self.reporter, type(None)):
