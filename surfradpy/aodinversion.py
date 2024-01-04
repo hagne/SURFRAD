@@ -17,8 +17,8 @@ class AODInversion(object):
                  version = 0.1, 
                  channels = [500, 670, 870, 1625],
                  sites = ['tbl',],
-                 start = '20190101',
-                 end = '20200101',
+                 start = None, #'20190101',
+                 end = None, #'20200101',
                  p2fldaod = '/export/htelg/data/grad/surfrad/aod_3/3.0/',
                  p2fldout = '/export/htelg/data/grad/surfrad/AODinversion/',
                  ignore_in_cloud = False,
@@ -115,12 +115,68 @@ class AODInversion(object):
     def workplan(self, value):
         self._workplan = value
         
-    def run_product(self):
-        for idx, row in self.workplan.iterrows():
-            if not isinstance(self.reporter, type(None)):
-                self.reporter.log()
-                self.reporter.clean_increment()
-            self.run_single_row(row)
+    def run_product(self, max_processes = 1):
+        if max_processes == 1:
+            for idx, row in self.workplan.iterrows():
+                if not isinstance(self.reporter, type(None)):
+                    self.reporter.log()
+                    self.reporter.clean_increment()
+                self.run_single_row(row)
+        else:
+            import psutil
+            import time
+            import multiprocessing
+
+            
+            timeout = None
+            sleeptime = 1
+            # iterator = iter([1, 2, 3, 4, 5])
+            iterator = self.workplan.iterrows()
+            
+            processes = []
+            while 1:      
+                for process in processes:
+                    if process.is_alive():
+                        p = psutil.Process(process.pid)
+                        dt_in_sec = (pd.Timestamp.now(tz = 'utc') - pd.to_datetime(p.create_time(), unit = 's', utc = True))/ pd.to_timedelta(1,'s')
+                        assert(dt_in_sec > 0), 'process elaps time is smaller 0, its process creation time is probably not in utc! todo: find out how to determine the timezone that is used by psutil'
+                        # print(dt_in_sec)
+                        if not isinstance(timeout, type(None)):
+                            if dt_in_sec > timeout:
+                                print(f"Process for number {process.name} exceeded the timeout ({timeout}s) and will be terminated.")
+                                process.terminate()
+                    else:
+                        print(f"Process {process.pid} finished with exitcode: {process.exitcode})")
+                        if not isinstance(self.reporter, type(None)):
+                            if process.exitcode == 0:
+                                self.reporter.clean_increment()
+                            else:
+                                self.reporter.errors_increment()
+                        processes.pop(processes.index(process))
+                        if not isinstance(self.reporter, type(None)):
+                            self.reporter.log()
+                            
+                    print('.', end = '')
+                    
+                if len(processes) >= max_processes:  
+                    time.sleep(sleeptime)
+                    continue
+                else:
+                    try:
+                        idx, row = next(iterator)
+                    except StopIteration:
+                        print('reached last number')
+                        if len(processes) == 0:
+                            break
+                        else:         
+                            time.sleep(sleeptime)
+                            continue
+                    process = multiprocessing.Process(target=self.run_single_row, args=(row,))
+                    process.daemon = True
+                    processes.append(process)
+                    process.start()
+            
+            print("All processes completed.")
     
     def run_single_row(self, row, verbose = False):
         ds = xr.open_dataset(row.p2in)
