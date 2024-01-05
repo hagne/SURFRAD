@@ -14,6 +14,7 @@ TODO
 import productomator.lab as prolab
 import surfradpy.aodinversion as sfraodinv
 import pandas as pd
+import warnings
 
 #### Functions that are executed by the scripts!    
 def produce_aodinversion1_01():
@@ -29,15 +30,15 @@ def produce_aodinversion1_01():
                              log_folder='/home/grad/htelg/.processlogs/',
                              reporting_frequency=(6, 'h'),
                             )
-    
-    import warnings
-    warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'invalid value encountered in log10')
-    warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'invalid value encountered in divide')
-    warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'divide by zero encountered in log10')
+
+    warnings.filterwarnings('ignore')
+    # warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'invalid value encountered in log10')
+    # warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'invalid value encountered in divide')
+    # warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'divide by zero encountered in log10')
     
     #### FIXME: address warnings below!!! .... uncommend to see them, then fix them
-    warnings.filterwarnings('ignore',category=pd.errors.PerformanceWarning)
-    warnings.filterwarnings('ignore',category=pd.errors.FutureWarning)
+    # warnings.filterwarnings('ignore',category=pd.errors.PerformanceWarning)
+    # warnings.filterwarnings('ignore',category=FutureWarning)
     
 
     run = sfraodinv.AODInversion( version=1.0,
@@ -75,14 +76,14 @@ def produce_aodinversion1_01_catchup():
                              reporting_frequency=(6, 'h'),
                             )
     
-    import warnings
-    warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'invalid value encountered in log10')
-    warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'invalid value encountered in divide')
-    warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'divide by zero encountered in log10')
+    warnings.filterwarnings('ignore')
+    # warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'invalid value encountered in log10')
+    # warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'invalid value encountered in divide')
+    # warnings.filterwarnings('ignore',category=RuntimeWarning, message = 'divide by zero encountered in log10')
     
     #### FIXME: address warnings below!!! .... uncommend to see them, then fix them
-    warnings.filterwarnings('ignore',category=pd.errors.PerformanceWarning)
-    warnings.filterwarnings('ignore',category=pd.errors.FutureWarning)
+    # warnings.filterwarnings('ignore',category=pd.errors.PerformanceWarning)
+    # warnings.filterwarnings('ignore',category=pd.errors.FutureWarning)
     
 
     run = sfraodinv.AODInversion( version=1.0,
