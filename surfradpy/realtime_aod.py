@@ -13,11 +13,11 @@ import numpy as np
 import atmPy.data_archives.NOAA_ESRL_GMD_GRAD.surfrad.surfrad as atmsrf
 import atmPy.aerosols.physics.column_optical_properties as atmcop
 import traceback
-import SurfRadPy.radiation as srfrad
+import surfradpy.radiation as srfrad
 
 
 class mfrsr_AOD_lev0(object):
-    def __init__(self):
+    def __init__(self, site=['tbl',]):
         # product_version = 0.4
         self.p2fld_langley_in = '/nfs/grad/Inst/MFR/SURFRAD/{site}/mfrsr/ccc/'
         # p2fld_out = f'/mnt/telg/data/grad/surfrad/mfrsr/langleys/'
@@ -25,8 +25,6 @@ class mfrsr_AOD_lev0(object):
             '/export/htelg/data/grad/surfrad/mfrsr/langleys.0.4/')
         self.p2fld_langley_concat = pl.Path(
             '/export/htelg/data/grad/surfrad/mfrsr/langleys_concat.0.4/tbl/')
-        self.date_start = '2016-08-25'
-        self.date_end = None  # '2022-01-01'
 
         self.product_version = 3.0
         self.file_type = 'tu'
@@ -36,17 +34,17 @@ class mfrsr_AOD_lev0(object):
         self.p2fld_out = f'/export/htelg/data/grad/surfrad/aod_3/{self.product_version}'
         
         
-        # settings       
-        # self.date_start = '2022-12-01'  # 
-        self.date_start = '2016-08-25'
+        # settings
+        # self.date_start = '2022-12-01'
+        self.date_start = '2017-01-01'
         # self.date_end = '2023-03-02'
         self.date_end = None
-        self.sites = ['gwn', 'psu',
-                 #          # 'bld', 'fpk', 'bon' Those do not seam to be real surfrad sites
-                 'sxf', 'tbl', 'bnd',
-                 'fpe',  # This is the real fort Peck
-                 'dra']
-        self.sites = ['tbl',]
+        # self.sites = ['gwn', 'psu',
+        #          #          # 'bld', 'fpk', 'bon' Those do not seam to be real surfrad sites
+        #          'sxf', 'tbl', 'bnd',
+        #          'fpe',  # This is the real fort Peck
+        #          'dra']
+        self.sites = site
         self.overwrite = False
         
         
@@ -55,12 +53,6 @@ class mfrsr_AOD_lev0(object):
         self.remove_review = True
         self.lands = None
 
-        # sites = ['gwn', 'psu', 'fpk',
-        #          # 'bld',
-        #          'sxf', 'tbl', 'bnd',
-        #          # 'fpe',
-        #          'dra']
-        self.sites = ['tbl']
         self.overwrite_langley = False
         self._workplan_langleys = None
         self._workplan_langleys_concat = None
@@ -83,19 +75,22 @@ class mfrsr_AOD_lev0(object):
     #     workplan_rest = self.workplan[~(self.workplan.apply(lambda row: row.p2f_out.is_file(), axis=1))]
     #     return workplan_rest.shape[0]
         
-    def process_all(self, test = False):
+    def process_all(self, test = False, verbose = True):
         
         #### radiation
         # this is needed for the met data
-        
+        if verbose:
+            print('producing netcdf from radiation data', end=' ... ')
         srfrad.generate_netcdfs(gui=False)
+        if verbose:
+            print('done')
         
         #### langleys
         
         # self.workplan_langleys
-        self.process_langleys(raise_error=True)
+        self.process_langleys(raise_error=True, verbose=True)
         # self.workplan_langleys_concat
-        ds = self.process_langley_concat()
+        ds = self.process_langley_concat(verbose=True)
                 
         #### the product
         
@@ -154,15 +149,20 @@ class mfrsr_AOD_lev0(object):
             self._workplan_langleys_concat = workplan
         return self._workplan_langleys_concat
 
-    def process_langley_concat(self):
+    
+    def process_langley_concat(self, verbose = False):
+        if verbose:
+            print('process langley')
+            print('---------------')
+            
         workplan = self.workplan_langleys_concat
-
         last = workplan.iloc[-1].p2f_out
-
+        
         for p2fout, grp in workplan.groupby('p2f_out'):
-            # print('|', end = '')
             i = 0
             for idx, row in grp.iterrows():
+                if verbose:
+                    print(f'{row.p2f}')
                 dst = xr.open_dataset(row.p2f)
                 # in case its pm this will ensure that the indes has no duplicates
                 dst['datetime'] = [idx,]
@@ -212,6 +212,9 @@ class mfrsr_AOD_lev0(object):
                 elif ds[var].dtype == np.int64:
                     ds[var] = ds[var].astype(np.int32)
                 elif ds[var].dtype == object:
+                    continue
+                # status variable
+                elif ds[var].dtype == '<U9':
                     continue
                 else:
                     assert (
@@ -284,12 +287,14 @@ class mfrsr_AOD_lev0(object):
     def workplan_langleys(self, value):
         self._workplan_langleys = value
 
-    def process_langleys(self, raise_error=False):
+    def process_langleys(self, raise_error=False, verbose = False):
         workplan = self.workplan_langleys
         for idx, row in workplan.iterrows():
+            row.p2f_out_am.parent.mkdir(exist_ok=True)
+            assert(row.p2f_out_am.parent.parent.is_dir()), f'not even the parent exists {row.p2f_out_am.parent.parent}'
             print('.', end='')
             sii = atmsrf.read_ccc(row.p2f)
-
+            
             for ampm in ['am', 'pm']:
                 print('>', end='')
                 # there are still scenarios that cause errors, that need to be handled
