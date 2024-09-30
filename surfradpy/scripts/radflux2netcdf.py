@@ -10,7 +10,7 @@ TODO
 
 """
 import productomator.lab as prolab
-import surfradpy.radflux2netcdf as sfrr2nc
+import surfradpy.radflux2netcdf as srfr2nc
 
 import pandas as pd
 import warnings
