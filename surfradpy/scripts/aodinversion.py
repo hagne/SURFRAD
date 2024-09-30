@@ -54,13 +54,16 @@ def produce_aodinversion1_01():
                                     reporter = reporter)
     # run.workplan = run.workplan.sample(frac = 1)
     
-    run.workplan = run.workplan[::-1]
+    # run.workplan = run.workplan[::-1]
+    run.workplan = run.workplan.sort_index(ascending = False)
+    run.workplan = run.workplan.iloc[:1]
+
     print(f'workplan.shape: {run.workplan.shape}')
     
     run.run_product(max_processes=10)
     
     reporter.wrapup()
-    return
+    return reporter
 
 def produce_aodinversion1_01_catchup():
     """
@@ -98,7 +101,8 @@ def produce_aodinversion1_01_catchup():
                                     test = False,
                                     verbose = False,
                                     reporter = reporter)
-    run.workplan = run.workplan[::-1]
+    # run.workplan = run.workplan[::-1]
+    run.workplan = run.workplan.sort_index(ascending = False)
     # run.workplan = run.workplan.sample(frac = 1)
     print(f'workplan.shape: {run.workplan.shape}')
     
