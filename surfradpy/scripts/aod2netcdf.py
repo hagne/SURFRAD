@@ -34,8 +34,7 @@ def run():
     
     print(f'no 2 be processed: {a2n.workplan.shape[0]}')
     
-
-    a2n.process(reporter = reporter)
+    a2n.process(reporter=reporter, if_error='skip')
     
     reporter.wrapup()
         

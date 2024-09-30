@@ -119,10 +119,14 @@ class Aod2Netcdf(object):
         print('Done')  
     
     def process_single(self, path2file_in, site, version):
-        aod = srf.open_path(path2file_in,
-                            product = 'None',
-                            cloud_sceened = False,
-                            local2UTC=True,)
+        try:
+            aod = srf.open_path(path2file_in,
+                                product = 'None',
+                                cloud_sceened = False,
+                                local2UTC=True,)
+        except:
+            print(f'Opening path {path2file_in} failed with following error message:')
+            raise
         if site == 'bon':
             site = 'bnd'
         site = srf.network.stations.find_site(site)
