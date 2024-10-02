@@ -79,11 +79,11 @@ class mfrsr_AOD_lev0(object):
         
         #### radiation
         # this is needed for the met data
-        if verbose:
-            print('producing netcdf from radiation data', end=' ... ')
-        srfrad.generate_netcdfs(gui=False)
-        if verbose:
-            print('done')
+        # if verbose:
+        #     print('producing netcdf from radiation data', end=' ... ')
+        # srfrad.generate_netcdfs(gui=False)
+        # if verbose:
+        #     print('done')
         
         #### langleys
         
