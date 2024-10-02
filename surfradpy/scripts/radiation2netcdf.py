@@ -11,14 +11,14 @@ def main():
                 reporting_frequency=(1, 'h'),
             )
     try:
-        srfrad.generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
+        out = srfrad.generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
                                 p2fldout = '/nfs/grad/surfrad/products_level1/radiation_netcdf/',
                                 gui=False,
                                  verbose = False)
-        reporter.clean_increment()
+        reporter.clean_increment(out['numprocessed'])
         reporter.wrapup()
     except:
-        reporter.errors_increment()
+        reporter.errors_increment(7)
         reporter.wrapup()
         raise
 

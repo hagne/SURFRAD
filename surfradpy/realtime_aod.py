@@ -22,9 +22,9 @@ class mfrsr_AOD_lev0(object):
         self.p2fld_langley_in = '/nfs/grad/Inst/MFR/SURFRAD/{site}/mfrsr/ccc/'
         # p2fld_out = f'/mnt/telg/data/grad/surfrad/mfrsr/langleys/'
         self.p2fld_langley_out = pl.Path(
-            '/export/htelg/data/grad/surfrad/mfrsr/langleys.0.4/')
+            '/home/grad/htelg/data/grad/surfrad/mfrsr/langleys.0.4/')
         self.p2fld_langley_concat = pl.Path(
-            '/export/htelg/data/grad/surfrad/mfrsr/langleys_concat.0.4/tbl/')
+            '/home/grad/htelg/data/grad/surfrad/mfrsr/langleys_concat.0.4/tbl/')
 
         self.product_version = 3.0
         self.file_type = 'tu'
@@ -86,10 +86,7 @@ class mfrsr_AOD_lev0(object):
         #     print('done')
         
         #### langleys
-        
-        # self.workplan_langleys
         self.process_langleys(raise_error=True, verbose=True)
-        # self.workplan_langleys_concat
         ds = self.process_langley_concat(verbose=True)
                 
         #### the product
@@ -341,10 +338,11 @@ class mfrsr_AOD_lev0(object):
                         continue
             print('>', end='')
         print('Done')
+        out = dict(numprocessed = workplan.shape[0])
         workplan = workplan[~(workplan.apply(
             lambda row: row.p2f_out_am.is_file() and row.p2f_out_pm.is_file(), axis=1))]
         self._workplan_langleys = workplan
-        return None
+        return out
 
     def make_product(self, path2file, product_version, verbose=False, langley_version='0.4', lands=None, aod_lim_max=2.8):
         # path2file = '/nfs/grad/Inst/MFR/SURFRAD/tbl/mfrsr/ccc/2021/tbl20210301_0660.ccc'
