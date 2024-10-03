@@ -31,12 +31,13 @@ class mfrsr_AOD_lev0(object):
         self.aod_lim_max = 2.8
         # p2fld_base = '/nfs/grad/Inst/MFR/SURFRAD/{site}/mfrsr/ccc/'
         self.p2fld_base = '/nfs/grad/Inst/MFR/SURFRAD/{site}/mfrsr/{file_type}/'
-        self.p2fld_out = f'/export/htelg/data/grad/surfrad/aod_3/{self.product_version}'
+        self.p2fld_out = f'/nfs/grad/surfrad/products_level2/aod3realtime/{self.product_version}'
         
         
         # settings
         # self.date_start = '2022-12-01'
-        self.date_start = '2017-01-01'
+        # self.date_start = '2017-01-01'
+        self.date_start = '2018-01-01'
         # self.date_end = '2023-03-02'
         self.date_end = None
         # self.sites = ['gwn', 'psu',
@@ -85,9 +86,9 @@ class mfrsr_AOD_lev0(object):
         # if verbose:
         #     print('done')
         
-        #### langleys
-        self.process_langleys(raise_error=True, verbose=True)
-        ds = self.process_langley_concat(verbose=True)
+        # #### langleys
+        # self.process_langleys(raise_error=True, verbose=True)
+        # ds = self.process_langley_concat(verbose=True)
                 
         #### the product
         
@@ -115,7 +116,6 @@ class mfrsr_AOD_lev0(object):
 
             # assert(self.workplan_langleys.shape[0] == 0), 'There are unprocessed langleys!!! Take care of those first'
             # TODO: This needs to get generalized
-            # p2fld_out = pl.Path('/export/htelg/data/grad/surfrad/mfrsr/langleys/tbl/')
             p2fld_langley_out = self.p2fld_langley_out.joinpath('tbl')
             df = pd.DataFrame(p2fld_langley_out.glob('*am*'), columns=['p2f'])
             df.index = df.apply(lambda row: pd.to_datetime(
@@ -349,8 +349,8 @@ class mfrsr_AOD_lev0(object):
         p2f_ccc = pl.Path(path2file)
         sii = atmsrf.read_ccc(p2f_ccc)
         sii.direct_normal_irradiation.settings_calibration = 'atm_gam'
-        sii.direct_normal_irradiation.path2absorption_correction_ceoff_1625 = '/export/htelg/products/grad/surfrad/aod_2/1625nm_absorption_correction_coefficience.nc'
-        sii.direct_normal_irradiation._apply_calibration_atm_gam(p2fld=f'/export/htelg/data/grad/surfrad/mfrsr/langleys_concat.{langley_version}/tbl/',
+        sii.direct_normal_irradiation.path2absorption_correction_ceoff_1625 = '/home/grad/htelg/data/grad/surfrad/aod1625/1625nm_absorption_correction_coefficience.nc'
+        sii.direct_normal_irradiation._apply_calibration_atm_gam(p2fld=f'/home/grad/htelg/data/grad/surfrad/mfrsr/langleys_concat.{langley_version}/tbl/',
                                                                  th=0.02,
                                                                  order_stderr=2,
                                                                  lam_overtime=2.5e4,
