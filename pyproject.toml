@@ -23,8 +23,8 @@ write_to = "_version.py"  # Path to write the version file
 [project.scripts]
 produce_aod2netcdf = "surfradpy.scripts.aod2netcdf:run"
 qcrad2ncei = "surfradpy.scripts.qcrad2ncei:main"
-produce_aodinv1 = 'surfradpy.scripts.aodinversion:produce_aodinversion1_01'
-produce_aodinv1catchup = 'surfradpy.scripts.aodinversion:produce_aodinversion1_01_catchup'
+aodinv1 = 'surfradpy.scripts.aodinversion:produce_aodinversion1_01'
+aodinv1cu = 'surfradpy.scripts.aodinversion:produce_aodinversion1_01_catchup'
 produce_aod_realtime = 'surfradpy.scripts.produce_realtime_aod:routine'
 produce_aod_realtime_catchup = 'surfradpy.scripts.produce_realtime_aod:catchup'
 radflux2netcdf = 'surfradpy.scripts.radflux2netcdf:main'

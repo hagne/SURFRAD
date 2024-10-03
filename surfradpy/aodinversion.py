@@ -9,6 +9,7 @@ import xarray as xr
 import pathlib as pl
 import atmPy.aerosols.physics.column_optical_properties as atmcop
 import pandas as pd
+import setproctitle
 
 
 class AODInversion(object):
@@ -126,14 +127,17 @@ class AODInversion(object):
             import psutil
             import time
             import multiprocessing
-
             
+
+            multiprocessing.current_process()
+            # print(pprocess.name)
             timeout = None
             sleeptime = 1
             # iterator = iter([1, 2, 3, 4, 5])
             iterator = self.workplan.iterrows()
             
             processes = []
+            i = 0
             while 1:      
                 for process in processes:
                     if process.is_alive():
@@ -171,14 +175,24 @@ class AODInversion(object):
                         else:         
                             time.sleep(sleeptime)
                             continue
-                    process = multiprocessing.Process(target=self.run_single_row, args=(row,))
+                    i+=1
+                    processname_append = f'{i:03d}'
+                    process = multiprocessing.Process(target=self.run_single_row, args=(row,processname_append,))
+                    # print('hallo?!?!', flush = True)
                     process.daemon = True
                     processes.append(process)
                     process.start()
             
             print("All processes completed.")
     
-    def run_single_row(self, row, verbose = False):
+    def run_single_row(self, row, processname_append = None, verbose = False):
+        if not isinstance(processname_append, type(None)):
+            on = setproctitle.getproctitle()
+            on = on.split('/')[-1]
+            # print(f'old: {on}')
+            new_name = f'{on}_{processname_append}'
+            # print(f'new: {new_name}')
+            setproctitle.setproctitle(new_name)
         ds = xr.open_dataset(row.p2in)
         # unify the nominal channel centers
         ds.channel.values[ds.channel == 673] = 670

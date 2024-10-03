@@ -106,7 +106,7 @@ def produce_aodinversion1_01_catchup():
     # run.workplan = run.workplan.sample(frac = 1)
     print(f'workplan.shape: {run.workplan.shape}')
     
-    run.run_product(max_processes=25)
+    run.run_product(max_processes=20)
     
     reporter.wrapup()
     return
