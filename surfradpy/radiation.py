@@ -9,8 +9,8 @@ import pandas as pd
 import numpy as np
 
 import pathlib as pl
-import ipywidgets as widgets
-from IPython.display import display
+# import ipywidgets as widgets
+# from IPython.display import display
 import xarray as xr
 
 def read_surfrad(p2f):
@@ -71,7 +71,10 @@ def read_surfrad(p2f):
     return ds
 
 
-def generate_netcdfs(gui = False):
+def generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
+                     p2fldout = '/nfs/grad/surfrad/products_level1/radiation_netcdf/',
+                     gui = False,
+                     verbose = False):
     """
     Convertes all the radiation data from ascii to netcdf. In principle I could 
     use the NCEI data ... I think there was additional data that is not stored 
@@ -87,10 +90,10 @@ def generate_netcdfs(gui = False):
     None.
 
     """
-    p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/'
+    
     p2fld = pl.Path(p2fld)
     
-    p2fldout = '/export/htelg/data/grad/surfrad/radiation'
+    
     p2fldout = pl.Path(p2fldout)
     
     sites = ['dra','bon','fpk','gwn','psu','sxf','tbl']
@@ -100,6 +103,8 @@ def generate_netcdfs(gui = False):
     progressbars = {}
     
     if gui:
+        import ipywidgets as widgets
+        from IPython.display import display
         for site in sites:
             pg = widgets.IntProgress(min=0) # instantiate the bar
             lab = widgets.Label(value = '0')
@@ -107,17 +112,25 @@ def generate_netcdfs(gui = False):
             f = widgets.HBox([sitelab,pg, lab])
             display(f) # display the bar
             progressbars[site] = [pg,lab]
-        
+    totlnum = 0   
     for site in sites:
         start = pd.Timestamp.now()
         
         if gui:
             pg,lab = progressbars[site]
         p2fldouts = p2fldout.joinpath(site)
+        if verbose:
+            print(f'output folder:{p2fldouts}')
         p2fldouts.mkdir(exist_ok=True)
         p2flds = p2fld.joinpath(site)
+        if verbose:
+            print(f'p2flds: {p2flds}')
+            
         years = [int(y.name) for y in p2flds.glob('*') if y.is_dir()]
         years.sort()
+        if verbose:
+            print(f'years: {years}')
+            
         dfy = pd.DataFrame(index = years)
         # dfy = dfy.truncate(2014, 2021)
         yearcontent = []
@@ -130,7 +143,6 @@ def generate_netcdfs(gui = False):
             yearcontent.append(fns)
     
         fns = pd.concat(yearcontent)
-    
         fns.sort_index(inplace=True)
     
         if truncate:
@@ -140,6 +152,8 @@ def generate_netcdfs(gui = False):
         
         if not overwrite:
             fns = fns[~(fns.apply(lambda row: row.p2foutfull.is_file(), axis = 1))]
+            
+        totlnum += fns.shape[0]
         
         if gui:
             pgmax = fns.shape[0]
@@ -156,6 +170,9 @@ def generate_netcdfs(gui = False):
             ds = read_surfrad(row.p2f)
             # assert(False)
             ds.to_netcdf(row.p2foutfull)
+    out = dict(numprocessed = totlnum,
+              )
+    return out
             
             
 def concat2hourlymean(gui = False):
