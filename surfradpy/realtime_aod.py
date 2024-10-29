@@ -360,6 +360,9 @@ class mfrsr_AOD_lev0(object):
                                                                  lands=lands)
         lands = sii.direct_normal_irradiation.lands
 
+        # save the gam result for the qa/qc checks
+        lands.v0prediction_gam.dataset.to_netcdf('/home/grad/htelg/data/grad/surfrad/mfrsr/langleys_gam_tbl.nc')
+
         ds = sii.direct_normal_irradiation.od_co2_ch4_h2o.transpose('datetime', 'channel')
         ds = ds.rename_vars({var: f'od_{var.split("_")[0]}' for var in ds})
         ds['aod'] = sii.direct_normal_irradiation.aod.transpose('datetime', 'channel')
