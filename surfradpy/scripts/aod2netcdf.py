@@ -14,6 +14,7 @@ import productomator.lab as prolab
 import surfradpy.aod2netcdf as aod2nc
 import pandas as pd
 import warnings
+import subprocess
 
 def run():
     reporter = prolab.Reporter('aod2netcdf', 
@@ -31,11 +32,28 @@ def run():
     
     max2process = 3000
     a2n.workplan = a2n.workplan.iloc[-max2process:]
-    
-    print(f'no 2 be processed: {a2n.workplan.shape[0]}')
+    print(a2n.workplan)
+    nooffiles = a2n.workplan.shape[0]
+    print(f'no 2 be processed: {nooffiles}')
     
     a2n.process(reporter=reporter, if_error='skip')
     
+    #### rsync
+    print(f'errors: {reporter.errors}')
+    # if False:
+    if (nooffiles - reporter.errors)> 0:
+        print('starting rsync', end = '...')
+        subprocess.run(
+                        ["rsync", "-av", f"{a2n.path2basefld_out}/", 
+                                          f"/nfs/iftp/aftp/g-rad/surfrad/aod_netcdf/v{a2n.version}/"],
+                        check=True
+                        )
+        print('done')
+    else:
+        print('no files processed => resync skpped.')
+        
+        
+        
     reporter.wrapup()
         
     
