@@ -241,7 +241,7 @@ def chuck_file2dataset(path2file, verbose=False):
     
     df = pd.read_csv(p2f, 
                      # delim_whitespace=True, #deprecated
-                     sep='\s+',
+                     sep=r'\s+',
                     )
 
     # at some point the column names went from upper and lower case to just lower case
@@ -292,6 +292,7 @@ class Convert(object):
                  path2fld_in='/nfs/iftp/aftp/g-rad/surfrad/RadFlux/',
                  path2fld_out='/nfs/grad/surfrad/products_level4/radflux/v{version}/',
                  sites=['tbl', 'dra', 'fpk', 'gwn', 'psu', 'sxf', 'bon'],
+                 file_extension = 'lwl',
                  start = None,
                  overwrite = False,
                  reporter = None
@@ -303,6 +304,7 @@ class Convert(object):
         self.start = start
         self.overwrite = overwrite
         self.reporter = reporter
+        self.file_extension = file_extension
         self._workplan = None
 
     def process(self, verbose=False, error_handling='raise'):
@@ -335,7 +337,7 @@ class Convert(object):
             start = self.start
             start_dt = False
             if isinstance(start, type(None)):
-                patterns = ['**/*.lwl',]
+                patterns = [f'**/*.{self.file_extension}',]
             else:
                 try:
                     # Try parsing timedelta first
@@ -348,14 +350,21 @@ class Convert(object):
                     except ValueError:
                         raise ValueError(f"Unable to parse '{start}' as either timedelta or datetime")
 
-                patterns = [f'{y:04d}/*.lw1' for y in range(start_dt.year, pd.Timestamp.now().year + 1)]
+                patterns = [f'{y:04d}/*.{self.file_extension}' for y in range(start_dt.year, pd.Timestamp.now().year + 1)]
                 
+            self.tp_patterns = patterns    
+            
             wp = pd.DataFrame()
             # loop over sites
+            verbose = True
             for fld in self.p2fld_in.glob('*'):
+                if verbose:
+                    print(f'checking: {fld}')
                 if not fld.is_dir():
                     continue
                 elif fld.name not in self.sites:
+                    if verbose:
+                        print(f'{fld.name} not in {self.sites}')
                     continue
                 
                 for pat in patterns:
