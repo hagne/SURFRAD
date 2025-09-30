@@ -112,7 +112,12 @@ def main():
     # with open(log_p, 'a') as log:
     #     log.write('run started {}\n========='.format(pd.Timestamp(datetime.datetime.now())))
     now = pd.Timestamp.now()
-    messages = ['run started {}\n========='.format(now)]
+    msg = 'run started {}\n========='.format(now)
+    messages = [msg]
+    if args.verbose:
+         print(msg)
+
+         
     errors = []
     try:
         df = NCEI.qcrad2ncei(folder_in = args.folder_in,

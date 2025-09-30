@@ -446,6 +446,11 @@ def qcrad2ncei(folder_in = '/Volumes/HTelg_4TB_Backup/GRAD/SURFRAD/qcrad_v3/',
                test = False,
                verbose = False
               ):
+    if verbose:
+         print(f'folder in: {folder_in}')
+         print(f'folder out netcdf: {folder_out}')
+         print(f'folder out rar: {folder_out_tar}')
+         
     fname_cdl = _os.path.join(_os.path.split(__file__)[0], 'SURFRAD_QCrad_metadata.cdl')#'../data/SURFRAD_QCrad_metadata.cdl'
 
     # generate a DataFrame with all files in sub folder and populate with relevant data
