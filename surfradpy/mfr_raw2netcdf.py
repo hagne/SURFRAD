@@ -11,6 +11,7 @@ class MfrsrRawToNetcdf:
                  name_pattern_netcdf, 
                  version = '0.1',
                  reporter = None,
+                 verbose = True,
                  **kwargs,
                  ):
         """
@@ -63,6 +64,7 @@ class MfrsrRawToNetcdf:
         self._workplan = None
         self.reporter = reporter
         self.freq='d'
+        self.verbose = verbose
 
     def _make_masterplan_out(self):
         # get all the files that should at the end exist
@@ -71,6 +73,8 @@ class MfrsrRawToNetcdf:
         mp_in = self._masterplan_in
         while 1:
             # print(i)
+            if self.verbose:
+                print(f'opening file {mp_in.iloc[i].p2f_in}', end = ' ... ')
             if i == 10:
                 print('lets not do this')
                 break
@@ -78,8 +82,12 @@ class MfrsrRawToNetcdf:
                 opt = atmsrf.read_raw(mp_in.iloc[i].p2f_in)
                 break
             except atmsrf.FileCorruptError:
+                if self.verbose:
+                    print('corrupt, try next')
                 i += 1
                 continue
+        if self.verbose:
+            print('done') 
 
         start = pd.to_datetime(opt.dataset.datetime.values[0])
         
