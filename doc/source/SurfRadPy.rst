@@ -4,18 +4,18 @@ SurfRadPy package
 Submodules
 ----------
 
-SurfRadPy.NCEI module
+surfradpy.NCEI module
 ---------------------
 
-.. automodule:: SurfRadPy.NCEI
+.. automodule:: surfradpy.NCEI
     :members:
     :undoc-members:
     :show-inheritance:
 
-SurfRadPy.surfrad module
+surfradpy.surfrad module
 ------------------------
 
-.. automodule:: SurfRadPy.surfrad
+.. automodule:: surfradpy.surfrad
     :members:
     :undoc-members:
     :show-inheritance:
@@ -24,7 +24,7 @@ SurfRadPy.surfrad module
 Module contents
 ---------------
 
-.. automodule:: SurfRadPy
+.. automodule:: surfradpy
     :members:
     :undoc-members:
     :show-inheritance:

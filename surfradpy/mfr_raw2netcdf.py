@@ -9,6 +9,7 @@ class MfrsrRawToNetcdf:
                  path_in,
                  path_out,
                  name_pattern_netcdf, 
+                 glob_pattern_raw = "**/*.xmd",
                  version = '0.1',
                  reporter = None,
                  verbose = True,
@@ -32,6 +33,9 @@ class MfrsrRawToNetcdf:
             placeholders for year, month, day, and kwargs
             (e.g., 'frc_{serialnumber}_{year}{month}{day}.nc').
             example:  'frc_{serialnumber}_{year}{month}{day}.nc'
+        glob_pattern_raw: str, optional
+            Glob pattern to find raw MFRSR files within `path_in`. Defaults to
+            '**/*.xmd'.
         version: str, optional
             Version of the conversion script. Defaults to '0.1'.
         reporter: object, optional
@@ -58,6 +62,7 @@ class MfrsrRawToNetcdf:
 
         name_pattern_netcdf = name_pattern_netcdf.format(year = '{year}', month = '{month}', day = '{day}', **self.kwargs)
         self.name_pattern_netcdf = name_pattern_netcdf
+        self.glob_pattern_raw = glob_pattern_raw
 
         self._masterplan_in = None 
         self._masterplan_out = None
@@ -115,7 +120,7 @@ class MfrsrRawToNetcdf:
     
     def _make_masterplan_in(self):
         # Get all raw files
-        df  = pd.DataFrame(self.path_in.glob('**/*.xmd'), columns=['p2f_in'])
+        df  = pd.DataFrame(self.path_in.glob(self.glob_pattern_raw), columns=['p2f_in'])
         df = df.sort_values('p2f_in')
         df['fname'] = df.apply(lambda row: row.p2f_in.name, axis = 1)
         return df
