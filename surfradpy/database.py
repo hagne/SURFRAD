@@ -16,7 +16,7 @@ class SurfradDatabase:
     """
     Class to handle SURFRAD database connections and queries.
     """
-    def __init__(self, path2db: str):
+    def __init__(self, path2db: str, create_if_missing: bool = False):
         """
         Initialize the SurfradDatabase with the path to the database file.
 
@@ -25,6 +25,9 @@ class SurfradDatabase:
         path2db: str
             Path to the SQLite database file.
         """
+        if not create_if_missing:
+            if not pl.Path(path2db).exists():
+                raise FileNotFoundError(f"Database file {path2db} does not exist. Set create_if_missing=True to create a new database.")
         self.path2db = pl.Path(path2db)
 
     def snapshot(self, max_rows=20, include_schema=True):
@@ -137,3 +140,35 @@ class SurfradDatabase:
 
         out['deployments'] = deployments
         return out
+    
+    def execute_query(self, query: str):
+        """
+        Execute a custom SQL query on the database and return the result as a pandas DataFrame.
+
+        Parameters
+        ----------
+        query : str
+            The SQL query to execute.
+
+        Returns
+        -------
+        pd.DataFrame
+            The result of the query.
+
+        Examples
+        --------
+        >>> db = SurfradDatabase('surfrad.db')
+        >>> df = db.execute_query('SELECT * FROM instruments_mfrsr WHERE instrument_sn = 648')
+        """
+        with sqlite3.connect(self.path2db) as db:
+            cur = db.cursor()
+            try:
+                cur.execute(query)
+                if cur.description is None:
+                    db.commit()
+                    return None
+                rows = cur.fetchall()
+                col_names = [desc[0] for desc in cur.description]
+            finally:
+                cur.close()
+        return pd.DataFrame(rows, columns=col_names)
