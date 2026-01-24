@@ -1,8 +1,10 @@
 import pathlib as pl
+import site
 import atmPy.data_archives.NOAA_ESRL_GMD_GRAD.surfrad.surfrad as atmsrf
 import xarray as xr
 import pandas as pd
-
+import surfradpy.database as sfp_db
+import socket
 
 class MfrsrRawToNetcdf:
     def __init__(self, 
@@ -10,7 +12,9 @@ class MfrsrRawToNetcdf:
                  path_out,
                  name_pattern_netcdf, 
                  glob_pattern_raw = "**/*.xmd",
-                 version = '0.1',
+                 site = None,
+                 version = '0.2',
+                 path2surfrad_database = None,
                  reporter = None,
                  verbose = True,
                  **kwargs,
@@ -31,13 +35,18 @@ class MfrsrRawToNetcdf:
         name_pattern_netcdf: str
             Filename pattern for the output NetCDF files. Can contain
             placeholders for year, month, day, and kwargs
-            (e.g., 'frc_{serialnumber}_{year}{month}{day}.nc').
-            example:  'frc_{serialnumber}_{year}{month}{day}.nc'
+            example 1:  In subfolders per year: '{year}/tbl_{serialnumber}_{year}{month}{day}.nc'
+            example 2:  All in one folder: 'frc_{serialnumber}_{year}{month}{day}.nc'
+        site: str, optional
+            Thre letter site code (e.g., 'tbl'). Used for validation against the SURFRAD database.
         glob_pattern_raw: str, optional
             Glob pattern to find raw MFRSR files within `path_in`. Defaults to
             '**/*.xmd'.
         version: str, optional
             Version of the conversion script. Defaults to '0.1'.
+        path2surfrad_database: str, optional
+            Path to the SURFRAD database file. If provided, additional metadata and tests are performed. 
+            E.g. if serialnumber and head_id correspond. If the instrumment was deployed at that time at that site etc.
         reporter: object, optional
             An object to report progress or issues. Not yet implemented.
         **kwargs:
@@ -48,8 +57,8 @@ class MfrsrRawToNetcdf:
         -------
         None.
 
-        """
-
+        """ 
+        kwargs['site'] = site
         for k,v in kwargs.items():
             setattr(self, k, v)
         kwargs['version'] = version
@@ -60,7 +69,17 @@ class MfrsrRawToNetcdf:
         self.path_out = pl.Path(path_out.format(**self.kwargs))
         self.path_out.mkdir(exist_ok=True, parents=True)
 
-        name_pattern_netcdf = name_pattern_netcdf.format(year = '{year}', month = '{month}', day = '{day}', **self.kwargs)
+        if isinstance(path2surfrad_database, str):
+            self.surfrad_db = sfp_db.SurfradDatabase(path2surfrad_database)
+        else:
+            self.surfrad_db = None
+
+
+        try:
+            name_pattern_netcdf = name_pattern_netcdf.format(year = '{year}', month = '{month}', day = '{day}', **self.kwargs)
+        except KeyError as e:
+            raise KeyError(f'Key: "{e.args[0]}" not found in kwargs. Please provide it when initializing the class MFRSRRawToNetcdf as an additional kwarg, e.g. site = "tbl".')
+        
         self.name_pattern_netcdf = name_pattern_netcdf
         self.glob_pattern_raw = glob_pattern_raw
 
@@ -150,8 +169,12 @@ class MfrsrRawToNetcdf:
                 # check if any new raw files have been produced, if not there is nothing to do
                 last_used_rawfile = ds.parent_files.split(',')[-1].strip()
                 last_used_rawfile = pl.Path(last_used_rawfile)
-                if mp_in.iloc[-1].p2f_in == last_used_rawfile:
-                    assert(False), 'No new raw files, nothing to do here'
+                if mp_in.iloc[-1].p2f_in == last_used_rawfile: # no new raw files
+                    print('No new raw files to process, workplan is empty')
+                    wp_in = mp_in.iloc[:0]
+                    self._workplan = wp_in
+                    return self._workplan
+                    # assert(False), 'No new raw files, nothing to do here'
                     
                 if ds.day_complete == 'True':
                     print('Last file was complet')
@@ -170,7 +193,16 @@ class MfrsrRawToNetcdf:
             self._workplan = wp_in
         return self._workplan
     
-    def process(self):
+    def process(self, dryrun = False, verbose = True):
+        """ Process the workplan
+        Parameters
+        ----------
+        dryrun : bool, optional
+            If True, a single file will be processed but not saved. The default is False.
+        verbose : bool, optional
+            If True, print progress messages. The default is True.
+            
+        """
         # keep opening files until the start and end of the file are on a different day
         def open_next_row(wpiter, verbose = True):
             """ This opens the next readable (non-corrupt) file"""
@@ -232,6 +264,10 @@ class MfrsrRawToNetcdf:
                 print('more than one day in files, concat and truncate')
             
             # ds_rawlist should now include all files that have data on this day
+            # lets check if all head_ids are identical
+            head_ids = [ds.dataset.serial_no for ds in ds_rawlist]
+            assert(len(set(head_ids))==1), f'Head IDs in the raw files do not match: {head_ids}'
+
             # lets concatonate and truncate them
             dsout = xr.concat([i.dataset for i in ds_rawlist], 'datetime')
             
@@ -239,19 +275,74 @@ class MfrsrRawToNetcdf:
 
             dsout = dsout.drop_duplicates('datetime', keep = 'last') # in rare cases the data is present in multiple files
             dsout = dsout.sel(datetime = slice(start_file,end))
-            
-            dsout.attrs = ds_rawlist[0].dataset.attrs
-            dsout.attrs.pop('path2file')
-            dsout.attrs['day_complete'] = complete.__str__()
-            dsout.attrs['parent_files'] = ', '.join([i.dataset.attrs['path2file'].as_posix() for i in ds_rawlist])
-            dsout.attrs['product_version'] = self.version
-            dsout.attrs['info'] = 'Original raw files concatinated/truncated to daily files and converted to netcdf files'
-            
+
+            # check metadata consistency inculding database information
+            ## get metadata from surfrad database
+            query = f'SELECT * FROM instruments_mfrsr WHERE Logger_ID="${dsout.serial_no}"'
+            db_meta = self.surfrad_db.execute_query(query)
+            assert(db_meta.shape[0] == 1), f'No unique entry found in instruments_mfrsr for Logger_ID = {dsout.serial_no}. Found {db_meta.shape[0]} entries.'
+            db_meta = db_meta.iloc[0]
+
+            ## where was the instrument deployed at the time of interest
+
+            query = f'SELECT * FROM deployments WHERE instrument_sn = "{db_meta.Instrument}"'
+            dep_df = self.surfrad_db.execute_query(query)
+            dep_df['Date_start'] = pd.to_datetime(dep_df.Date_start)
+            dep_df = dep_df.sort_values('Date_start')
+            dep_df = dep_df[dep_df.Date_start <= start_file ] # remove deployments after the file date
+            assert(dep_df.shape[0]>0), f'No deployment found for instrument {db_meta.Instrument} before {start_file}.'
+            deployment = dep_df.iloc[-1]     #last_install_before_file_date
+
+            self.tp_deployment = deployment
+            assert(deployment.Date_stop == 'present' or pd.to_datetime(deployment.Date_stop) >= start_file), f'Instrument {db_meta.Instrument} was not deployed at {start_file}. Deployment ended at {deployment.Date_stop}.'
+
+            ## Double check that the deployment site matches the expected site
+
+            assert(deployment.Location.lower() == self.site.lower()), f'Instrument {db_meta.Instrument} was not deployed at site {self.site} at {start_file}, but at {deployment.Location}.'
+
+            ## get site metadata
+            query = f'SELECT * FROM sites WHERE abb="{self.site}"'
+            site_meta = self.surfrad_db.execute_query(query).iloc[0]
+
+            self.tp_ds_rawlist = ds_rawlist
+            self.tp_db_meta = db_meta
+            self.tp_site_meta = site_meta
+
+            # add attributes
+            self.tp_ri = ds_rawlist[0]
+            dsraw = ds_rawlist[0].dataset
+            attrs = {}
+            attrs['info'] = 'SURFRAD MFRSR raw data converted to netcdf format, concatonated and truncated to daily files in UTC time.'
+            attrs['source'] = 'This netcdf file was created by surfradpy.mfr_raw2netcdf.MfrsrRawToNetcdf'
+            attrs['processing_date'] = pd.Timestamp.now().isoformat()
+            attrs['processing_server'] = socket.gethostname()
+            attrs['product_version'] = self.version
+            attrs['site'] = site_meta.abb
+            attrs['site_name'] = site_meta.name
+            attrs['elevation'] = site_meta.elevation
+            attrs['latitude'] = site_meta.latitude
+            attrs['longitude'] = site_meta.longitude
+            attrs['measurement_sequenc'] = dsraw.attrs['measurement_sequenc']
+            attrs['instrument_type'] = dsraw.attrs['instrument_type']
+            attrs['sn_mfrsr'] = db_meta.Instrument
+            attrs['logger_id'] = db_meta.Logger_ID
+            attrs['head_id'] = db_meta.Head_ID
+            attrs['parent_files'] = ', '.join([i.dataset.attrs['path2file'].as_posix() for i in ds_rawlist])
+            attrs['day_complete'] = complete.__str__()
+            dsout.attrs = attrs
             # create the pathname and save under that name
             
             dt = start_file
             p2f_out = self.path_out.joinpath(self.name_pattern_netcdf.format(year = f'{dt.year:04d}', month = f'{dt.month:02d}', day = f'{dt.day:02d}'))
-            
+
+            self.tp_p2fout = p2f_out
+            self.tp_dsout = dsout
+            self.tp_start_file = start_file
+            # assert(False), 'debug stop'
+            if dryrun:
+                if verbose:
+                    print('dryrun active, skip saving')
+                return {'dsout': dsout, 'p2f_out': p2f_out, 'active': active, 'start_file': start_file, 'complete': complete}
             if dsout.datetime.shape[0] == 0:
                 if verbose:
                     print('no data in dataset, skip saving')
@@ -260,10 +351,14 @@ class MfrsrRawToNetcdf:
                     if verbose:
                         print('File exists, skip saving')
                 else:
+                    p2f_out.parent.mkdir(parents=True, exist_ok=True)
                     dsout.to_netcdf(p2f_out)
             return {'dsout': dsout, 'p2f_out': p2f_out, 'active': active, 'start_file': start_file, 'complete': complete}
-        # Keep rocessing
+        # Keep processing
         wp_in = self.workplan
+        if wp_in.shape[0] == 0:
+            print('Workplan is empty, nothing to do')
+            return
         wpiter = wp_in.iterrows()
         active = False
         start_file = False
@@ -275,12 +370,15 @@ class MfrsrRawToNetcdf:
             # print(f'make next file of the day ({i})')
             print('.', end = '')
             out = make_file_of_the_day(wpiter, active, start_file, verbose = False)
+            if dryrun:
+                print('dryrun active, stop after first file')
+                break
             active = out['active']
             complete = out['complete']
             start_file = out['start_file'] + pd.to_timedelta(1, 'd')
             dsout = out['dsout']
             i += 1
-        return dsout
+        return out
 
 
 

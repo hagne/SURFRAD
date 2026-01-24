@@ -130,8 +130,8 @@ class SurfradDatabase:
             inst_list.append(df)
 
         deployments = pd.concat(inst_list)
-        deployments['Date_stop'] = deployments.Date_stop.astype(str)
-
+        deployments['Date_stop'] = deployments.Date_stop.astype(str).str.lower() # this is a mixed format column ... also make sure 'present' is lowercase
+        deployments['Location'] = deployments['Location'].str.lower() # make sure location is lowercase
         # update the table
         if not dryrun:
             with sqlite3.connect(self.path2db) as db:

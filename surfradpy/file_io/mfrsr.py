@@ -34,64 +34,12 @@ Multi_Filter_32 = 2
 Type2 = 3
 Single_Channel = 4
 
-REPORT_END = 0  # default in setup_pp.c
-DATE_JOE = "joe"  # only mode we implement
-
-DEFAULT_GAP = -9998
-DEFAULT_NIGHTTIME = -9999
-DEFAULT_SEP = " "  # setup_pp.c default
-DEFAULT_TZ_SECONDS = 0  # setup_pp.c default "timezone=0"
-
-
-# -----------------------------
-# Minimal fmt4/sstoa equivalents
-# -----------------------------
-def sstoa(v: int) -> str:
-    return str(int(v))
-
-
-def fmt4(x: float) -> str:
-    """
-    Best-effort stand-in for the C fmt4(): prints a float in a compact way.
-    This is only used for non-gap values when separator != NULL (default is " ").
-    """
-    # Preserve exact integers nicely
-    if math.isfinite(x) and abs(x - round(x)) < 1e-12:
-        return str(int(round(x)))
-
-    ax = abs(x)
-    if ax == 0:
-        return "0"
-
-    # Keep ~4 significant digits-ish without being too noisy.
-    if ax >= 10000 or ax < 0.001:
-        s = f"{x:.4e}"
-    elif ax >= 1000:
-        s = f"{x:.1f}"
-    elif ax >= 100:
-        s = f"{x:.2f}"
-    elif ax >= 10:
-        s = f"{x:.3f}"
-    else:
-        s = f"{x:.4f}"
-
-    # Trim trailing zeros/dot for readability
-    if "e" not in s and "E" not in s:
-        s = s.rstrip("0").rstrip(".")
-    return s
-
 
 # -----------------------------
 # Time conversion (from rsrlibc.c)
 # -----------------------------
 DAYS_1900_1970 = 25568
 SECONDS_PER_DAY = 86400
-
-
-# def rsr_unix2j(secs: int) -> float:
-#     if secs < 0:
-#         return -1.0
-#     return float(DAYS_1900_1970) + (float(secs) / SECONDS_PER_DAY)
 
 
 def rsr_j2unix(jdays: float) -> int:
@@ -101,84 +49,6 @@ def rsr_j2unix(jdays: float) -> int:
     # +0.5 for rounding like C
     secs = int(jdays * 86400.0 + 0.5)
     return secs if secs >= 0 else -1
-
-
-# -----------------------------
-# Solar geometry (ported from sunae.c/h)
-# -----------------------------
-# @dataclass
-# class AEP:
-#     az: float = 0.0
-#     el: float = 0.0
-#     ra: float = 0.0
-#     dec: float = 0.0
-#     ha: float = 0.0
-#     eqt: float = 0.0
-#     tst: float = 0.0
-
-
-# def _mod2pi(x: float) -> float:
-#     twopi = 2.0 * math.pi
-#     y = x % twopi
-#     return y
-
-
-# def sunae(year: int, doy: int, hour: float, lat_deg: float, lon_deg: float, aep: AEP) -> float:
-#     """
-#     Port of sunae() from sunae.c (sufficient for correct_direct()).
-#     Returns tst (true solar time hours), and fills aep with angles (radians).
-#     """
-#     rlat = math.radians(lat_deg)
-#     rlon = math.radians(lon_deg)
-
-#     # Leap year handling like C
-#     leap = (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0))
-#     ydays = 366 if leap else 365
-
-#     gamma = (2.0 * math.pi / ydays) * (doy - 1 + (hour - 12.0) / 24.0)
-
-#     eqtime = 229.18 * (
-#         0.000075
-#         + 0.001868 * math.cos(gamma)
-#         - 0.032077 * math.sin(gamma)
-#         - 0.014615 * math.cos(2 * gamma)
-#         - 0.040849 * math.sin(2 * gamma)
-#     )
-
-#     decl = (
-#         0.006918
-#         - 0.399912 * math.cos(gamma)
-#         + 0.070257 * math.sin(gamma)
-#         - 0.006758 * math.cos(2 * gamma)
-#         + 0.000907 * math.sin(2 * gamma)
-#         - 0.002697 * math.cos(3 * gamma)
-#         + 0.00148 * math.sin(3 * gamma)
-#     )
-
-#     time_offset = eqtime + 4.0 * lon_deg  # minutes (timezone handled by caller; tu uses UTC default)
-#     tst = hour * 60.0 + time_offset  # minutes
-#     ha = math.radians((tst / 4.0) - 180.0)
-
-#     cos_zen = math.sin(rlat) * math.sin(decl) + math.cos(rlat) * math.cos(decl) * math.cos(ha)
-#     cos_zen = max(-1.0, min(1.0, cos_zen))
-#     zen = math.acos(cos_zen)
-#     el = (math.pi / 2.0) - zen
-
-#     # Azimuth
-#     sin_az = -(math.sin(ha) * math.cos(decl)) / max(1e-12, math.cos(el))
-#     cos_az = (math.sin(decl) - math.sin(rlat) * math.sin(el)) / max(1e-12, (math.cos(rlat) * math.cos(el)))
-#     az = math.atan2(sin_az, cos_az)
-#     az = _mod2pi(az)
-
-#     # Fill outputs
-#     aep.az = az
-#     aep.el = el
-#     aep.dec = decl
-#     aep.ha = ha
-#     aep.eqt = eqtime
-#     aep.tst = tst / 60.0  # hours
-
-#     return aep.tst
 
 
 # -----------------------------
@@ -254,6 +124,339 @@ class RSRFile:
     record: RSRRec = field(default_factory=RSRRec)
 
     _gap_skip: int = -1  # mirrors static skip in rsr_next_record
+
+    def __post_init__(self):
+        self._dataset = None
+
+    @property
+    def dataset(self) -> _xr.Dataset:
+        if isinstance(self._dataset, type(None)):
+            # loop records to get the data
+            i = 0
+            data = []
+            # while i < 100:
+            while True:
+                i += 1
+                # r = rsr_next_record(inp)
+                r = self.next_record
+                if r.n_data < 0:
+                    break
+
+                if r.is_gap:
+                    vec = None
+                else:
+                    vec = [float(v) for v in r.data[:r.n_data]]
+                # print('doing it')
+                emit_data_out = self.pad_data(vec, 
+                                        # sep=DEFAULT_SEP, 
+                                        # nighttime_placeholder=DEFAULT_NIGHTTIME, 
+                                        # gap_placeholder=DEFAULT_GAP,
+                                        #   out = out
+                                        )
+
+                row = [self.record.obs_time] +  emit_data_out['parts_f']
+                data.append(row)
+                
+
+            data = np.array(data)
+            df = _pd.DataFrame(data, index = _pd.to_datetime(data[:,0], unit='s'))
+            df.index.name = 'datetime'
+
+            if self.head.band_on == 0:
+                instrument = 'mfr'
+            elif self.head.band_on == 1:
+                instrument = 'mfrsr'
+            else:
+                assert(False), f'nop, not possible! '
+        
+            di = 7
+            si = 2
+            alltime = df.iloc[:,si: si+di]
+            
+            # out['df'] = df.copy()
+            if instrument == 'mfr':
+                alltime.columns = range(7)
+                alltime.columns.name = 'channel'
+                
+                ds = _xr.Dataset()
+                ds['alltime'] = alltime
+                # obs = atmradobs.GlobalHorizontalIrradiation(ds)
+            
+            elif instrument == 'mfrsr':
+                si = 11
+                global_horizontal = df.iloc[:,si: si+di]
+                si =  18
+                diffuse_horizontal = df.iloc[:,si: si+di]
+                si =  25
+                direct = df.iloc[:,si: si+di]
+                
+                for dft in [alltime, global_horizontal, diffuse_horizontal, direct]:
+                    dft.columns = range(7)
+                    dft.columns.name = 'channel'
+                
+                ds = _xr.Dataset()
+                # ds['sun_position'] = sun_position
+                ds['alltime'] = alltime
+                ds['global_horizontal'] = global_horizontal
+                ds['diffuse_horizontal'] = diffuse_horizontal
+                ds['direct_horizontal'] = direct
+
+            # add metadata
+            ds.attrs['instrument'] = instrument
+            ds.attrs['start_time'] = _pd.to_datetime(self.start_time, unit='s')
+            ds.attrs['avg_period'] = self.head.avg_period
+            ds.attrs['sample_rate'] = self.head.sample_rate
+            ds.attrs['logger_id'] = self.head.logger_id
+            ds.attrs['head_id'] = self.head.head_id if self.inst_type == Type2 else 'N/A'
+            ds.attrs['soft_rev'] = self.head.soft_rev
+            ds.attrs['latitude'] = self.head.latitude
+            ds.attrs['longitude'] = self.head.longitude
+            ds.attrs['band_on'] = self.head.band_on
+            ds.attrs['diodes'] = self.head.diodes
+            self._dataset = ds
+        return self._dataset
+
+    @property
+    def next_record(self) -> RSRRec:
+        # End-of-buffer
+        if self.cdp_pos >= self.data_length:
+            self.record.n_data = -1
+            return self.record
+        self.record.is_gap = 0
+        reclen = self.data[self.cdp_pos]
+
+        if reclen == self.rec_len_day or reclen == self.rec_len_nite:
+            rec_n = self.rec_n_day if reclen == self.rec_len_day else self.rec_n_nite
+            if rec_n > 0:
+                if self.inst_type == Type2:
+                    vals = self._unpack_2(rec_n)
+                else:
+                    vals = self._unpack_1(rec_n)
+                # store into record.data (day-sized buffer in C)
+                self.record.data[:rec_n] = vals
+            self.record.n_data = rec_n
+            self.cdp_pos += reclen + 1
+
+        elif reclen == 0xFE:
+            # gap record indicator; mirrors static skip in C
+            if self._gap_skip == -1:
+                if self.cdp_pos + 4 >= self.data_length:
+                    raise ValueError("Truncated gap record")
+                self._gap_skip = (
+                    (self.data[self.cdp_pos + 1] << 24)
+                    + (self.data[self.cdp_pos + 2] << 16)
+                    + (self.data[self.cdp_pos + 3] << 8)
+                    + self.data[self.cdp_pos + 4]
+                )
+                if self._gap_skip <= 0:
+                    raise ValueError("Gap record skip count must be > 0")
+                for i in range(self.rec_n_day):
+                    self.record.data[i] = -9999
+
+            if self._gap_skip == 1:
+                self.cdp_pos += 5
+                self._gap_skip = -1
+            else:
+                self._gap_skip -= 1
+
+            self.record.is_gap = 1
+            self.record.n_data = self.rec_n_day
+
+        elif reclen == 0xFF:
+            self.record.n_data = -1
+            return self.record
+
+        else:
+            raise ValueError(f"Bad record length indicator {reclen} at byte {self.cdp_pos + self.header_length}")
+
+        self.curr_rec_no += 1
+        # set current time
+        self.record.obs_time = self.start_time + self.head.avg_period * (self.curr_rec_no - 1)
+        return self.record
+
+    def pad_data(self: RSRFile,
+                    vec: Optional[List[float]],
+                    # sep: str = DEFAULT_SEP,
+                    # nighttime_placeholder: Optional[int] = DEFAULT_NIGHTTIME,
+                    # gap_placeholder: int = DEFAULT_GAP,
+                    out = None,
+                ) -> dict:
+        if isinstance(out, type(None)):
+            out = {}
+
+        partsf: List[str] = []
+
+        # pre-type2: if nighttime record, prepend placeholders for missing daytime-only channels
+        if self.inst_type != Type2 and nighttime_placeholder is not None:
+            if self.record.n_data == self.rec_n_nite:
+                missing = self.rec_n_day - self.record.n_data
+                for _ in range(missing):
+                    partsf.append(np.nan)
+
+        # actual values
+        n = self.record.n_data
+        for i in range(n):
+            if self.record.is_gap:
+                partsf.append(np.nan)
+            else:
+                assert vec is not None
+                partsf.append(vec[i])
+
+        # type2: pad remaining with nighttime placeholders (if requested)
+        if self.inst_type == Type2:
+            for _ in range(self.rec_n_day - self.record.n_data):
+                partsf.append(np.nan)
+        out['parts_f'] = partsf
+        return out
+
+    def _unpack_2(self: RSRFile, n: int) -> List[int]:
+        # p points to the first byte that contains 12-bit groups
+        p = self.cdp_pos + ((n + 11) // 8)
+        nib = ((n - 1) % 8) < 4  # matches C: nib = (n - 1)%8 < 4;
+        out = [0] * n
+        for i in range(n):
+            if nib:
+                out[i] = ((self.data[p] & 0x0F) << 8) | self.data[p + 1]
+                p += 2
+            else:
+                out[i] = ((self.data[p + 1] >> 4) | (self.data[p] << 4)) & 0xFFFF
+                p += 1
+            nib = not nib
+
+        # apply signs from packed sign bits (start at cdp+1)
+        p = self.cdp_pos + 1
+        bm = 0x80
+        for i in range(n):
+            if self.data[p] & bm:
+                out[i] = -out[i]
+            bm >>= 1
+            if bm == 0:
+                p += 1
+                bm = 0x80
+        return out
+
+    def _unpack_1(self, n: int) -> List[int]:
+        p = self.cdp_pos + 1
+        out = [0] * n
+        i = 0
+        while i < n:
+            b0 = self.data[p]
+            b1 = self.data[p + 1]
+            b2 = self.data[p + 2]
+            out[i] = ((b1 >> 4) | (b0 << 4)) & 0xFFFF
+            if i + 1 < n:
+                out[i + 1] = (((b1 & 0x0F) << 8) | b2) & 0xFFFF
+            i += 2
+            p += 3
+
+        # apply bipolar conversion
+        poles = self.polar_day if n == self.rec_n_day else self.polar_nite
+        if poles is None:
+            return out
+
+        for i in range(n):
+            if poles[i]:
+                v = out[i]
+                if v >= 2048:
+                    out[i] = 2 * (v - 4096)
+                else:
+                    out[i] = 2 * v
+        return out
+    
+    def _rec_lengths(self: RSRFile) -> None:
+        h = self.head
+        if self.inst_type == Type2:
+            c = sum(1 for x in h.counter if x)
+            d = sum(1 for x in h.daytime if x)
+            n = sum(1 for x in h.all_the_time if x)
+            if h.band_on:
+                d += 3 * h.diodes
+
+            t = c + n + d
+            self.rec_n_day = t
+            self.rec_len_day = ((t + 3) // 4 + t * 3 + 1) // 2
+            t = c + n
+            self.rec_n_nite = t
+            self.rec_len_nite = 0 if t == 0 else ((t + 3) // 4 + t * 3 + 1) // 2
+
+            self.polar_day = None
+            self.polar_nite = None
+        else:
+            # nighttime channels
+            if h.met_on:
+                self.rec_n_nite = 10 if self.inst_type == Multi_Filter_32 else 3
+            else:
+                self.rec_n_nite = 0
+            for i in range(16):
+                if h.extra[i]:
+                    self.rec_n_nite += 1
+
+            self.rec_n_day = self.rec_n_nite
+            if h.band_on:
+                if self.inst_type == Single_Channel:
+                    self.rec_n_day += 4
+                else:
+                    self.rec_n_day += 3 * h.diodes
+
+            self.rec_len_day = int(math.ceil(self.rec_n_day * 1.5))
+            self.rec_len_nite = int(math.ceil(self.rec_n_nite * 1.5))
+
+            self.polar_day = [0] * self.rec_n_day
+            self.polar_nite = [0] * self.rec_n_nite if self.rec_n_nite > 0 else None
+            _find_poles(self)
+        self.record.data = [0] * self.rec_n_day
+        self.record.n_data = -2
+        self.record.obs_time = self.start_time
+        return
+
+    def _find_poles(self: RSRFile) -> None:
+        h = self.head
+        assert self.polar_day is not None
+
+        # shadowband channels are always unipolar (0)
+        d = 0
+        if h.band_on:
+            if self.inst_type == Single_Channel:
+                for _ in range(4):
+                    self.polar_day[d] = 0
+                    d += 1
+            else:
+                for _ in range(3 * h.diodes):
+                    self.polar_day[d] = 0
+                    d += 1
+
+        n = 0
+        # met channels are unipolar; multi_filter_32 has some bipolar met channels set per C
+        if h.met_on:
+            if self.inst_type != Multi_Filter_32:
+                for _ in range(3):
+                    self.polar_day[d] = 0
+                    d += 1
+                    if self.polar_nite is not None:
+                        self.polar_nite[n] = 0
+                    n += 1
+            else:
+                for _ in range(10):
+                    self.polar_day[d] = 0
+                    d += 1
+                    if self.polar_nite is not None:
+                        self.polar_nite[n] = 0
+                    n += 1
+                # C sets two of the met channels bipolar (indices relative to end)
+                self.polar_day[d - 5] = 1
+                self.polar_day[d - 8] = 1
+                if self.polar_nite is not None:
+                    self.polar_nite[n - 5] = 1
+                    self.polar_nite[n - 8] = 1
+
+        # extras inherit bipolar bit
+        for i in range(16):
+            if h.extra[i]:
+                self.polar_day[d] = h.bipolar[i]
+                d += 1
+                if self.polar_nite is not None:
+                    self.polar_nite[n] = h.bipolar[i]
+                n += 1
 
 
 def _unhead_1(inst_type: int, buf: bytes) -> tuple[RSRHeader, int]:
@@ -375,105 +578,7 @@ def _unhead_2(buf: bytes) -> tuple[RSRHeader, int]:
     return h, data_length
 
 
-def _rec_lengths(rf: RSRFile) -> None:
-    h = rf.head
-    if rf.inst_type == Type2:
-        c = sum(1 for x in h.counter if x)
-        d = sum(1 for x in h.daytime if x)
-        n = sum(1 for x in h.all_the_time if x)
-        if h.band_on:
-            d += 3 * h.diodes
-
-        t = c + n + d
-        rf.rec_n_day = t
-        rf.rec_len_day = ((t + 3) // 4 + t * 3 + 1) // 2
-
-        t = c + n
-        rf.rec_n_nite = t
-        rf.rec_len_nite = 0 if t == 0 else ((t + 3) // 4 + t * 3 + 1) // 2
-
-        rf.polar_day = None
-        rf.polar_nite = None
-    else:
-        # nighttime channels
-        if h.met_on:
-            rf.rec_n_nite = 10 if rf.inst_type == Multi_Filter_32 else 3
-        else:
-            rf.rec_n_nite = 0
-        for i in range(16):
-            if h.extra[i]:
-                rf.rec_n_nite += 1
-
-        rf.rec_n_day = rf.rec_n_nite
-        if h.band_on:
-            if rf.inst_type == Single_Channel:
-                rf.rec_n_day += 4
-            else:
-                rf.rec_n_day += 3 * h.diodes
-
-        rf.rec_len_day = int(math.ceil(rf.rec_n_day * 1.5))
-        rf.rec_len_nite = int(math.ceil(rf.rec_n_nite * 1.5))
-
-        rf.polar_day = [0] * rf.rec_n_day
-        rf.polar_nite = [0] * rf.rec_n_nite if rf.rec_n_nite > 0 else None
-        _find_poles(rf)
-
-    rf.record.data = [0] * rf.rec_n_day
-    rf.record.n_data = -2
-    rf.record.obs_time = rf.start_time
-
-
-def _find_poles(rf: RSRFile) -> None:
-    h = rf.head
-    assert rf.polar_day is not None
-
-    # shadowband channels are always unipolar (0)
-    d = 0
-    if h.band_on:
-        if rf.inst_type == Single_Channel:
-            for _ in range(4):
-                rf.polar_day[d] = 0
-                d += 1
-        else:
-            for _ in range(3 * h.diodes):
-                rf.polar_day[d] = 0
-                d += 1
-
-    n = 0
-    # met channels are unipolar; multi_filter_32 has some bipolar met channels set per C
-    if h.met_on:
-        if rf.inst_type != Multi_Filter_32:
-            for _ in range(3):
-                rf.polar_day[d] = 0
-                d += 1
-                if rf.polar_nite is not None:
-                    rf.polar_nite[n] = 0
-                n += 1
-        else:
-            for _ in range(10):
-                rf.polar_day[d] = 0
-                d += 1
-                if rf.polar_nite is not None:
-                    rf.polar_nite[n] = 0
-                n += 1
-            # C sets two of the met channels bipolar (indices relative to end)
-            rf.polar_day[d - 5] = 1
-            rf.polar_day[d - 8] = 1
-            if rf.polar_nite is not None:
-                rf.polar_nite[n - 5] = 1
-                rf.polar_nite[n - 8] = 1
-
-    # extras inherit bipolar bit
-    for i in range(16):
-        if h.extra[i]:
-            rf.polar_day[d] = h.bipolar[i]
-            d += 1
-            if rf.polar_nite is not None:
-                rf.polar_nite[n] = h.bipolar[i]
-            n += 1
-
-
-def rsr_open_file(path: str) -> RSRFile:
+def open_rsr(path: str) -> RSRFile:
     print(f"Opening RSR file: {path}")
     with open(path, "rb") as f:
         raw = f.read()
@@ -527,497 +632,13 @@ def rsr_open_file(path: str) -> RSRFile:
         start_time=start_time,
     )
 
-    _rec_lengths(rf)
+    rf._rec_lengths()
     rf.cdp_pos = 0
     rf.curr_rec_no = 0
     rf._gap_skip = -1
     return rf
 
 
-def _set_current_time(rf: RSRFile) -> None:
-    rf.record.obs_time = rf.start_time + rf.head.avg_period * (rf.curr_rec_no - 1)
-
-
-def _unpack_1(rf: RSRFile, n: int) -> List[int]:
-    p = rf.cdp_pos + 1
-    out = [0] * n
-    i = 0
-    while i < n:
-        b0 = rf.data[p]
-        b1 = rf.data[p + 1]
-        b2 = rf.data[p + 2]
-        out[i] = ((b1 >> 4) | (b0 << 4)) & 0xFFFF
-        if i + 1 < n:
-            out[i + 1] = (((b1 & 0x0F) << 8) | b2) & 0xFFFF
-        i += 2
-        p += 3
-
-    # apply bipolar conversion
-    poles = rf.polar_day if n == rf.rec_n_day else rf.polar_nite
-    if poles is None:
-        return out
-
-    for i in range(n):
-        if poles[i]:
-            v = out[i]
-            if v >= 2048:
-                out[i] = 2 * (v - 4096)
-            else:
-                out[i] = 2 * v
-    return out
-
-
-def _unpack_2(rf: RSRFile, n: int) -> List[int]:
-    # p points to the first byte that contains 12-bit groups
-    p = rf.cdp_pos + ((n + 11) // 8)
-    nib = ((n - 1) % 8) < 4  # matches C: nib = (n - 1)%8 < 4;
-    out = [0] * n
-    for i in range(n):
-        if nib:
-            out[i] = ((rf.data[p] & 0x0F) << 8) | rf.data[p + 1]
-            p += 2
-        else:
-            out[i] = ((rf.data[p + 1] >> 4) | (rf.data[p] << 4)) & 0xFFFF
-            p += 1
-        nib = not nib
-
-    # apply signs from packed sign bits (start at cdp+1)
-    p = rf.cdp_pos + 1
-    bm = 0x80
-    for i in range(n):
-        if rf.data[p] & bm:
-            out[i] = -out[i]
-        bm >>= 1
-        if bm == 0:
-            p += 1
-            bm = 0x80
-    return out
-
-
-def rsr_next_record(rf: RSRFile) -> RSRRec:
-    # End-of-buffer
-    if rf.cdp_pos >= rf.data_length:
-        rf.record.n_data = -1
-        return rf.record
-
-    rf.record.is_gap = 0
-    reclen = rf.data[rf.cdp_pos]
-
-    if reclen == rf.rec_len_day or reclen == rf.rec_len_nite:
-        rec_n = rf.rec_n_day if reclen == rf.rec_len_day else rf.rec_n_nite
-        if rec_n > 0:
-            if rf.inst_type == Type2:
-                vals = _unpack_2(rf, rec_n)
-            else:
-                vals = _unpack_1(rf, rec_n)
-            # store into record.data (day-sized buffer in C)
-            rf.record.data[:rec_n] = vals
-        rf.record.n_data = rec_n
-        rf.cdp_pos += reclen + 1
-
-    elif reclen == 0xFE:
-        # gap record indicator; mirrors static skip in C
-        if rf._gap_skip == -1:
-            if rf.cdp_pos + 4 >= rf.data_length:
-                raise ValueError("Truncated gap record")
-            rf._gap_skip = (
-                (rf.data[rf.cdp_pos + 1] << 24)
-                + (rf.data[rf.cdp_pos + 2] << 16)
-                + (rf.data[rf.cdp_pos + 3] << 8)
-                + rf.data[rf.cdp_pos + 4]
-            )
-            if rf._gap_skip <= 0:
-                raise ValueError("Gap record skip count must be > 0")
-            for i in range(rf.rec_n_day):
-                rf.record.data[i] = -9999
-
-        if rf._gap_skip == 1:
-            rf.cdp_pos += 5
-            rf._gap_skip = -1
-        else:
-            rf._gap_skip -= 1
-
-        rf.record.is_gap = 1
-        rf.record.n_data = rf.rec_n_day
-
-    elif reclen == 0xFF:
-        rf.record.n_data = -1
-        return rf.record
-
-    else:
-        raise ValueError(f"Bad record length indicator {reclen} at byte {rf.cdp_pos + rf.header_length}")
-
-    rf.curr_rec_no += 1
-    _set_current_time(rf)
-    return rf.record
-
-
-# -----------------------------
-# unpack.c logic needed for your invocation
-# -----------------------------
-# def _call_sunae(inp: RSRFile, report_time: int, midpt: bool) -> tuple[AEP, float]:
-#     aep = AEP()
-#     t = inp.record.obs_time + 5  # C: obs_time + 5 seconds
-#     if midpt and inp.head.sample_rate != inp.head.avg_period:
-#         t -= inp.head.sample_rate / 2.0
-#     if report_time != REPORT_END:
-#         # only END is used in your invocation; included for completeness
-#         if report_time == 1:  # Mid
-#             t -= inp.head.avg_period / 2.0
-#         elif report_time == 2:  # Start
-#             t -= float(inp.head.avg_period)
-
-#     # gmtime
-#     dt = datetime.utcfromtimestamp(int(t))
-#     year = dt.year
-#     doy = int(dt.strftime("%j"))
-#     hour = dt.hour + dt.minute / 60.0 + dt.second / 3600.0
-
-#     # C uses lon = -longitude
-#     lon = -1.0 * inp.head.longitude
-#     lat = inp.head.latitude
-
-#     tst = sunae(year, doy, hour, lat, lon, aep)
-#     return aep, tst
-
-
-# def correct_direct(inp: RSRFile, report_time: int, vec: List[float]) -> None:
-#     """
-#     Port of correct_direct() from unpack.c, acting in-place on vec.
-#     """
-#     # only when sample_rate == avg_period, non-gap, not single-channel, band_on, diodes != 0
-#     if inp.head.sample_rate != inp.head.avg_period:
-#         return
-#     if inp.record.n_data == inp.rec_n_nite:
-#         return
-#     if inp.inst_type == Single_Channel:
-#         return
-#     if not inp.head.band_on:
-#         return
-#     if inp.head.diodes == 0:
-#         return
-
-#     aep, _tst = _call_sunae(inp, report_time=report_time, midpt=False)
-#     if aep.el < (10.0 * math.pi / 180.0):
-#         di_idx = inp.head.diodes * 2
-#         cos_el = math.cos((math.pi / 2.0) - aep.el)
-#         if cos_el > 0:
-#             vec[di_idx] = vec[di_idx] / cos_el
-
-
-def emit_header(inp: RSRFile) -> str:
-    h = inp.head
-    if inp.inst_type == Type2:
-        daytime = "".join(str(int(x)) for x in h.daytime)
-        allthetime = "".join(str(int(x)) for x in h.all_the_time)
-        counter = "".join(str(int(x)) for x in h.counter)
-        return (
-            f"FORMAT VERSION={h.soft_rev} UNIT_ID={h.unit_id} HEAD_ID={h.head_id} "
-            f"LONGITUDE={h.longitude:.4f} LATITUDE={h.latitude:.4f} FLAGS=0x{h.flags:x} "
-            f"AVERAGING PERIOD={h.avg_period} SAMPLE RATE={h.sample_rate} "
-            f"DIODES={h.diodes} DAYTIME=0x{h.raw_daytime:x} ALLTHETIME=0x{h.raw_all_the_time:x} "
-            f"COUNTERS=0x{h.raw_counter:x} DAYTIME_FLAGS={daytime} "
-            f"ALLTHETIME_FLAGS={allthetime} COUNTER_FLAGS={counter} BYTES={inp.data_length}"
-        )
-    else:
-        return (
-            f"FORMAT VERSION={h.soft_rev} UNIT_ID={h.unit_id} LONGITUDE={h.longitude:.4f} "
-            f"LATITUDE={h.latitude:.4f} FLAGS=0x{h.flags:x} AVERAGING PERIOD={h.avg_period} "
-            f"SAMPLE RATE={h.sample_rate} GAIN={h.rsr_gain} OFFSET={h.rsr_offset} DIODES={h.diodes} "
-            f"EXTRA=0x{h.raw_extra:x} BIPOLAR=0x{h.raw_bipolar:x} BYTES={inp.data_length}"
-        )
-
-
-# def emit_date_time_joe(inp: RSRFile, tz_seconds: int = 0) -> str:
-#     # C: t = obs_time; adjust by report_time (END => none), then add timezone
-#     t = inp.record.obs_time + tz_seconds
-#     return f"{rsr_unix2j(int(t)):.5f}"
-
-
-def emit_data(
-                inp: RSRFile,
-                vec: Optional[List[float]],
-                sep: str = DEFAULT_SEP,
-                nighttime_placeholder: Optional[int] = DEFAULT_NIGHTTIME,
-                gap_placeholder: int = DEFAULT_GAP,
-                out = None,
-            ) -> str:
-    if isinstance(out, type(None)):
-        out = {}
-
-    h = inp.head
-    parts: List[str] = []
-    partsf: List[str] = []
-    if inp.record.is_gap:
-        cvt = sstoa(gap_placeholder)
-    else:
-        cvt = ""
-
-    # pre-type2: if nighttime record, prepend placeholders for missing daytime-only channels
-    if inp.inst_type != Type2 and nighttime_placeholder is not None:
-        if inp.record.n_data == inp.rec_n_nite:
-            missing = inp.rec_n_day - inp.record.n_data
-            for _ in range(missing):
-                parts.append(sstoa(nighttime_placeholder))
-
-    # actual values
-    n = inp.record.n_data
-    for i in range(n):
-        if inp.record.is_gap:
-            parts.append(cvt)
-            partsf.append(np.nan)
-        else:
-            assert vec is not None
-            parts.append(fmt4(vec[i]))
-            out['veci'] = vec[i]
-            partsf.append(vec[i])
-
-    # type2: pad remaining with nighttime placeholders (if requested)
-    if inp.inst_type == Type2 and nighttime_placeholder is not None:
-        for _ in range(inp.rec_n_day - inp.record.n_data):
-            parts.append(sstoa(nighttime_placeholder))
-            partsf.append(np.nan)
-    out['parts_str'] = sep + sep.join(parts) if parts else ""
-    out['parts_f'] = partsf
-    return out
-
-
-def tu_like_unpack(path: str, out = None) -> None:
-
-    if isinstance(out, type(None)):
-        out = {}
-
-    inp = rsr_open_file(path)
-    out['inp'] = inp
-
-    # loop records
-    i = 0
-    data = []
-    # while i < 100:
-    while True:
-        i += 1
-        r = rsr_next_record(inp)
-        if r.n_data < 0:
-            break
-
-        if r.is_gap:
-            vec = None
-        else:
-            vec = [float(v) for v in r.data[:r.n_data]]
-            # correct_direct(inp, report_time=REPORT_END, vec=vec)
-        emit_data_out = emit_data(inp, vec, 
-                                  sep=DEFAULT_SEP, 
-                                  nighttime_placeholder=DEFAULT_NIGHTTIME, 
-                                  gap_placeholder=DEFAULT_GAP,
-                                #   out = out
-                                  )
-        # line += emit_data_out['parts_str']
-        # lines.append(line)
-        row = [inp.record.obs_time] +  emit_data_out['parts_f']
-        data.append(row)
-    # out['lines'] = lines
-    out['data'] = data
-    # out['data_str'] = '\n'.join(lines)
-    return out
 
 
 
-# if __name__ == "__main__":
-#     main()
-# python tu_py.py -d joe -H /path/to/file > out.txt
-
-
-def read_raw(path2file, out = None, use_str = False):
-    """
-    Opens a MFRSR or MFR raw file. Those are the files that have an extension 
-    like .mtm, .xmd, .rsr. Surfrad files are stored here:
-    /nfs/grad/Inst/MFR/SURFRAD/{site}/mfrsr/raw/
-    This requires the "tu" program to be installed on the system. You can get 
-    it at: https://github.com/HagenTelg/tu_mfrsr_reader
-
-    Parameters
-    ----------
-    path2file : TYPE
-        DESCRIPTION.
-    read_header_only : TYPE, optional
-        DESCRIPTION. The default is False.
-
-    Returns
-    -------
-    TYPE
-        DESCRIPTION.
-
-    """
-    if isinstance(out, type(None)):
-        out = {}
-
-
-    out = tu_like_unpack(path2file, 
-                        #   True, 'joe', 
-                         out = out 
-                         )
-    
-    if use_str:
-        print('=====================')
-        print('++++ Don"t use this path anymore, use use_str = False ++++')
-        outstr = out['data_str']
-        # out['rawstring'] = outstr
-        # print(f'error: {err}')
-
-
-        #### the header
-        header = outstr.split('\n')[0]    
-        # if read_header_only:
-        #     return header
-        
-        bla = header.split()[5]
-        if bla == '0':
-            instrument = 'mfr'
-        else:
-            instrument = 'mfrsr'
-        
-        
-        #### format the data
-        df = _pd.read_csv(io.StringIO(outstr), sep = r'\s+', header = None, skiprows=1)
-        df.index = df.apply(lambda row: _pd.to_datetime('19000101') + _pd.to_timedelta(row[0] - 1, 'd'), axis = 1)
-        df.index.name = 'datetime'
-        df = df.where(df!=-9999)
-        
-        # photodiode (channel) collumns
-        di = 7
-        si = 2
-        alltime = df.iloc[:,si: si+di]
-        out['df'] = df.copy()
-        if instrument == 'mfr':
-            alltime.columns = range(7)
-            alltime.columns.name = 'channel'
-            
-            ds = _xr.Dataset()
-            # ds['sun_position'] = sun_position
-            ds['alltime'] = alltime
-            ds.attrs = attrs
-            # obs = atmradobs.GlobalHorizontalIrradiation(ds)
-        
-        elif instrument == 'mfrsr':
-            si = 11
-            global_horizontal = df.iloc[:,si: si+di]
-            si =  18
-            diffuse_horizontal = df.iloc[:,si: si+di]
-            si =  25
-            direct = df.iloc[:,si: si+di]
-            
-            for dft in [alltime, global_horizontal, diffuse_horizontal, direct]:
-                out['dft'] = dft
-                dft.columns = range(7)
-                dft.columns.name = 'channel'
-            
-            ds = _xr.Dataset()
-            # ds['sun_position'] = sun_position
-            ds['alltime'] = alltime
-            ds['global_horizontal'] = global_horizontal
-            ds['diffuse_horizontal'] = diffuse_horizontal
-            ds['direct_horizontal'] = direct
-            # ds.attrs = attrs
-            
-            # obs = atmradobs.CombinedGlobalDiffuseDirect(ds, 
-            #                                             # raise_error_if_no_channel_wavelength = False
-            #               
-        else:
-            assert(False), 'nop, not possible!' 
-    else:
-        data = np.array(out['data'])
-        inp = out['inp']
-        df = _pd.DataFrame(data, index = _pd.to_datetime(data[:,0], unit='s'))
-        df.index.name = 'datetime'
-
-        # out['rawstring'] = outstr
-        # print(f'error: {err}')
-
-
-        #### the header
-        # header = outstr.split('\n')[0]    
-        # if read_header_only:
-        #     return header
-        # return
-        # bla = header.split()[5]
-        if inp.head.band_on == 0:
-            instrument = 'mfr'
-        elif inp.head.band_on == 1:
-            instrument = 'mfrsr'
-        else:
-            assert(False), f'nop, not possible! '
-        
-        
-        # #### format the data
-        # df = _pd.read_csv(io.StringIO(outstr), sep = r'\s+', header = None, skiprows=1)
-        # df.index = df.apply(lambda row: _pd.to_datetime('19000101') + _pd.to_timedelta(row[0] - 1, 'd'), axis = 1)
-        # df.index.name = 'datetime'
-        # df = df.where(df!=-9999)
-
-
-        # if test == 1:
-        #     return df, header
-        #### assign collumns
-        # attrs = dict(site_longitude = - float(header.split()[4]),
-        #              site_latitude = float(header.split()[3]),
-        #              site_elevation = 0,
-        #              site = 'TMP',
-        #              site_name = 'unknown',
-        #              calibrated_irradiance = 'False',
-        #              calibrated_cosine = 'False',
-        #              info = 'This is the raw file',
-        #              file_type = int(header.split()[0]),
-        #              serial_no = header.split()[1],
-        #              path2file = path2file,
-        #              measurement_sequenc = ', '.join(header.split()[5:8]),
-        #              instrument_type = instrument,
-        #             )
-        # non photodiod collums
-        # 0: time
-        # 1: no idea
-        # 9: no idea
-        # 10: no idea
-        
-        # photodiode (channel) collumns
-        di = 7
-        si = 2
-        alltime = df.iloc[:,si: si+di]
-        
-        out['df'] = df.copy()
-        if instrument == 'mfr':
-            alltime.columns = range(7)
-            alltime.columns.name = 'channel'
-            
-            ds = _xr.Dataset()
-            # ds['sun_position'] = sun_position
-            ds['alltime'] = alltime
-            # ds.attrs = attrs
-            # obs = atmradobs.GlobalHorizontalIrradiation(ds)
-        
-        elif instrument == 'mfrsr':
-            si = 11
-            global_horizontal = df.iloc[:,si: si+di]
-            si =  18
-            diffuse_horizontal = df.iloc[:,si: si+di]
-            si =  25
-            direct = df.iloc[:,si: si+di]
-            
-            for dft in [alltime, global_horizontal, diffuse_horizontal, direct]:
-                dft.columns = range(7)
-                dft.columns.name = 'channel'
-            
-            ds = _xr.Dataset()
-            # ds['sun_position'] = sun_position
-            ds['alltime'] = alltime
-            ds['global_horizontal'] = global_horizontal
-            ds['diffuse_horizontal'] = diffuse_horizontal
-            ds['direct_horizontal'] = direct
-            # ds.attrs = attrs
-            
-            # obs = atmradobs.CombinedGlobalDiffuseDirect(ds, 
-            #                                             # raise_error_if_no_channel_wavelength = False
-            #                                             )
-    
-
-    out['ds'] = ds
-    return out
