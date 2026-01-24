@@ -88,10 +88,10 @@ DAYS_1900_1970 = 25568
 SECONDS_PER_DAY = 86400
 
 
-def rsr_unix2j(secs: int) -> float:
-    if secs < 0:
-        return -1.0
-    return float(DAYS_1900_1970) + (float(secs) / SECONDS_PER_DAY)
+# def rsr_unix2j(secs: int) -> float:
+#     if secs < 0:
+#         return -1.0
+#     return float(DAYS_1900_1970) + (float(secs) / SECONDS_PER_DAY)
 
 
 def rsr_j2unix(jdays: float) -> int:
@@ -106,79 +106,79 @@ def rsr_j2unix(jdays: float) -> int:
 # -----------------------------
 # Solar geometry (ported from sunae.c/h)
 # -----------------------------
-@dataclass
-class AEP:
-    az: float = 0.0
-    el: float = 0.0
-    ra: float = 0.0
-    dec: float = 0.0
-    ha: float = 0.0
-    eqt: float = 0.0
-    tst: float = 0.0
+# @dataclass
+# class AEP:
+#     az: float = 0.0
+#     el: float = 0.0
+#     ra: float = 0.0
+#     dec: float = 0.0
+#     ha: float = 0.0
+#     eqt: float = 0.0
+#     tst: float = 0.0
 
 
-def _mod2pi(x: float) -> float:
-    twopi = 2.0 * math.pi
-    y = x % twopi
-    return y
+# def _mod2pi(x: float) -> float:
+#     twopi = 2.0 * math.pi
+#     y = x % twopi
+#     return y
 
 
-def sunae(year: int, doy: int, hour: float, lat_deg: float, lon_deg: float, aep: AEP) -> float:
-    """
-    Port of sunae() from sunae.c (sufficient for correct_direct()).
-    Returns tst (true solar time hours), and fills aep with angles (radians).
-    """
-    rlat = math.radians(lat_deg)
-    rlon = math.radians(lon_deg)
+# def sunae(year: int, doy: int, hour: float, lat_deg: float, lon_deg: float, aep: AEP) -> float:
+#     """
+#     Port of sunae() from sunae.c (sufficient for correct_direct()).
+#     Returns tst (true solar time hours), and fills aep with angles (radians).
+#     """
+#     rlat = math.radians(lat_deg)
+#     rlon = math.radians(lon_deg)
 
-    # Leap year handling like C
-    leap = (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0))
-    ydays = 366 if leap else 365
+#     # Leap year handling like C
+#     leap = (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0))
+#     ydays = 366 if leap else 365
 
-    gamma = (2.0 * math.pi / ydays) * (doy - 1 + (hour - 12.0) / 24.0)
+#     gamma = (2.0 * math.pi / ydays) * (doy - 1 + (hour - 12.0) / 24.0)
 
-    eqtime = 229.18 * (
-        0.000075
-        + 0.001868 * math.cos(gamma)
-        - 0.032077 * math.sin(gamma)
-        - 0.014615 * math.cos(2 * gamma)
-        - 0.040849 * math.sin(2 * gamma)
-    )
+#     eqtime = 229.18 * (
+#         0.000075
+#         + 0.001868 * math.cos(gamma)
+#         - 0.032077 * math.sin(gamma)
+#         - 0.014615 * math.cos(2 * gamma)
+#         - 0.040849 * math.sin(2 * gamma)
+#     )
 
-    decl = (
-        0.006918
-        - 0.399912 * math.cos(gamma)
-        + 0.070257 * math.sin(gamma)
-        - 0.006758 * math.cos(2 * gamma)
-        + 0.000907 * math.sin(2 * gamma)
-        - 0.002697 * math.cos(3 * gamma)
-        + 0.00148 * math.sin(3 * gamma)
-    )
+#     decl = (
+#         0.006918
+#         - 0.399912 * math.cos(gamma)
+#         + 0.070257 * math.sin(gamma)
+#         - 0.006758 * math.cos(2 * gamma)
+#         + 0.000907 * math.sin(2 * gamma)
+#         - 0.002697 * math.cos(3 * gamma)
+#         + 0.00148 * math.sin(3 * gamma)
+#     )
 
-    time_offset = eqtime + 4.0 * lon_deg  # minutes (timezone handled by caller; tu uses UTC default)
-    tst = hour * 60.0 + time_offset  # minutes
-    ha = math.radians((tst / 4.0) - 180.0)
+#     time_offset = eqtime + 4.0 * lon_deg  # minutes (timezone handled by caller; tu uses UTC default)
+#     tst = hour * 60.0 + time_offset  # minutes
+#     ha = math.radians((tst / 4.0) - 180.0)
 
-    cos_zen = math.sin(rlat) * math.sin(decl) + math.cos(rlat) * math.cos(decl) * math.cos(ha)
-    cos_zen = max(-1.0, min(1.0, cos_zen))
-    zen = math.acos(cos_zen)
-    el = (math.pi / 2.0) - zen
+#     cos_zen = math.sin(rlat) * math.sin(decl) + math.cos(rlat) * math.cos(decl) * math.cos(ha)
+#     cos_zen = max(-1.0, min(1.0, cos_zen))
+#     zen = math.acos(cos_zen)
+#     el = (math.pi / 2.0) - zen
 
-    # Azimuth
-    sin_az = -(math.sin(ha) * math.cos(decl)) / max(1e-12, math.cos(el))
-    cos_az = (math.sin(decl) - math.sin(rlat) * math.sin(el)) / max(1e-12, (math.cos(rlat) * math.cos(el)))
-    az = math.atan2(sin_az, cos_az)
-    az = _mod2pi(az)
+#     # Azimuth
+#     sin_az = -(math.sin(ha) * math.cos(decl)) / max(1e-12, math.cos(el))
+#     cos_az = (math.sin(decl) - math.sin(rlat) * math.sin(el)) / max(1e-12, (math.cos(rlat) * math.cos(el)))
+#     az = math.atan2(sin_az, cos_az)
+#     az = _mod2pi(az)
 
-    # Fill outputs
-    aep.az = az
-    aep.el = el
-    aep.dec = decl
-    aep.ha = ha
-    aep.eqt = eqtime
-    aep.tst = tst / 60.0  # hours
+#     # Fill outputs
+#     aep.az = az
+#     aep.el = el
+#     aep.dec = decl
+#     aep.ha = ha
+#     aep.eqt = eqtime
+#     aep.tst = tst / 60.0  # hours
 
-    return aep.tst
+#     return aep.tst
 
 
 # -----------------------------
@@ -187,8 +187,8 @@ def sunae(year: int, doy: int, hour: float, lat_deg: float, lon_deg: float, aep:
 @dataclass
 class RSRHeader:
     soft_rev: int = 0
-    unit_id: int = 0
-    head_id: int = 0  # type2
+    logger_id: str = ""
+    head_id: str = ""  # type2
     longitude: float = 0.0
     latitude: float = 0.0
     flags: int = 0
@@ -259,7 +259,7 @@ class RSRFile:
 def _unhead_1(inst_type: int, buf: bytes) -> tuple[RSRHeader, int]:
     h = RSRHeader()
     h.soft_rev = buf[0]
-    h.unit_id = (buf[1] << 8) + buf[2]
+    h.logger_id = f'{(buf[1] << 8) + buf[2]:X}'
     h.longitude = 360.0 * ((buf[3] << 8) + buf[4]) / 65536.0
     h.latitude = 360.0 * ((buf[5] << 8) + buf[6]) / 65536.0
 
@@ -322,8 +322,8 @@ def _unhead_1(inst_type: int, buf: bytes) -> tuple[RSRHeader, int]:
 def _unhead_2(buf: bytes) -> tuple[RSRHeader, int]:
     h = RSRHeader()
     h.soft_rev = buf[0]
-    h.unit_id = (buf[1] << 8) + buf[2]
-    h.head_id = (buf[3] << 8) + buf[4]
+    h.logger_id = f'{(buf[1] << 8) + buf[2]:X}'
+    h.head_id = f'{(buf[3] << 8) + buf[4]:X}'
     h.longitude = 360.0 * ((buf[5] << 8) + buf[6]) / 65536.0
     h.latitude = 360.0 * ((buf[7] << 8) + buf[8]) / 65536.0
 
@@ -655,54 +655,54 @@ def rsr_next_record(rf: RSRFile) -> RSRRec:
 # -----------------------------
 # unpack.c logic needed for your invocation
 # -----------------------------
-def _call_sunae(inp: RSRFile, report_time: int, midpt: bool) -> tuple[AEP, float]:
-    aep = AEP()
-    t = inp.record.obs_time + 5  # C: obs_time + 5 seconds
-    if midpt and inp.head.sample_rate != inp.head.avg_period:
-        t -= inp.head.sample_rate / 2.0
-    if report_time != REPORT_END:
-        # only END is used in your invocation; included for completeness
-        if report_time == 1:  # Mid
-            t -= inp.head.avg_period / 2.0
-        elif report_time == 2:  # Start
-            t -= float(inp.head.avg_period)
+# def _call_sunae(inp: RSRFile, report_time: int, midpt: bool) -> tuple[AEP, float]:
+#     aep = AEP()
+#     t = inp.record.obs_time + 5  # C: obs_time + 5 seconds
+#     if midpt and inp.head.sample_rate != inp.head.avg_period:
+#         t -= inp.head.sample_rate / 2.0
+#     if report_time != REPORT_END:
+#         # only END is used in your invocation; included for completeness
+#         if report_time == 1:  # Mid
+#             t -= inp.head.avg_period / 2.0
+#         elif report_time == 2:  # Start
+#             t -= float(inp.head.avg_period)
 
-    # gmtime
-    dt = datetime.utcfromtimestamp(int(t))
-    year = dt.year
-    doy = int(dt.strftime("%j"))
-    hour = dt.hour + dt.minute / 60.0 + dt.second / 3600.0
+#     # gmtime
+#     dt = datetime.utcfromtimestamp(int(t))
+#     year = dt.year
+#     doy = int(dt.strftime("%j"))
+#     hour = dt.hour + dt.minute / 60.0 + dt.second / 3600.0
 
-    # C uses lon = -longitude
-    lon = -1.0 * inp.head.longitude
-    lat = inp.head.latitude
+#     # C uses lon = -longitude
+#     lon = -1.0 * inp.head.longitude
+#     lat = inp.head.latitude
 
-    tst = sunae(year, doy, hour, lat, lon, aep)
-    return aep, tst
+#     tst = sunae(year, doy, hour, lat, lon, aep)
+#     return aep, tst
 
 
-def correct_direct(inp: RSRFile, report_time: int, vec: List[float]) -> None:
-    """
-    Port of correct_direct() from unpack.c, acting in-place on vec.
-    """
-    # only when sample_rate == avg_period, non-gap, not single-channel, band_on, diodes != 0
-    if inp.head.sample_rate != inp.head.avg_period:
-        return
-    if inp.record.n_data == inp.rec_n_nite:
-        return
-    if inp.inst_type == Single_Channel:
-        return
-    if not inp.head.band_on:
-        return
-    if inp.head.diodes == 0:
-        return
+# def correct_direct(inp: RSRFile, report_time: int, vec: List[float]) -> None:
+#     """
+#     Port of correct_direct() from unpack.c, acting in-place on vec.
+#     """
+#     # only when sample_rate == avg_period, non-gap, not single-channel, band_on, diodes != 0
+#     if inp.head.sample_rate != inp.head.avg_period:
+#         return
+#     if inp.record.n_data == inp.rec_n_nite:
+#         return
+#     if inp.inst_type == Single_Channel:
+#         return
+#     if not inp.head.band_on:
+#         return
+#     if inp.head.diodes == 0:
+#         return
 
-    aep, _tst = _call_sunae(inp, report_time=report_time, midpt=False)
-    if aep.el < (10.0 * math.pi / 180.0):
-        di_idx = inp.head.diodes * 2
-        cos_el = math.cos((math.pi / 2.0) - aep.el)
-        if cos_el > 0:
-            vec[di_idx] = vec[di_idx] / cos_el
+#     aep, _tst = _call_sunae(inp, report_time=report_time, midpt=False)
+#     if aep.el < (10.0 * math.pi / 180.0):
+#         di_idx = inp.head.diodes * 2
+#         cos_el = math.cos((math.pi / 2.0) - aep.el)
+#         if cos_el > 0:
+#             vec[di_idx] = vec[di_idx] / cos_el
 
 
 def emit_header(inp: RSRFile) -> str:
@@ -728,10 +728,10 @@ def emit_header(inp: RSRFile) -> str:
         )
 
 
-def emit_date_time_joe(inp: RSRFile, tz_seconds: int = 0) -> str:
-    # C: t = obs_time; adjust by report_time (END => none), then add timezone
-    t = inp.record.obs_time + tz_seconds
-    return f"{rsr_unix2j(int(t)):.5f}"
+# def emit_date_time_joe(inp: RSRFile, tz_seconds: int = 0) -> str:
+#     # C: t = obs_time; adjust by report_time (END => none), then add timezone
+#     t = inp.record.obs_time + tz_seconds
+#     return f"{rsr_unix2j(int(t)):.5f}"
 
 
 def emit_data(
@@ -782,19 +782,13 @@ def emit_data(
     return out
 
 
-def tu_like_unpack(path: str, header: bool, date_fmt: str, out = None) -> None:
-    if date_fmt != DATE_JOE:
-        raise ValueError("This Python translation only implements: -d joe")
+def tu_like_unpack(path: str, out = None) -> None:
 
     if isinstance(out, type(None)):
         out = {}
 
     inp = rsr_open_file(path)
     out['inp'] = inp
-    lines = [emit_header(inp)]
-
-    # if header:
-    #     print(emit_header(inp))
 
     # loop records
     i = 0
@@ -806,31 +800,24 @@ def tu_like_unpack(path: str, header: bool, date_fmt: str, out = None) -> None:
         if r.n_data < 0:
             break
 
-        out['r'] = r
-
-        # date/time
-        line = emit_date_time_joe(inp, tz_seconds=DEFAULT_TZ_SECONDS)
-
-        # data vector: copy_data() -> doubles
         if r.is_gap:
             vec = None
         else:
             vec = [float(v) for v in r.data[:r.n_data]]
-            # correct_direct (calibrate/coscor omitted by design for your invocation)
-            correct_direct(inp, report_time=REPORT_END, vec=vec)
+            # correct_direct(inp, report_time=REPORT_END, vec=vec)
         emit_data_out = emit_data(inp, vec, 
                                   sep=DEFAULT_SEP, 
                                   nighttime_placeholder=DEFAULT_NIGHTTIME, 
                                   gap_placeholder=DEFAULT_GAP,
                                 #   out = out
                                   )
-        line += emit_data_out['parts_str']
-        lines.append(line)
+        # line += emit_data_out['parts_str']
+        # lines.append(line)
         row = [inp.record.obs_time] +  emit_data_out['parts_f']
         data.append(row)
-    out['lines'] = lines
+    # out['lines'] = lines
     out['data'] = data
-    out['data_str'] = '\n'.join(lines)
+    # out['data_str'] = '\n'.join(lines)
     return out
 
 
@@ -865,7 +852,8 @@ def read_raw(path2file, out = None, use_str = False):
         out = {}
 
 
-    out = tu_like_unpack(path2file,  True, 'joe', 
+    out = tu_like_unpack(path2file, 
+                        #   True, 'joe', 
                          out = out 
                          )
     
