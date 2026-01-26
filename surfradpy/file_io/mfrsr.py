@@ -7,7 +7,8 @@ import xarray as _xr
 import numpy as np
 import io
 import atmPy.radiation.retrievals.spectral_irradiance as atmradobs
-
+import warnings
+import pathlib as pl
 
 import math
 from dataclasses import dataclass, field
@@ -203,7 +204,7 @@ class RSRFile:
 
             # add metadata
             ds.attrs['instrument'] = instrument
-            ds.attrs['start_time'] = _pd.to_datetime(self.start_time, unit='s')
+            ds.attrs['start_time'] = _pd.to_datetime(self.start_time, unit='s').__str__()
             ds.attrs['avg_period'] = self.head.avg_period
             ds.attrs['sample_rate'] = self.head.sample_rate
             ds.attrs['logger_id'] = self.head.logger_id
@@ -213,7 +214,9 @@ class RSRFile:
             ds.attrs['longitude'] = self.head.longitude
             ds.attrs['band_on'] = self.head.band_on
             ds.attrs['diodes'] = self.head.diodes
+            ds.attrs['path2file'] = pl.Path(self.filename).as_posix()
             self._dataset = ds
+            
         return self._dataset
 
     @property
@@ -226,6 +229,13 @@ class RSRFile:
         reclen = self.data[self.cdp_pos]
 
         if reclen == self.rec_len_day or reclen == self.rec_len_nite:
+            # Ensure record payload fits within data buffer
+            end = self.cdp_pos + reclen
+            if end >= self.data_length:
+                warnings.warn(
+                    f"Truncated record: reclen={reclen} at data index {self.cdp_pos}, "
+                    f"data_length={self.data_length}"
+                )
             rec_n = self.rec_n_day if reclen == self.rec_len_day else self.rec_n_nite
             if rec_n > 0:
                 if self.inst_type == Type2:
@@ -267,7 +277,13 @@ class RSRFile:
             return self.record
 
         else:
-            raise ValueError(f"Bad record length indicator {reclen} at byte {self.cdp_pos + self.header_length}")
+            warnings.warn(
+                f"Bad record length indicator {reclen} at byte {self.cdp_pos + self.header_length}; "
+                "treating as end-of-data"
+            )
+            self.record.n_data = -1
+            self.cdp_pos = self.data_length
+            return self.record
 
         self.curr_rec_no += 1
         # set current time
@@ -287,7 +303,7 @@ class RSRFile:
         partsf: List[str] = []
 
         # pre-type2: if nighttime record, prepend placeholders for missing daytime-only channels
-        if self.inst_type != Type2 and nighttime_placeholder is not None:
+        if self.inst_type != Type2:# and nighttime_placeholder is not None:
             if self.record.n_data == self.rec_n_nite:
                 missing = self.rec_n_day - self.record.n_data
                 for _ in range(missing):
@@ -314,19 +330,26 @@ class RSRFile:
         p = self.cdp_pos + ((n + 11) // 8)
         nib = ((n - 1) % 8) < 4  # matches C: nib = (n - 1)%8 < 4;
         out = [0] * n
+        n_read = 0
         for i in range(n):
-            if nib:
-                out[i] = ((self.data[p] & 0x0F) << 8) | self.data[p + 1]
-                p += 2
-            else:
-                out[i] = ((self.data[p + 1] >> 4) | (self.data[p] << 4)) & 0xFFFF
-                p += 1
-            nib = not nib
+            try:
+                if nib:
+                    out[i] = ((self.data[p] & 0x0F) << 8) | self.data[p + 1]
+                    p += 2
+                else:
+                    out[i] = ((self.data[p + 1] >> 4) | (self.data[p] << 4)) & 0xFFFF
+                    p += 1
+                nib = not nib
+                n_read += 1
+            except IndexError:
+                warnings.warn(
+                    f"Truncated record while unpacking 12-bit values at data index {p}, data_length={self.data_length}")
+                break # TODO: could more data eventually be salvaged?
 
         # apply signs from packed sign bits (start at cdp+1)
         p = self.cdp_pos + 1
         bm = 0x80
-        for i in range(n):
+        for i in range(n_read): # only loop over number of n that were actually read
             if self.data[p] & bm:
                 out[i] = -out[i]
             bm >>= 1
@@ -579,7 +602,7 @@ def _unhead_2(buf: bytes) -> tuple[RSRHeader, int]:
 
 
 def open_rsr(path: str) -> RSRFile:
-    print(f"Opening RSR file: {path}")
+    # print(f"Opening RSR file: {path}")
     with open(path, "rb") as f:
         raw = f.read()
 
@@ -637,8 +660,5 @@ def open_rsr(path: str) -> RSRFile:
     rf.curr_rec_no = 0
     rf._gap_skip = -1
     return rf
-
-
-
 
 

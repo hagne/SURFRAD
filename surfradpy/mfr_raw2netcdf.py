@@ -1,10 +1,11 @@
 import pathlib as pl
 import site
-import atmPy.data_archives.NOAA_ESRL_GMD_GRAD.surfrad.surfrad as atmsrf
+# import atmPy.data_archives.NOAA_ESRL_GMD_GRAD.surfrad.surfrad as atmsrf
 import xarray as xr
 import pandas as pd
 import surfradpy.database as sfp_db
 import socket
+import surfradpy.file_io.mfrsr as srpmfrsrio
 
 class MfrsrRawToNetcdf:
     def __init__(self, 
@@ -13,7 +14,7 @@ class MfrsrRawToNetcdf:
                  name_pattern_netcdf, 
                  glob_pattern_raw = "**/*.xmd",
                  site = None,
-                 version = '0.2',
+                 version = '0.3',
                  path2surfrad_database = None,
                  reporter = None,
                  verbose = True,
@@ -103,11 +104,18 @@ class MfrsrRawToNetcdf:
                 print('lets not do this')
                 break
             try:
-                opt = atmsrf.read_raw(mp_in.iloc[i].p2f_in)
+                # opt = atmsrf.read_raw(mp_in.iloc[i].p2f_in)
+                opt = srpmfrsrio.open_rsr(mp_in.iloc[i].p2f_in)  # test if the file is readable
                 break
-            except atmsrf.FileCorruptError:
+            # except atmsrf.FileCorruptError:
+            #     if self.verbose:
+            #         print('corrupt, try next')
+            #     i += 1
+            #     continue
+            except Exception as e:
+                raise e
                 if self.verbose:
-                    print('corrupt, try next')
+                    print(f'error {e}, try next')
                 i += 1
                 continue
         if self.verbose:
@@ -123,9 +131,14 @@ class MfrsrRawToNetcdf:
                 print('lets not do this')
                 break
             try:
-                opt = atmsrf.read_raw(mp_in.iloc[-i].p2f_in)
+                # opt = atmsrf.read_raw(mp_in.iloc[-i].p2f_in)
+                opt = srpmfrsrio.open_rsr(mp_in.iloc[-i].p2f_in)  # test if the file is readable
                 break
-            except atmsrf.FileCorruptError:
+            # except atmsrf.FileCorruptError:
+            #     i += 1
+            #     continue
+            except Exception as e:
+                raise e
                 i += 1
                 continue
 
@@ -177,11 +190,11 @@ class MfrsrRawToNetcdf:
                     # assert(False), 'No new raw files, nothing to do here'
                     
                 if ds.day_complete == 'True':
-                    print('Last file was complet')
-                    #when the day was complet we still want the last file since that file reached into the next day and was truncated
+                    print('Last file was complete')
+                    #when the day was complete we still want the last file since that file reached into the next day and was truncated
                     start_at_this_file = last_used_rawfile
                 else:
-                    print('Last file was incomplet')
+                    print('Last file was incomplete')
                     # when the day was not complete we want to start from scratch with this file and load all files that has been used in the last netcdf file
                     start_at_this_file = ds.parent_files.split(',')[0].strip()
                     start_at_this_file = pl.Path(start_at_this_file)
@@ -211,10 +224,15 @@ class MfrsrRawToNetcdf:
                 if verbose:
                     print(f'open file: {row_in.p2f_in}')
                 try:
-                    dsin = atmsrf.read_raw(row_in.p2f_in)
+                    # dsin = atmsrf.read_raw(row_in.p2f_in)
+                    dsin = srpmfrsrio.open_rsr(row_in.p2f_in)  # test if the file is readable
+                    self.tp_p2f_in = row_in.p2f_in
                     break
-                except atmsrf.FileCorruptError:
-                    print(f'Corrupt file encountered: {row_in.p2f_in.as_posix()}.')
+                # except atmsrf.FileCorruptError:
+                #     print(f'Corrupt file encountered: {row_in.p2f_in.as_posix()}.')
+                #     continue
+                except Exception as e:
+                    print(f'Error {e} encountered when opening file: {row_in.p2f_in.as_posix()}. Try next file.')
                     continue
             return dsin 
 
@@ -264,9 +282,12 @@ class MfrsrRawToNetcdf:
                 print('more than one day in files, concat and truncate')
             
             # ds_rawlist should now include all files that have data on this day
-            # lets check if all head_ids are identical
-            head_ids = [ds.dataset.serial_no for ds in ds_rawlist]
+            # lets check if all head_ids and logger_ids are identical
+            head_ids = [ds.dataset.head_id for ds in ds_rawlist]
             assert(len(set(head_ids))==1), f'Head IDs in the raw files do not match: {head_ids}'
+
+            logger_ids = [ds.dataset.logger_id for ds in ds_rawlist]
+            assert(len(set(logger_ids))==1), f'Logger IDs in the raw files do not match: {logger_ids}'
 
             # lets concatonate and truncate them
             dsout = xr.concat([i.dataset for i in ds_rawlist], 'datetime')
@@ -278,9 +299,9 @@ class MfrsrRawToNetcdf:
 
             # check metadata consistency inculding database information
             ## get metadata from surfrad database
-            query = f'SELECT * FROM instruments_mfrsr WHERE Logger_ID="${dsout.serial_no}"'
+            query = f'SELECT * FROM instruments_mfrsr WHERE Logger_ID="${dsout.logger_id}"'
             db_meta = self.surfrad_db.execute_query(query)
-            assert(db_meta.shape[0] == 1), f'No unique entry found in instruments_mfrsr for Logger_ID = {dsout.serial_no}. Found {db_meta.shape[0]} entries.'
+            assert(db_meta.shape[0] == 1), f'No unique entry found in instruments_mfrsr for Logger_ID = {dsout.logger_id}. Found {db_meta.shape[0]} entries.'
             db_meta = db_meta.iloc[0]
 
             ## where was the instrument deployed at the time of interest
@@ -311,23 +332,26 @@ class MfrsrRawToNetcdf:
             # add attributes
             self.tp_ri = ds_rawlist[0]
             dsraw = ds_rawlist[0].dataset
-            attrs = {}
+            attrs = dsraw.attrs.copy()
             attrs['info'] = 'SURFRAD MFRSR raw data converted to netcdf format, concatonated and truncated to daily files in UTC time.'
             attrs['source'] = 'This netcdf file was created by surfradpy.mfr_raw2netcdf.MfrsrRawToNetcdf'
             attrs['processing_date'] = pd.Timestamp.now().isoformat()
             attrs['processing_server'] = socket.gethostname()
             attrs['product_version'] = self.version
             attrs['site'] = site_meta.abb
-            attrs['site_name'] = site_meta.name
+            attrs['site_name'] = site_meta['name']
             attrs['elevation'] = site_meta.elevation
             attrs['latitude'] = site_meta.latitude
             attrs['longitude'] = site_meta.longitude
-            attrs['measurement_sequenc'] = dsraw.attrs['measurement_sequenc']
-            attrs['instrument_type'] = dsraw.attrs['instrument_type']
+            # attrs['band_on'] = dsraw.attrs['band_on']
+            # attrs['band_on'] = dsraw.attrs['band_on']
+            # attrs['avg_period'] = dsraw.attrs['avg_period']
+            # attrs['sample_rate'] = dsraw.attrs['sample_rate']
+            # attrs['instrument_type'] = dsraw.attrs['instrument_type']
             attrs['sn_mfrsr'] = db_meta.Instrument
             attrs['logger_id'] = db_meta.Logger_ID
             attrs['head_id'] = db_meta.Head_ID
-            attrs['parent_files'] = ', '.join([i.dataset.attrs['path2file'].as_posix() for i in ds_rawlist])
+            attrs['parent_files'] = ', '.join([i.dataset.attrs['path2file'] for i in ds_rawlist])
             attrs['day_complete'] = complete.__str__()
             dsout.attrs = attrs
             # create the pathname and save under that name
