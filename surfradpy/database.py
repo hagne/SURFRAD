@@ -108,9 +108,11 @@ class SurfradDatabase:
             if df.columns[0] != 'Date_start':
                 print(f'Instrument {k} has fist column with the name {df.columns[0]} not "Date_start" as expected. This indicates that the instrument was never put into action ... bought for spare parts?')
                 continue
-            
+            # self.tp_df = df
+            # print(type(df.Date_start))
 
-            assert(df.Date_start.dtype.name == 'datetime64[ns]'), f'Date_start column of the {k} sheet does not have a valid datetime format. Someone must have entered a non valid entry in that column of MFRSR_history.'
+            # assert(df.Date_start.__name__ == "Timestamp")
+            assert(df.Date_start.dtypes.name == 'datetime64[us]'), f'Date_start column of the {k} sheet does not have a valid datetime format (has {df.Date_start.dtype.name}). Someone must have entered a non valid entry in that column of MFRSR_history.'
             
             # only get relevant columns
             df = df[['Date_start','Date_stop', 'Location', 'Table/Tower']]

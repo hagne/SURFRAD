@@ -157,9 +157,12 @@ class RSRFile:
 
                 row = [self.record.obs_time] +  emit_data_out['parts_f']
                 data.append(row)
-                
 
             data = np.array(data)
+            self.tp_data = data
+            if data.shape[0] == 0:
+                raise FileCorruptError(self.filename, message="No valid records found in file")
+            
             df = _pd.DataFrame(data, index = _pd.to_datetime(data[:,0], unit='s'))
             df.index.name = 'datetime'
 
@@ -633,6 +636,8 @@ def open_rsr(path: str) -> RSRFile:
         head, data_length = _unhead_2(hb)
     else:
         head, data_length = _unhead_1(inst_type, hb)
+
+    # print(head)
 
     # start_time: rsr_j2unix(days_1900 + secs_today/86400.0)
     start_time = rsr_j2unix(head.days_1900 + head.secs_today / 86400.0)

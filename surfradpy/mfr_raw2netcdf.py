@@ -1,5 +1,6 @@
 import pathlib as pl
 import site
+import warnings
 # import atmPy.data_archives.NOAA_ESRL_GMD_GRAD.surfrad.surfrad as atmsrf
 import xarray as xr
 import pandas as pd
@@ -205,13 +206,18 @@ class MfrsrRawToNetcdf:
 
             self._workplan = wp_in
         return self._workplan
-    
-    def process(self, dryrun = False, verbose = True):
+
+    def process(self, justone = False, save = True, id_mismatch_error = True, verbose = True):
         """ Process the workplan
         Parameters
         ----------
-        dryrun : bool, optional
+        justone : bool, optional
             If True, a single file will be processed but not saved. The default is False.
+        save: bool, optional
+            If True, the processed files will be saved. The default is True.
+        id_mismatch_error : bool, optional
+            If True, a ValueError will be raised if head_id or logger_id mismatches are found
+            between raw files being concatonated. The default is True.
         verbose : bool, optional
             If True, print progress messages. The default is True.
             
@@ -226,7 +232,11 @@ class MfrsrRawToNetcdf:
                 try:
                     # dsin = atmsrf.read_raw(row_in.p2f_in)
                     dsin = srpmfrsrio.open_rsr(row_in.p2f_in)  # test if the file is readable
+                    dsin.dataset # to avoid linting error
                     self.tp_p2f_in = row_in.p2f_in
+                    self.tp_dsin = dsin
+                    # print(dsin.filename, end = '\t')
+                    # print(dsin.head.logger_id, flush=True)
                     break
                 # except atmsrf.FileCorruptError:
                 #     print(f'Corrupt file encountered: {row_in.p2f_in.as_posix()}.')
@@ -284,10 +294,18 @@ class MfrsrRawToNetcdf:
             # ds_rawlist should now include all files that have data on this day
             # lets check if all head_ids and logger_ids are identical
             head_ids = [ds.dataset.head_id for ds in ds_rawlist]
-            assert(len(set(head_ids))==1), f'Head IDs in the raw files do not match: {head_ids}'
+            if len(set(head_ids))!=1:
+                msg = f'Head IDs in the raw files do not match: {head_ids}'
+                if id_mismatch_error:
+                    raise ValueError(msg)
+                warnings.warn(msg)
 
             logger_ids = [ds.dataset.logger_id for ds in ds_rawlist]
-            assert(len(set(logger_ids))==1), f'Logger IDs in the raw files do not match: {logger_ids}'
+            if len(set(logger_ids))!=1:
+                msg = f'Logger IDs in the raw files do not match: {logger_ids}'
+                if id_mismatch_error:
+                    raise ValueError(msg)
+                warnings.warn(msg)
 
             # lets concatonate and truncate them
             dsout = xr.concat([i.dataset for i in ds_rawlist], 'datetime')
@@ -363,9 +381,9 @@ class MfrsrRawToNetcdf:
             self.tp_dsout = dsout
             self.tp_start_file = start_file
             # assert(False), 'debug stop'
-            if dryrun:
+            if justone:
                 if verbose:
-                    print('dryrun active, skip saving')
+                    print('justone active, skip saving')
                 return {'dsout': dsout, 'p2f_out': p2f_out, 'active': active, 'start_file': start_file, 'complete': complete}
             if dsout.datetime.shape[0] == 0:
                 if verbose:
@@ -374,6 +392,10 @@ class MfrsrRawToNetcdf:
                 if p2f_out.is_file():
                     if verbose:
                         print('File exists, skip saving')
+                elif not save:
+                    # if verbose:
+                    #     print('save is False, skip saving')
+                    pass
                 else:
                     p2f_out.parent.mkdir(parents=True, exist_ok=True)
                     dsout.to_netcdf(p2f_out)
@@ -394,8 +416,8 @@ class MfrsrRawToNetcdf:
             # print(f'make next file of the day ({i})')
             print('.', end = '')
             out = make_file_of_the_day(wpiter, active, start_file, verbose = False)
-            if dryrun:
-                print('dryrun active, stop after first file')
+            if justone:
+                print('justone active, stop after first file')
                 break
             active = out['active']
             complete = out['complete']
