@@ -21,6 +21,7 @@ packages = ["surfradpy"]
 write_to = "_version.py"  # Path to write the version file
 
 [project.scripts]
+produce_surfrad_mfrsr2nc = "surfradpy.scripts.surfrad_mfrsr_raw2netcdf:run"
 produce_aod2netcdf = "surfradpy.scripts.aod2netcdf:run"
 qcrad2ncei = "surfradpy.scripts.qcrad2ncei:main"
 aodinv1 = 'surfradpy.scripts.aodinversion:produce_aodinversion1_01'

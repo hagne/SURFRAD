@@ -1,0 +1,11 @@
+name: surfradpy
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - pandas
+  - xarray
+  - netcdf4
+  - setproctitle
+  - pip

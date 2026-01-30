@@ -8,12 +8,43 @@ import surfradpy.database as sfp_db
 import socket
 import surfradpy.file_io.mfrsr as srpmfrsrio
 
+
+def files_between(root: pl.Path, start: pd.Timestamp, end: pd.Timestamp, globpattern: str = ""):
+    """ Generator that yields all files between start and end dates (inclusive) in the given root directory.
+    Parameters
+    ----------
+    root : pl.Path
+        Root directory containing year subdirectories with files.
+    start : pd.Timestamp
+        Start date.
+    end : pd.Timestamp
+        End date.
+    globpattern : str, optional
+        Glob pattern to match files. The default is mainly covering the extension, set to '*.nc' for netcdf files."".
+    Yields
+    -------
+    pl.Path
+        Paths to files between start and end dates.
+    """ 
+    assert(end > start), f'End must come after start! (end: {end}, start{start})'
+    root = root
+    d = start
+    while d <= end:
+        year_dir = root / f"{d.year}"
+        assert(year_dir.exists())
+        yield from year_dir.glob(f"*{d:%Y%m%d}{globpattern}")
+        d += pd.to_timedelta(1, 'D')
+
+
+
 class MfrsrRawToNetcdf:
     def __init__(self, 
                  path_in,
                  path_out,
                  name_pattern_netcdf, 
-                 glob_pattern_raw = "**/*.xmd",
+                 glob_pattern_raw = "*.xmd",
+                 start = None,
+                 end = None,
                  site = None,
                  version = '0.3',
                  path2surfrad_database = None,
@@ -43,7 +74,11 @@ class MfrsrRawToNetcdf:
             Thre letter site code (e.g., 'tbl'). Used for validation against the SURFRAD database.
         glob_pattern_raw: str, optional
             Glob pattern to find raw MFRSR files within `path_in`. Defaults to
-            '**/*.xmd'.
+            '*.xmd'. Consider using start and end in addition to this pattern.
+        start: str or pd.Timestamp, optional
+            Start date for processing. Have to provide end as well. glob_pattern_raw is still needed to define extension.
+        end: str or pd.Timestamp, optional
+            See start.
         version: str, optional
             Version of the conversion script. Defaults to '0.1'.
         path2surfrad_database: str, optional
@@ -91,6 +126,8 @@ class MfrsrRawToNetcdf:
         self.reporter = reporter
         self.freq='d'
         self.verbose = verbose
+        self._processing_start = start
+        self._processing_end = end
 
     def _make_masterplan_out(self):
         # get all the files that should at the end exist
@@ -153,7 +190,14 @@ class MfrsrRawToNetcdf:
     
     def _make_masterplan_in(self):
         # Get all raw files
-        df  = pd.DataFrame(self.path_in.glob(self.glob_pattern_raw), columns=['p2f_in'])
+        if isinstance(self._processing_start, type(None)):
+            gen = self.path_in.glob(self.glob_pattern_raw)
+        else:
+            start = pd.to_datetime(self._processing_start)
+            end = pd.to_datetime(self._processing_end) if not isinstance(self._processing_end, type(None)) else pd.Timestamp.now()
+            gen = files_between(self.path_in, start, end, globpattern = self.glob_pattern_raw)
+        df  = pd.DataFrame(gen, columns=['p2f_in'])
+        assert(df.shape[0]>0), f'No raw files found in {self.path_in} between {self._processing_start} and {self._processing_end} with pattern {self.glob_pattern_raw}.'
         df = df.sort_values('p2f_in')
         df['fname'] = df.apply(lambda row: row.p2f_in.name, axis = 1)
         return df
@@ -243,6 +287,8 @@ class MfrsrRawToNetcdf:
                 #     continue
                 except Exception as e:
                     print(f'Error {e} encountered when opening file: {row_in.p2f_in.as_posix()}. Try next file.')
+                    if not isinstance(self.reporter, type(None)):
+                       self.reporter.errors_increment()
                     continue
             return dsin 
 
@@ -399,6 +445,9 @@ class MfrsrRawToNetcdf:
                 else:
                     p2f_out.parent.mkdir(parents=True, exist_ok=True)
                     dsout.to_netcdf(p2f_out)
+                    if not isinstance(self.reporter, type(None)):
+                        self.reporter.clean_increment()
+                        self.reporter.log()
             return {'dsout': dsout, 'p2f_out': p2f_out, 'active': active, 'start_file': start_file, 'complete': complete}
         # Keep processing
         wp_in = self.workplan

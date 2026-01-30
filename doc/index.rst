@@ -48,7 +48,7 @@ metadata + conventions, QC utilities, retrieval workflows, and analysis examples
    :caption: Reference
 
    reference/api
-   reference/cli
+   reference/command-line-tools
    reference/configuration
 ..    reference/formats
 ..    reference/glossary
