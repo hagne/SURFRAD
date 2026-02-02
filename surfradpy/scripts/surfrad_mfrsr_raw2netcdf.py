@@ -20,7 +20,7 @@ def run(prefix = '/nfs/grad/',
         log_folder='/home/grad/htelg/.processlogs/',
         test = False,
         verbose = True,):
-    
+    out = {}
     if db_path is None:
         db_path = sfp_config.get_db_path()
     if db_path is None:
@@ -63,11 +63,12 @@ def run(prefix = '/nfs/grad/',
                                 )
         print(f'{site} workplan.shape: {ci.workplan.shape}')
         if test:
-            out = ci.process(verbose=verbose, save=False, justone = False)
+            last_processed = ci.process(verbose=verbose, save=False, justone = False)
             break
         else:
-            out = ci.process(verbose=verbose)
-
+            last_processed = ci.process(verbose=verbose)
+    out['product_instance'] = ci
+    out['last_processed'] = last_processed
     reporter.wrapup()
     out['reporter'] = reporter
     return out
