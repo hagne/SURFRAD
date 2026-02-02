@@ -24,8 +24,8 @@ tag_regex = '^v(?P<version>\d+(?:\.\d+){0,2})$'
 git_describe_command = "git describe --tags --long --match v*"
 
 [project.scripts]
-produce_surfrad_mfrsr_full = "surfradpy.scripts.surfrad_mfrsr_full_process:run"
-produce_surfrad_mfrsr2nc = "surfradpy.scripts.surfrad_mfrsr_raw2netcdf:run"
+produce_surfrad_mfrsr_full = "surfradpy.scripts.surfrad_mfrsr_full_process:main"
+produce_surfrad_mfrsr2nc = "surfradpy.scripts.surfrad_mfrsr_raw2netcdf:main"
 produce_aod2netcdf = "surfradpy.scripts.aod2netcdf:run"
 qcrad2ncei = "surfradpy.scripts.qcrad2ncei:main"
 aodinv1 = 'surfradpy.scripts.aodinversion:produce_aodinversion1_01'

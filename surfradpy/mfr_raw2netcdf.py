@@ -193,10 +193,14 @@ class MfrsrRawToNetcdf:
     def _make_masterplan_in(self):
         # Get all raw files
         if isinstance(self._processing_start, type(None)):
+            if self.verbose:
+                print(f'Get all files in {self.path_in} with glob pattern: {self.glob_pattern_raw}')
             gen = self.path_in.glob(self.glob_pattern_raw)
         else:
             start = pd.to_datetime(self._processing_start)
             end = pd.to_datetime(self._processing_end) if not isinstance(self._processing_end, type(None)) else pd.Timestamp.now()
+            if self.verbose:
+                print(f'Get all files in {self.path_in} with "files_between" function and start: {start}, end: {end} and glob pattern: {self.glob_pattern_raw}')
             gen = files_between(self.path_in, start, end, globpattern = self.glob_pattern_raw)
         df  = pd.DataFrame(gen, columns=['p2f_in'])
         assert(df.shape[0]>0), f'No raw files found in {self.path_in} between {self._processing_start} and {self._processing_end} with pattern {self.glob_pattern_raw}.'

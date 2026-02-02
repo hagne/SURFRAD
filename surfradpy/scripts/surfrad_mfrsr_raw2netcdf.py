@@ -18,7 +18,9 @@ import pandas as pd
 def run(prefix = '/nfs/grad/', 
         db_path=None, 
         log_folder='/home/grad/htelg/.processlogs/',
-        test = False,):
+        test = False,
+        verbose = True,):
+    
     if db_path is None:
         db_path = sfp_config.get_db_path()
     if db_path is None:
@@ -57,14 +59,41 @@ def run(prefix = '/nfs/grad/',
                                     site = site,
                                     path2surfrad_database  = db_path,
                                     reporter = reporter,
+                                    verbose = verbose,
                                 )
         print(f'{site} workplan.shape: {ci.workplan.shape}')
         if test:
-            out = ci.process(verbose=True, save=False, justone = False)
+            out = ci.process(verbose=verbose, save=False, justone = False)
             break
         else:
-            out = ci.process(verbose=True)
+            out = ci.process(verbose=verbose)
 
     reporter.wrapup()
     out['reporter'] = reporter
     return out
+
+
+def main(argv=None):
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--prefix', default='/nfs/grad/')
+    parser.add_argument('--db-path', default=None)
+    parser.add_argument('--log-folder', default='/home/grad/htelg/.processlogs/')
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--verbose', action='store_true', dest='verbose')
+    parser.add_argument('--no-verbose', action='store_false', dest='verbose')
+    parser.set_defaults(verbose=True)
+    args = parser.parse_args(argv)
+
+    return run(
+        prefix=args.prefix,
+        db_path=args.db_path,
+        log_folder=args.log_folder,
+        test=args.test,
+        verbose=args.verbose,
+    )
+
+
+if __name__ == "__main__":
+    main()
