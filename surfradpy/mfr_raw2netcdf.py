@@ -106,7 +106,9 @@ class MfrsrRawToNetcdf:
         self.path_out = pl.Path(path_out.format(**self.kwargs))
         self.path_out.mkdir(exist_ok=True, parents=True)
 
-        if isinstance(path2surfrad_database, str):
+        if path2surfrad_database is None:
+            path2surfrad_database = sfp_db.get_default_db_path()
+        if isinstance(path2surfrad_database, (str, pl.Path)):
             self.surfrad_db = sfp_db.SurfradDatabase(path2surfrad_database)
         else:
             self.surfrad_db = None
@@ -474,6 +476,5 @@ class MfrsrRawToNetcdf:
             dsout = out['dsout']
             i += 1
         return out
-
 
 

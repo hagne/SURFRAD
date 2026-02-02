@@ -10,13 +10,21 @@ This module provides database access functions for all SURFRAD data and instrume
 import sqlite3
 import pathlib as pl
 import pandas as pd
+import surfradpy.config as sfp_config
+
+
+def get_default_db_path() -> pl.Path | None:
+    """
+    Return the configured default database path, if available.
+    """
+    return sfp_config.get_db_path()
 
 
 class SurfradDatabase:
     """
     Class to handle SURFRAD database connections and queries.
     """
-    def __init__(self, path2db: str, create_if_missing: bool = False):
+    def __init__(self, path2db: str | pl.Path | None, create_if_missing: bool = False):
         """
         Initialize the SurfradDatabase with the path to the database file.
 
@@ -25,9 +33,20 @@ class SurfradDatabase:
         path2db: str
             Path to the SQLite database file.
         """
+        if path2db is None:
+            path2db = get_default_db_path()
+        if path2db is None:
+            cfg_path = sfp_config.get_config_path()
+            raise FileNotFoundError(
+                "No database path provided and no default configured. "
+                f"Set SURFRAD_DB_PATH or add [database] path to {cfg_path}."
+            )
         if not create_if_missing:
             if not pl.Path(path2db).exists():
-                raise FileNotFoundError(f"Database file {path2db} does not exist. Set create_if_missing=True to create a new database.")
+                raise FileNotFoundError(
+                    f"Database file {path2db} does not exist. "
+                    "Set create_if_missing=True to create a new database."
+                )
         self.path2db = pl.Path(path2db)
 
     def snapshot(self, max_rows=20, include_schema=True):

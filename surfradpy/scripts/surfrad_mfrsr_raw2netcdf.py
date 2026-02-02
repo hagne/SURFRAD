@@ -10,14 +10,23 @@ This script converts SURFRAD MFR raw (.xmd) data files to netcdf format. In the 
 
 import surfradpy.mfr_raw2netcdf as mfr_r2nc
 import surfradpy.database as sfp_db
+import surfradpy.config as sfp_config
 import productomator.lab as prolab
 import pandas as pd
 
 
 def run(prefix = '/nfs/grad/', 
-        db_path='/home/grad/htelg/prog/SURFRAD/notebooks/databases/surfrad_database.db', 
+        db_path=None, 
         log_folder='/home/grad/htelg/.processlogs/',
         test = False,):
+    if db_path is None:
+        db_path = sfp_config.get_db_path()
+    if db_path is None:
+        cfg_path = sfp_config.get_config_path()
+        raise FileNotFoundError(
+            "No database path provided and no default configured. "
+            f"Set SURFRAD_DB_PATH or add [database] path to {cfg_path}."
+        )
 
     reporter = prolab.Reporter('surfrad_mfr_raw2netcdf', 
                                 log_folder=log_folder,

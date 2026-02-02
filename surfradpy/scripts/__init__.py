@@ -11,3 +11,6 @@ reinstall would be required if changes are made to the script itself. Therefore,
 the scripts are simply pointing to modules here, which continue to be editable.
 """
 
+from . import surfrad_mfrsr_raw2netcdf
+from . import surfrad_mfrsr_full_process
+from . import qcrad2ncei

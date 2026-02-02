@@ -58,7 +58,6 @@ metadata + conventions, QC utilities, retrieval workflows, and analysis examples
    :caption: Developer guide
 
    developer/improve_this_documentation
-
    developer/contributing
 ..    developer/architecture
    developer/adding-a-retrieval
