@@ -19,6 +19,9 @@ packages = ["surfradpy"]
 
 [tool.setuptools_scm]
 write_to = "_version.py"  # Path to write the version file
+fallback_version = "0.0.0"
+tag_regex = '^v(?P<version>\d+(?:\.\d+){0,2})$'
+git_describe_command = "git describe --tags --long --match v*"
 
 [project.scripts]
 produce_surfrad_mfrsr_full = "surfradpy.scripts.surfrad_mfrsr_full_process:run"
