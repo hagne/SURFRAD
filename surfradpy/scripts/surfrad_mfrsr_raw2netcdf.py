@@ -81,7 +81,7 @@ def main(argv=None):
     parser.add_argument('--db-path', default=None)
     parser.add_argument('--log-folder', default='/home/grad/htelg/.processlogs/')
     parser.add_argument('--test', action='store_true')
-    parser.add_argument('--verbose', action='store_true', dest='verbose')
+    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
     parser.add_argument('--no-verbose', action='store_false', dest='verbose')
     parser.set_defaults(verbose=True)
     args = parser.parse_args(argv)

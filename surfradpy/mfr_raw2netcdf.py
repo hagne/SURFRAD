@@ -227,13 +227,16 @@ class MfrsrRawToNetcdf:
                 print('No rawfiles have been processe yet, start from the beginning')
                 wp_in = mp_in
             else:
+                
                 lastrow = mp_out_exist.iloc[-1]
                 ds = xr.open_dataset(lastrow.p2out)
 
                 # check if any new raw files have been produced, if not there is nothing to do
                 last_used_rawfile = ds.parent_files.split(',')[-1].strip()
                 last_used_rawfile = pl.Path(last_used_rawfile)
-                if mp_in.iloc[-1].p2f_in == last_used_rawfile: # no new raw files
+                if self.verbose:
+                    print(f'Check if new files (last: {mp_in.iloc[-1].p2f_in}) are new and if it should be added to last file. The last raw files that can be found in the last processed file is {last_used_rawfile}')
+                if mp_in.iloc[-1].p2f_in.name == last_used_rawfile.name: # no new raw files
                     print('No new raw files to process, workplan is empty')
                     wp_in = mp_in.iloc[:0]
                     self._workplan = wp_in
@@ -241,11 +244,13 @@ class MfrsrRawToNetcdf:
                     # assert(False), 'No new raw files, nothing to do here'
                     
                 if ds.day_complete == 'True':
-                    print('Last file was complete')
+                    if self.verbose:
+                        print('Last file was complete')
                     #when the day was complete we still want the last file since that file reached into the next day and was truncated
                     start_at_this_file = last_used_rawfile
                 else:
-                    print('Last file was incomplete')
+                    if self.verbose:
+                        print('Last file was incomplete')
                     # when the day was not complete we want to start from scratch with this file and load all files that has been used in the last netcdf file
                     start_at_this_file = ds.parent_files.split(',')[0].strip()
                     start_at_this_file = pl.Path(start_at_this_file)
