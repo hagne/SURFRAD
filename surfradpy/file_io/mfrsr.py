@@ -51,6 +51,12 @@ def rsr_j2unix(jdays: float) -> int:
     secs = int(jdays * 86400.0 + 0.5)
     return secs if secs >= 0 else -1
 
+def tempcal(val):
+    srt = 6810.0 * (5000.0 / val - 1.0)
+    ln = math.log(srt)
+    srt = 1.030852e-3 + 2.389179e-4 * ln + 1.574641e-7 * (ln ** 3)
+    srt = 1.0 / srt - 273.12
+    return srt
 
 # -----------------------------
 # RSR structures / parsing (ported from rsrlibc.c/h)
@@ -165,7 +171,7 @@ class RSRFile:
             
             df = _pd.DataFrame(data, index = _pd.to_datetime(data[:,0], unit='s'))
             df.index.name = 'datetime'
-
+            self.tp_df = df.copy()
             if self.head.band_on == 0:
                 instrument = 'mfr'
             elif self.head.band_on == 1:
@@ -204,6 +210,15 @@ class RSRFile:
                 ds['global_horizontal'] = global_horizontal
                 ds['diffuse_horizontal'] = diffuse_horizontal
                 ds['direct_horizontal'] = direct
+
+            ds['head_temperature'] = df.apply(lambda row: tempcal(row[1]), axis = 1)
+            ds['head_temperature'].attrs['units'] = 'degC'
+            ds['head_temperature'].attrs['long_name'] = 'MFRSR head temperature'
+
+            ds['logger_voltage'] = df.apply(lambda row: row[9] * 6/1000, axis = 1)
+            ds['logger_voltage'].attrs['units'] = 'V'
+            ds['logger_voltage'].attrs['long_name'] = 'MFRSR logger voltage'
+
 
             # add metadata
             ds.attrs['instrument'] = instrument
