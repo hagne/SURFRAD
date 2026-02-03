@@ -31,7 +31,7 @@ def files_between(root: pl.Path, start: pd.Timestamp, end: pd.Timestamp, globpat
     d = start
     while d <= end:
         year_dir = root / f"{d.year}"
-        assert(year_dir.exists())
+        assert(year_dir.exists()), f'Year directory does not exist: {year_dir}'
         yield from year_dir.glob(f"*{d:%Y%m%d}{globpattern}")
         d += pd.to_timedelta(1, 'D')
 
@@ -255,12 +255,16 @@ class MfrsrRawToNetcdf:
                     start_at_this_file = ds.parent_files.split(',')[0].strip()
                     start_at_this_file = pl.Path(start_at_this_file)
 
-                rawlable = mp_in.index[mp_in.p2f_in == start_at_this_file][0]
+                rawlable = mp_in.index[mp_in.p2f_in.name == start_at_this_file.name][0]
                 pos = mp_in.index.get_loc(rawlable)
                 wp_in = mp_in.iloc[pos:]
 
             self._workplan = wp_in
         return self._workplan
+    
+    @workplan.setter
+    def workplan(self, value):
+        self._workplan = value
 
     def process(self, justone = False, save = True, id_mismatch_error = True, verbose = True):
         """ Process the workplan
