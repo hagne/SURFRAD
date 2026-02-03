@@ -130,6 +130,7 @@ def generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
         p2fldouts = p2fldout.joinpath(site)
         if verbose:
             print(f'output folder:{p2fldouts}')
+        assert(p2fldouts.parent.exists()), f'Output parent folder does not exist: {p2fldouts.parent}.'
         p2fldouts.mkdir(exist_ok=True, 
                         # parents=True
                         )
@@ -184,6 +185,7 @@ def generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
             out['ds_sample'] = ds
             if test:
                 return out
+            row.p2foutfull.parent.mkdir(exist_ok=True)
             ds.to_netcdf(row.p2foutfull)
     out['numprocessed'] = totlnum
     return out
