@@ -49,7 +49,9 @@ def read_surfrad(p2f):
     collab = [c.split()[0] for c in collab]
 
     # read the file
-    df = pd.read_csv(p2f, skiprows=2, delim_whitespace = True, names = range(48))#, names = collab)
+    df = pd.read_csv(p2f, skiprows=2, sep= r'\s+',
+                    #  delim_whitespace = True, 
+                     names = range(48))#, names = collab)
     
     # there are some redundant columns full of zeros, no idea what they man?!?
     df = df.iloc[:,list(range(8)) + list(range(8,48,2))].copy()
@@ -74,7 +76,8 @@ def read_surfrad(p2f):
 def generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
                      p2fldout = '/nfs/grad/surfrad/products_level1/radiation_netcdf/',
                      gui = False,
-                     verbose = False):
+                     verbose = False,
+                     test = False):
     """
     Convertes all the radiation data from ascii to netcdf. In principle I could 
     use the NCEI data ... I think there was additional data that is not stored 
@@ -90,11 +93,17 @@ def generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
     None.
 
     """
-    
+    version = '1.1'
+    """
+    changelog:
+    1.0: initial version
+    1.1: save in annual folders instead of all in one folder
+    """
+    out = {}
     p2fld = pl.Path(p2fld)
     
     
-    p2fldout = pl.Path(p2fldout)
+    p2fldout = pl.Path(p2fldout) / f'v{version}'
     
     sites = ['dra','bon','fpk','gwn','psu','sxf','tbl']
     # sites = sites[1:]
@@ -121,7 +130,9 @@ def generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
         p2fldouts = p2fldout.joinpath(site)
         if verbose:
             print(f'output folder:{p2fldouts}')
-        p2fldouts.mkdir(exist_ok=True)
+        p2fldouts.mkdir(exist_ok=True, 
+                        # parents=True
+                        )
         p2flds = p2fld.joinpath(site)
         if verbose:
             print(f'p2flds: {p2flds}')
@@ -148,7 +159,7 @@ def generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
         if truncate:
             fns = fns.truncate(*truncate)
         
-        fns['p2foutfull'] = fns.apply(lambda row: p2fldouts.joinpath(f'srf_rad_full_{site}_{row.name.year:04d}{row.name.month:02d}{row.name.day:02d}.nc'), axis = 1)
+        fns['p2foutfull'] = fns.apply(lambda row: p2fldouts / f'{row.name.year:04d}/srf_rad_full_{site}_{row.name.year:04d}{row.name.month:02d}{row.name.day:02d}.nc', axis = 1)
         
         if not overwrite:
             fns = fns[~(fns.apply(lambda row: row.p2foutfull.is_file(), axis = 1))]
@@ -169,9 +180,12 @@ def generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
                     lab.value = f'{100*e/pgmax:0.1f}% {e}({pgmax}) t remaining: {minremain:0.0f} min'
             ds = read_surfrad(row.p2f)
             # assert(False)
+            out['pw'] = fns
+            out['ds_sample'] = ds
+            if test:
+                return out
             ds.to_netcdf(row.p2foutfull)
-    out = dict(numprocessed = totlnum,
-              )
+    out['numprocessed'] = totlnum
     return out
             
             
