@@ -255,7 +255,7 @@ class MfrsrRawToNetcdf:
                     start_at_this_file = ds.parent_files.split(',')[0].strip()
                     start_at_this_file = pl.Path(start_at_this_file)
 
-                rawlable = mp_in.index[mp_in.p2f_in.name == start_at_this_file.name][0]
+                rawlable = mp_in.index[mp_in.fname == start_at_this_file.name][0]
                 pos = mp_in.index.get_loc(rawlable)
                 wp_in = mp_in.iloc[pos:]
 
