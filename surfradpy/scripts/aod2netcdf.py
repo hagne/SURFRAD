@@ -11,7 +11,7 @@ Objectives:
 
 """
 import productomator.lab as prolab
-import surfradpy.aod2netcdf as aod2nc
+import surfradpy.products.aod2netcdf as aod2nc
 import pandas as pd
 import warnings
 import subprocess

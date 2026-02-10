@@ -1,2 +1,2 @@
 from . import NCEI
-from . import mfr_raw2netcdf
+from .products import mfr_raw2netcdf

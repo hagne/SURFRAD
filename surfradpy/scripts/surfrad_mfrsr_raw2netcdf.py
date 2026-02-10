@@ -8,7 +8,7 @@ Created 2026-01-15
 This script converts SURFRAD MFR raw (.xmd) data files to netcdf format. In the process it merges and truncates the data to daily files in UTC time.
 """
 
-import surfradpy.mfr_raw2netcdf as mfr_r2nc
+import surfradpy.products.mfr_raw2netcdf as mfr_r2nc
 import surfradpy.database as sfp_db
 import surfradpy.config as sfp_config
 import productomator.lab as prolab

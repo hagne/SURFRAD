@@ -12,7 +12,7 @@ TODO
 - address some of the warnings
 """
 import productomator.lab as prolab
-import surfradpy.aodinversion as sfraodinv
+import surfradpy.products.aodinversion as sfraodinv
 import pandas as pd
 import warnings
 
