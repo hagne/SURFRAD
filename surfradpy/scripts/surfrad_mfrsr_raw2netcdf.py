@@ -48,25 +48,25 @@ def run(prefix = '/nfs/grad/',
     start = end - pd.to_timedelta(60, 'D')
     for site in sites:
         print(site)
-        path_in = f'{prefix}/Inst/MFR/SURFRAD/{site}/mfrsr/raw/'
-        ci = mfr_r2nc.MfrsrRawToNetcdf(path_in,
-                                    f'{prefix}/Inst/MFR/SURFRAD/{site}/mfrsr/raw.netcdf/v{{version}}/',
-                                    '{year}/{site}_mfrsr_raw_{year}{month}{day}.nc',
-                                    glob_pattern_raw='*.xmd',
-                                    start = start,
-                                    end = end,
-                                    # verbose = True,
-                                    site = site,
-                                    path2surfrad_database  = db_path,
-                                    reporter = reporter,
-                                    verbose = verbose,
+        ci = mfr_r2nc.MfrsrRawToNetcdf(path_in = f'{prefix}/Inst/MFR/SURFRAD/{{site}}/mfrsr/raw/',
+                                        path_out = f'{prefix}/Inst/MFR/SURFRAD/{{site}}/mfrsr/raw.netcdf/v{{version}}',
+                                        date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])),
+                                        name_pattern_netcdf = '{year}/{site}_mfrsr_raw_{date}.nc',
+                                        glob_pattern_raw = "*.xmd",
+                                        start = start,
+                                        end = end,
+                                        site = site,
+                                        version = '0.3', # this is actually 0.3.1 but i don't want to rerun everything.
+                                        path2surfrad_database = db_path,
+                                        reporter = reporter,
+                                        verbose = verbose,
                                 )
         print(f'{site} workplan.shape: {ci.workplan.shape}')
         if test:
-            last_processed = ci.process(verbose=verbose, save=False, justone = False)
+            last_processed = ci.process_row(iloc = 1, save=False)
             break
         else:
-            last_processed = ci.process(verbose=verbose)
+            last_processed = ci.process()
     out['product_instance'] = ci
     out['last_processed'] = last_processed
     reporter.wrapup()
