@@ -130,7 +130,6 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
                 dsin = srpmfrsrio.open_rsr(fp)  # test if the file is readable
                 ds_rawlist.append(dsin.dataset)
                 self.tp_dsin = dsin
-                break
             # except atmsrf.FileCorruptError:
             #     print(f'Corrupt file encountered: {row_in.p2f_in.as_posix()}.')
             #     continue
@@ -139,7 +138,7 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
                 if not isinstance(self.reporter, type(None)):
                     self.reporter.errors_increment()
                 continue
-
+        self.tp_ds_rawlist = ds_rawlist.copy()
 
         head_ids = [ds.head_id for ds in ds_rawlist]
         if len(set(head_ids))!=1:
@@ -161,6 +160,7 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
         start = row.name.normalize()
         end = start + pd.to_timedelta(1,'D') - pd.to_timedelta(1, 'ns')
         dsout = dsout.drop_duplicates('datetime', keep = 'last') # in rare cases the data is present in multiple files
+        self.tp_dsout = dsout.copy()
         dsout = dsout.sel(datetime=(dsout.datetime >= start) & (dsout.datetime < end))
 
         # check metadata consistency inculding database information
