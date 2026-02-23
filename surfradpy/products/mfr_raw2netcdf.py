@@ -222,10 +222,7 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
             if self.verbose:
                 print('no data in dataset, skip saving')
         else:
-            if p2f_out.is_file():
-                if self.verbose:
-                    print('File exists, skip saving')
-            elif not save:
+            if not save:
                 pass
             else:
                 p2f_out.parent.mkdir(parents=True, exist_ok=True)
