@@ -1,0 +1,44 @@
+# Subroutine 
+# 
+#
+sub Time_Calculations () {
+    use Time::Local;
+    use Date::Manip;
+
+    my $date = shift(@_);
+
+    my $yyyy = substr($date,0,4);
+    my $mm   = substr($date,4,2);
+    my $dd   = substr($date,6,2);
+    my $hh   = substr($date,8,2);
+    my $mn   = substr($date,10,2);
+    my $ss   = substr($date,12,2);
+    
+    my $cat_time = "$yyyy$mm$dd$hh$mn$ss.GMT";
+    my $delta = &DateCalc("Jan 1, 1900  00:00:00 GMT","$cat_time");
+
+    my ($tp1,$tp2,$wk,$dy,$hr,$m,$s)=split(':',$delta);
+    my $epoch = ((($wk*604800)+($dy*86400)+($hr*3600)+($m*60)+$s)/86400)+1;
+
+#    my $epoch = (((timegm($ss,$mn,$hr,$dd,$mm-1,$yyyy))+25200)/86400)+25568;
+#    print STDOUT ">$epoch\n";
+#    sleep 1;
+
+    my $cdiy  = ((gmtime(timegm(0,0,0,$dd,$mm-1,$yyyy)))[7])+1;#Current DIY
+    my $fhr   = $hh + ($mn*60 + $ss)/3600;                 # Fractional Hour
+
+    my $diy   = ((gmtime(timegm(0,0,0,31,11,$yyyy)))[7])+1;# Days-In-Year
+    my $siy   = $diy*86400;                                # Secs-In-Year
+    my $cs    = ($cdiy-1)*86400+$hh*3600+$mn*60+$ss;       # Current Secs
+    my $fyear = $yyyy + ($cs/$siy);                        # Fracional Year
+    my $YYYYMMDD = sprintf "%4.4d%2.2d%2.2d",$yyyy,$mm,$dd;
+    my $mdy   = sprintf "%2.2d\/%2.2d\/%4.4d",$mm,$dd,$yyyy; # MM/DD/YYYY
+    my $fYYYYMMDD = $YYYYMMDD+(($hh*3600+$mn*60+$ss)/86400);
+    
+    my $fdoy  = ($cdiy+($hh*3600+$mn*60+$ss)/86400);
+    
+    my @time = ($epoch,$fYYYYMMDD,$fdoy,$fyear,$cdiy,$fhr,$mdy);
+    
+    return @time;
+}
+1;

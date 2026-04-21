@@ -1,0 +1,127 @@
+sub Bad_Data () {
+    use strict;
+
+    my $site = shift(@_);
+    my $beg  = shift(@_); # Begin time
+    my $end  = shift(@_); # End time
+
+    my $file = "/home/grad/mfrsr/Calinfo/bad_data";
+    open(BD, $file) or die "Can't open $file: $!\n";
+
+    my (@allperiods, @subperiods);
+    while (<BD>) {
+        chomp;
+        next if /^\s*$/;     # Skip blank lines                             
+        next if /^\s*\#/;    # Skip comment lines                           
+        s/\#.*$//;           # Strip tag comment  
+	s/^\s+//;            # Strip preceding white space
+	if (/^$site/) {
+	    push @allperiods, $_;
+	}
+    }
+
+    foreach my $line (@allperiods) {
+	my $tB = "F"; # Test Begin
+	my $tE = "F"; # Test End
+	my $tS = "F"; # Test Span.  Does it span entire range?
+	my @flds  = split(/\s+/,$line);
+	my $b = substr($flds[2],0,8);
+	my $e = substr($flds[3],0,8);
+
+	if (($beg >= $b) && ($beg <= $e)) {$tB = "T";}
+	if (($end >= $b) && ($end <= $e)) {$tE = "T";}
+	if (($beg <= $b) && ($end >= $e)) {$tS = "T";}
+
+	if (($tB eq "T") || ($tE eq "T") || ($tS eq "T")) {
+	    push @subperiods, $line;
+	} 
+    }
+
+    my %bd; # Hash to hold keys of bad data times
+    foreach my $line (@subperiods) {
+	my @flds  = split(/\s+/,$line);
+	my $code = $flds[1];
+	my $b = $flds[2];
+	my $yyyy = substr($b,0,4);
+	my $mm   = substr($b,4,2);
+	my $dd   = substr($b,6,2);
+	my $hh   = substr($b,8,2);
+	my $mn   = substr($b,10,2);
+	my $ss   = substr($b,12,2);
+	my @x = (gmtime(timegm($ss,$mn,$hh,$dd,$mm-1,$yyyy)-20));
+	$x[5] += 1900;
+	$x[4]++;
+	$b = sprintf "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d",
+	              $x[5],$x[4],$x[3],$x[2],$x[1],$x[0];
+	my $e = $flds[3];
+
+###############################################################################
+# Need to subtract 20 sec from Sub-Begin time.  Sub-Begin ($sb)
+# is used when the instrument is not functioning properly for 
+# a subset of the day, e.g., from 090000 to 130000 (HHMNSS).
+#
+	my $sb;
+	if ($flds[4] == 999999) {
+	    $sb = $flds[4]; # Sub-Begin.
+	} else {
+	    my $sbhh = substr($flds[4],0,2);
+	    my $sbmn = substr($flds[4],2,2);
+	    my $sbss = substr($flds[4],4,2);
+	    my @sb = (gmtime(timegm($sbss,$sbmn,$sbhh,$dd,$mm-1,$yyyy)-20));
+	    $sb = sprintf "%2.2d%2.2d%2.2d", $sb[2],$sb[1],$sb[0];
+	}
+
+	my $se = $flds[5]; # Sub-End. To subset hours within day.
+
+	if ($sb > $se) {die "Sub_Begin must be <= Sub_End";}
+
+###############################################################################
+# Need a "test begin" ($tbeg) variable to increment in the following while loop
+#
+	my $tbeg = sprintf"%8.8d%6.6d",$beg,"0";
+	while ($b < $e) {
+	    my $yyyy = substr($b,0,4);
+	    my $mm   = substr($b,4,2);
+	    my $dd   = substr($b,6,2);
+	    my $hh   = substr($b,8,2);
+	    my $mn   = substr($b,10,2);
+	    my $ss   = substr($b,12,2);
+
+# Increment begin of bad data time by 20 sec each iteration of the while loop.
+# 
+	    my @d = (gmtime(timegm($ss,$mn,$hh,$dd,$mm-1,$yyyy)+20));
+	    $d[5] += 1900;
+	    $d[4]++;
+	    $b = sprintf "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d",
+                    	  $d[5],$d[4],$d[3],$d[2],$d[1],$d[0];
+
+# Need a "test sub-begin" ($tsb) var to increment for the following if statement
+	    my $tsb = sprintf "%2.2d%2.2d%2.2d", $d[2],$d[1],$d[0];
+#	    print "^^$beg $tbeg $b $e @d\n";
+	    if (($b >= $tbeg) && ($se == 999999)) {
+		my $key = $b;
+		$bd{$key} = $code;
+		print "<>$beg $tbeg $b @d\n";
+#		sleep 1;
+#	    } elsif (($sb >= $tsb) && ($sb < $se)) {
+	    } elsif (($tsb >= $sb) && ($tsb <= $se)) {
+		print "##$b $e $sb $se $tsb @d\n\n";
+		my $hh = substr($sb,0,2);
+		my $mn = substr($sb,2,2);
+		my $ss = substr($sb,4,2);
+		my @i = (gmtime(timegm($ss,$mn,$hh,$d[3],$d[4]-1,$d[5])+20));
+		$i[5] += 1900;
+		$i[4]++;
+		$sb = sprintf "%2.2d%2.2d%2.2d",$i[2],$i[1],$i[0];
+		my $key = sprintf "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d",
+                         	   $i[5],$i[4],$i[3],$i[2],$i[1],$i[0];		
+		$bd{$key} = $code;
+#		print ">>$sb $key @i\n";
+	    } 
+	}
+    }
+#    print "\nend\n";
+    return (%bd);
+}
+1;
+

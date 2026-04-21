@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created 2026-04-10
+
+@author: hagen telg
+
+This script performs spectral and cosine calibrations on SURFRAD MFRSR raw data (netcdf version).
+"""
+
+import pandas as pd
+import surfradpy.products.mfrsr_cosinecorrection as srfcc
+import productomator.lab as prolab
+
+
+def run(prefix = '/nfs/grad/',
+        log_folder='/home/grad/htelg/.processlogs/',
+        start = None,
+        end = None,
+        noofdays = 60,
+        test = False,
+        raise_errors = False,
+        verbose = True,):
+    if verbose:
+        print("start surfrad_mfrsr_cosinecalibration")
+    out = {}
+    reporter = prolab.Reporter('surfrad_mfrsr_cosinecalibraton', 
+                                log_folder=log_folder,
+                                reporting_frequency=(6, 'h'),
+                            )
+
+    if end is None:
+         end = pd.Timestamp.now()
+    if start is None:
+         start = end - pd.to_timedelta(noofdays, 'D')
+
+    sites = ['bnd',
+            'dra',
+            'gwn',
+            'psu', 
+            'sxf',
+            'tbl',
+            'fpe',
+    ]
+    version_in = '0.3'
+    version_out = '0.1'
+
+    for site in sites:
+        if verbose:
+            print(site)
+            print('-----')
+        p2fld_in = f'/{prefix}/grad/Inst/MFR/SURFRAD/{site}/mfrsr/raw.netcdf/v{version_in}/'
+        p2fld_out = f'/{prefix}/grad/Inst/MFR/SURFRAD/{site}/mfrsr/cosine_corrected/v{version_out}/'
+        ci = srfcc.CalibrateMFRSR(p2fld_in  = p2fld_in,
+                                        p2fld_out = p2fld_out,
+                                        date_from_name = lambda name: pd.to_datetime(name.split('_')[-1].replace('.nc', '')),
+                                        output_file_format = f'{{year}}/{site}_mfrsr_cosinecorrected_{{date}}.nc',
+                                        # glob_pattern_raw = "*.xmd",
+                                        start = start,
+                                        end = end,
+                                        # site = site,
+                                        # version = '0.3', # this is actually 0.3.1 but i don't want to rerun everything.
+                                        # path2surfrad_database = db_path,
+                                        reporter = reporter,
+                                        verbose = verbose,
+                                )
+        print(f'{site} workplan.shape: {ci.workplan.shape}')
+        if test:
+            last_processed = ci.process_row(iloc = 1, save=False)
+            break
+        else:
+            # try:
+            
+            last_processed = ci.process(raise_errors = raise_errors)
+            # except:
+            #     return ci
+    out['product_instance'] = ci
+    out['last_processed'] = last_processed
+    reporter.wrapup()
+    out['reporter'] = reporter
+    return out

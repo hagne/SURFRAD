@@ -1,0 +1,52 @@
+# Subroutine determine_sol_file determines the correct cosine file to use
+# for the site and date(s).
+#
+sub Determine_Sol () {
+    my $site = uc(shift(@_));
+    my $date = shift(@_);
+    my $file = "/home/grad/mfrsr/Calinfo/cosine_history";
+
+    open(HI, $file) or die "Can't open $file: $!\n";
+
+    my $site_flag = "N";
+    my $date_flag = "N";
+    my $cnt = 0;
+    my (@info,$solfile,$_);
+    while (<HI>) {
+	chomp;
+	next if /^\s*$/;     # Skip blank lines                             
+	next if /^\s*\#/;    # Skip comment lines                           
+	s/\#.*$//;           # Strip tag comment                            
+
+	if ($cnt == 1) {     # Exits while loop once all info is read          
+	    last;
+	}
+
+	if (($site_flag eq "Y") && ($date_flag eq "Y") && ($cnt < 1)) {
+	    $solfile = $_;    # Loading data from file                   
+	    $cnt++;
+	}
+
+	if ((/^\d\d\d\d\d\d\d\d/) && ($site_flag eq "Y")) {
+	    if ($date >= $_) {     # Sets station date info               
+		$date_flag = "Y";
+	    }
+	}
+
+	if (/^$site/) {  # Sets a flag once "site" is found in file       
+	    $site_flag = "Y";
+	}
+    }
+    close (HI);
+    chomp(my $fcheck = `ls /home/grad/mfrsr/Calinfo/$solfile`);
+    if (-s $fcheck) {
+	return "$solfile";
+    } else {
+	print "\n   solfile does not exist.  Check date(s) for $site in\n";
+	print "   /home/grad/mfrsr/Calinfo/cosine_history\n\n";
+	die;
+    }
+}
+1;
+
+

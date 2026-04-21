@@ -1,0 +1,148 @@
+sub Bad_Data () {
+    use strict;
+
+    my $site = shift(@_);
+    my $beg  = shift(@_); # Begin time
+    my $end  = shift(@_); # End time
+
+###############################################################################
+# Begin and end times are in YYYYMMDD format.  Need to convert them to
+# YYYYMMDDHHMNSS with the end set to the following day. 
+#
+    my $beg = sprintf "%8.8d%6.6d",$beg,"0";
+    my @a;
+    $a[0] = substr($end,0,4);
+    $a[1] = substr($end,4,2);
+    $a[2] = substr($end,6,2);
+    @a = (gmtime(timegm(0,0,0,$a[2],$a[1]-1,$a[0])+86400))[5,4,3];
+    $a[0]+=1900;
+    $a[1]++;
+    $end = sprintf"%4.4d%2.2d%2.2d%6.6d",@a,"0";
+
+    my $file = "/home/grad/mfrsr/Calinfo/bad_data";
+    open(BD, $file) or die "Can't open $file: $!\n";
+
+    my (@allperiods, @subperiods);
+    while (<BD>) {
+        chomp;
+        next if /^\s*$/;     # Skip blank lines                             
+        next if /^\s*\#/;    # Skip comment lines                           
+        s/\#.*$//;           # Strip tag comment  
+	s/^\s+//;            # Strip preceding white space
+	if (/^$site/) {
+	    push @allperiods, $_;
+	}
+    }
+
+    foreach my $line (@allperiods) {
+	my $tB = "F"; # Test Begin
+	my $tE = "F"; # Test End
+	my $tS = "F"; # Test Span.  Does it span entire range?
+	my @flds  = split(/\s+/,$line);
+	my $b = $flds[2];
+	my $e = $flds[3];
+
+	if (($beg >= $b) && ($beg <= $e)) {$tB = "T";}
+	if (($end >= $b) && ($end <= $e)) {$tE = "T";}
+	if (($beg <= $b) && ($end >= $e)) {$tS = "T";}
+
+	if (($tB eq "T") || ($tE eq "T") || ($tS eq "T")) {
+	    push @subperiods, $line;
+	} 
+    }
+
+    my %bd; # Hash to hold keys of bad data times
+    foreach my $line (@subperiods) {
+	my @flds  = split(/\s+/,$line);
+	my $code = $flds[1];
+	my $b = $flds[2]; # Beg time of bad data
+	my $e = $flds[3]; # End time of bad data
+	my $yyyy = substr($b,0,4);
+	my $mm   = substr($b,4,2);
+	my $dd   = substr($b,6,2);
+	my $hh   = substr($b,8,2);
+	my $mn   = substr($b,10,2);
+	my $ss   = substr($b,12,2);
+	my @x = (gmtime(timegm($ss,$mn,$hh,$dd,$mm-1,$yyyy)-0));
+	$x[5] += 1900;
+	$x[4]++;
+	$b = sprintf "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d",
+	              $x[5],$x[4],$x[3],$x[2],$x[1],$x[0];
+
+###############################################################################
+# At this point the begin and end times need to be determined for the while
+# loop below.  The overall begin and end times are compared with the beg/end
+# times from the bad_data file.  Those are compared to determine the most
+# efficient beg/end times.
+#
+	my $wbeg = $beg;  # Beg/end vars for the while loop below
+	my $wend = $end;
+	if ($beg <= $b) {$wbeg = $b;}
+	if ($end >= $e) {$wend = $e;}
+
+
+###############################################################################
+# Need to subtract 20 sec from Sub-Begin time.  Sub-Begin ($sb)
+# is used when the instrument is not functioning properly for 
+# a subset of the day, e.g., from 090000 to 130000 (HHMNSS).
+#
+	my $sb;
+	if ($flds[4] == 999999) {
+	    $sb = $flds[4]; # Sub-Begin.
+	} else {
+	    my $sbhh = substr($flds[4],0,2);
+	    my $sbmn = substr($flds[4],2,2);
+	    my $sbss = substr($flds[4],4,2);
+	    my @sb = (gmtime(timegm($sbss,$sbmn,$sbhh,$dd,$mm-1,$yyyy)-0));
+	    $sb = sprintf "%2.2d%2.2d%2.2d", $sb[2],$sb[1],$sb[0];
+	}
+	my $se = $flds[5]; # Sub-End. To subset hours within day.
+	if ($sb > $se) {die "Sub_Begin must be <= Sub_End";}
+
+###############################################################################
+# Need a "test sub-begin" ($tsb) variable to increment in following while loop
+#
+	my $tsb = sprintf"%8.8d%6.6d",$wbeg,"0";
+	while ($wbeg <= $wend) {
+	    if (($sb == 999999) || ($se == 999999)) {
+#		my $key = $wbeg;
+		$bd{$wbeg} = $code;
+	    } elsif (($tsb >= $sb) && ($tsb <= $se)) {
+#		my $yyyy = substr($wbeg,0,4);
+#		my $mm   = substr($wbeg,4,2);
+#		my $dd   = substr($wbeg,6,2);
+#		my $hh   = substr($wbeg,8,2);
+#		my $mn   = substr($wbeg,10,2);
+#		my $ss   = substr($wbeg,12,2);
+#		my @i = (gmtime(timegm($ss,$mn,$hh,$dd,$mm-1,$yyyy)+0));
+#		$i[5] += 1900;
+#		$i[4]++;
+#		my $key = sprintf "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d",
+#                         	   $i[5],$i[4],$i[3],$i[2],$i[1],$i[0];		
+		$bd{$wbeg} = $code;
+#		print "##$wbeg $wend $sb $se $tsb\n";
+		print "##$wbeg $tsb\n";
+
+	    }
+
+# Increment $wbeg and $tsb by 20 sec each iteration of the while loop.
+# 
+	    my $yyyy = substr($wbeg,0,4);
+	    my $mm   = substr($wbeg,4,2);
+	    my $dd   = substr($wbeg,6,2);
+	    my $hh   = substr($wbeg,8,2);
+	    my $mn   = substr($wbeg,10,2);
+	    my $ss   = substr($wbeg,12,2);
+	    my @d = (gmtime(timegm($ss,$mn,$hh,$dd,$mm-1,$yyyy)+20));
+	    $d[5]+=1900;
+	    $d[4]++;
+	    $wbeg = sprintf "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d",
+                    	  $d[5],$d[4],$d[3],$d[2],$d[1],$d[0];
+	    $tsb = sprintf "%2.2d%2.2d%2.2d",$d[2],$d[1],$d[0];
+	}
+    }
+#    print "\nend\n";
+    return (%bd);
+}
+1;
+
