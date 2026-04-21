@@ -41,6 +41,7 @@ Single_Channel = 4
 # -----------------------------
 DAYS_1900_1970 = 25568
 SECONDS_PER_DAY = 86400
+TIMESTAMP_CORRECTION_SEC = -20 # My timestamp was shifted with respect to the original tu program.
 
 
 def rsr_j2unix(jdays: float) -> int:
@@ -444,7 +445,7 @@ class RSRFile:
 
             self.polar_day = [0] * self.rec_n_day
             self.polar_nite = [0] * self.rec_n_nite if self.rec_n_nite > 0 else None
-            _find_poles(self)
+            self._find_poles(self)
         self.record.data = [0] * self.rec_n_day
         self.record.n_data = -2
         self.record.obs_time = self.start_time
@@ -655,7 +656,8 @@ def open_rsr(path: str) -> RSRFile:
     # print(head)
 
     # start_time: rsr_j2unix(days_1900 + secs_today/86400.0)
-    start_time = rsr_j2unix(head.days_1900 + head.secs_today / 86400.0)
+    # Apply parser-alignment correction so emitted timestamps match reference parser.
+    start_time = rsr_j2unix(head.days_1900 + head.secs_today / 86400.0) + TIMESTAMP_CORRECTION_SEC
     if start_time < 0:
         raise ValueError("Suspicious header time; cannot compute start_time")
 
@@ -680,5 +682,4 @@ def open_rsr(path: str) -> RSRFile:
     rf.curr_rec_no = 0
     rf._gap_skip = -1
     return rf
-
 
