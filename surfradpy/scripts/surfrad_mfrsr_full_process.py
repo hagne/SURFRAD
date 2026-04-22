@@ -12,12 +12,27 @@ independently.
 
 import argparse
 import surfradpy.scripts.surfrad_mfrsr_raw2netcdf as raw2nc
+import surfradpy.scripts.surfrad_mfrsr_cosine_calibration as cosine_cal
 
 def run(prefix = '/nfs/grad/', verbose = False):
-    """Run the full SURFRAD MFRSR processing chain."""
+    """Run the full SURFRAD MFRSR processing chain. Including raw2netcdf, cosine calibration
+
+    Changes
+    -------
+    2026-04-22
+        - cosine correction added
+        - timestamp adjustemnt takes affect
+
+    Parameters
+    ----------
+    prefix : str, optional
+        Base filesystem prefix used by downstream processing scripts, by default '/nfs/grad/'
+    verbose : bool, optional
+        Enable verbose output, by default False"""
     if verbose:
         print(f'Running MFRSR full process with prefix={prefix}')
     raw2nc.run(prefix=prefix, verbose=verbose)
+    cosine_cal.run(prefix=prefix, verbose=verbose)
     # TODO: add cosine calibration script
     # TODO: add add langley calibration script, not sure if this is the way to go ... do same as PMOD
     # TODO: add aod script
