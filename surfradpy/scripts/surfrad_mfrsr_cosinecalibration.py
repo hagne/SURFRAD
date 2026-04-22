@@ -117,7 +117,7 @@ def _build_parser():
         description=inspect.getdoc(run) or "",
         formatter_class=_RawDefaultsHelpFormatter,
     )
-    parser.add_argument('--prefix', default='/nfs/grad/')
+    parser.add_argument('--prefix', default='/nfs')
     parser.add_argument('--log-folder', default='/home/grad/htelg/.processlogs/')
     parser.add_argument('--start', default=None)
     parser.add_argument('--end', default=None)
