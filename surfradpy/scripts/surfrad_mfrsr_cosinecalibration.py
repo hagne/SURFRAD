@@ -19,7 +19,7 @@ class _RawDefaultsHelpFormatter(
     pass
 
 
-def run(prefix = '/nfs/grad/',
+def run(prefix = '/nfs',
         log_folder='/home/grad/htelg/.processlogs/',
         start = None,
         end = None,
