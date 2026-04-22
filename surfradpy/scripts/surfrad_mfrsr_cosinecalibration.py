@@ -80,8 +80,8 @@ def run(prefix = '/nfs/grad/',
         if verbose:
             print(site)
             print('-----')
-        p2fld_in = f'/{prefix}/grad/Inst/MFR/SURFRAD/{site}/mfrsr/raw.netcdf/v{version_in}/'
-        p2fld_out = f'/{prefix}/grad/Inst/MFR/SURFRAD/{site}/mfrsr/cosine_corrected/v{{version}}/'
+        p2fld_in = f'{prefix}/grad/Inst/MFR/SURFRAD/{site}/mfrsr/raw.netcdf/v{version_in}/'
+        p2fld_out = f'{prefix}/grad/Inst/MFR/SURFRAD/{site}/mfrsr/cosine_corrected/v{{version}}/'
         ci = srfcc.CalibrateMFRSR(p2fld_in  = p2fld_in,
                                         p2fld_out = p2fld_out,
                                         date_from_name = lambda name: pd.to_datetime(name.split('_')[-1].replace('.nc', '')),
