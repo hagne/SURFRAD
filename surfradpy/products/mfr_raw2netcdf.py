@@ -19,7 +19,7 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
                  start = None,
                  end = None,
                  site = None,
-                 version = '0.3', # this is actually 0.3.1 but i don't want to rerun everything.
+                 version = '0.4', # this is actually 0.3.1 but i don't want to rerun everything.
                  path2surfrad_database = None,
                  reporter = None,
                  verbose = True,
@@ -27,6 +27,10 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
                  ):
         """
         Conversion class which converts raw MFRSR files to daily NetCDF files.
+
+        Changelog
+        ---------
+        v0.4: Bugfix in raw reader resulst in a 20 second shift in the timestamps. 
 
         Parameters
         ----------

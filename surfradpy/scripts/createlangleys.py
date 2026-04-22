@@ -5,13 +5,17 @@ Created on Wed May  3 13:29:47 2023
 
 @author: hagen
 """
-import productomator.lab as prolab
-import surfradpy.realtime_aod as sufrtaod
+import argparse
+import inspect
 import warnings
 warnings.simplefilter(action='ignore')
 
 
-def main():
+def run():
+    """Create and concatenate SURFRAD MFRSR Langley calibration products."""
+    import productomator.lab as prolab
+    import surfradpy.realtime_aod as sufrtaod
+
     reporter = prolab.Reporter(
                 'srf_langleys',
                 log_folder='/home/grad/htelg/.processlogs/',
@@ -37,3 +41,15 @@ def main():
         raise
     reporter.wrapup()    
 
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description=inspect.getdoc(run) or "",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.parse_args(argv)
+    return run()
+
+
+if __name__ == '__main__':
+    main()

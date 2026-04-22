@@ -10,13 +10,17 @@ Objectives:
     - convert John's AOD product to a unified netcdf product
 
 """
-import productomator.lab as prolab
-import surfradpy.products.aod2netcdf as aod2nc
-import pandas as pd
 import warnings
 import subprocess
+import argparse
+import inspect
 
-def run():
+def run(verbose=True):
+    """Convert SURFRAD AOD product files to unified netCDF output."""
+    import pandas as pd
+    import productomator.lab as prolab
+    import surfradpy.products.aod2netcdf as aod2nc
+
     reporter = prolab.Reporter('aod2netcdf', 
                                # log_folder='/export/htelg/tmp/', 
                                # reporting_frequency=(1,'min'),
@@ -32,30 +36,47 @@ def run():
     
     max2process = 3000
     a2n.workplan = a2n.workplan.iloc[-max2process:]
-    print(a2n.workplan)
+    if verbose:
+        print(a2n.workplan)
     nooffiles = a2n.workplan.shape[0]
-    print(f'no 2 be processed: {nooffiles}')
+    if verbose:
+        print(f'no 2 be processed: {nooffiles}')
     
     a2n.process(reporter=reporter, if_error='skip')
     
     #### rsync
-    print(f'errors: {reporter.errors}')
+    if verbose:
+        print(f'errors: {reporter.errors}')
     # if False:
     if (nooffiles - reporter.errors)> 0:
-        print('starting rsync', end = '...')
+        if verbose:
+            print('starting rsync', end = '...')
         subprocess.run(
                         ["rsync", "-av", f"{a2n.path2basefld_out}/", 
                                           f"/nfs/iftp/aftp/g-rad/surfrad/aod_netcdf/v{a2n.version}/"],
                         check=True
                         )
-        print('done')
+        if verbose:
+            print('done')
     else:
-        print('no files processed => resync skpped.')
+        if verbose:
+            print('no files processed => resync skpped.')
         
         
         
     reporter.wrapup()
-        
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description=inspect.getdoc(run) or "",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
+    parser.add_argument('--no-verbose', action='store_false', dest='verbose')
+    parser.set_defaults(verbose=True)
+    args = parser.parse_args(argv)
+    return run(verbose=args.verbose)
     
 if __name__ == "__main__":
-    run()
+    main()

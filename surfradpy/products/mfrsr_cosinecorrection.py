@@ -8,6 +8,7 @@ import socket
 
 class CalibrateMFRSR(pm.worker.Workplanner):
     def __init__(self,*args, **kwargs):
+        kwargs['version'] = '0.2'
         super().__init__(*args, **kwargs)
         
     def process_row(self, row = None, iloc = None, loc = None, save = True):
@@ -20,6 +21,10 @@ class CalibrateMFRSR(pm.worker.Workplanner):
             2.2 add variable attributes, units, long_name, standard_name, etc.
         3. save the output file (row.p2f_out)
         
+        Changelog
+        ---------
+        v0.2: Bugfix in raw reader resulst in a 20 second shift in the timestamps. 
+
         Parameters
         ----------
         row : pandas.Series, optional
@@ -153,6 +158,7 @@ class CalibrateMFRSR(pm.worker.Workplanner):
         ds.attrs['parent_files'] = row.p2f_in.as_posix()
         ds.attrs['calibration_file_cosine'] = p2fcos.as_posix()
         ds.attrs['calibration_file_spectral'] = p2fspr.as_posix()
+        ds.attrs['version'] = self.version
         ## Save the output file
         if save:
             row.p2f_out.parent.mkdir(parents = True, exist_ok = True)

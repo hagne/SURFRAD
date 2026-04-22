@@ -1,9 +1,13 @@
-import productomator.lab as prolab
-import surfradpy.radiation as srfrad
+import argparse
+import inspect
 import warnings
 warnings.simplefilter(action='ignore')
 
-def main():
+def run():
+    """Convert SURFRAD radiation text products to netCDF files."""
+    import productomator.lab as prolab
+    import surfradpy.radiation as srfrad
+
     reporter = prolab.Reporter(
                 'radiation2netcdf',
                 log_folder='/home/grad/htelg/.processlogs/',
@@ -23,4 +27,17 @@ def main():
         raise
 
     return
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description=inspect.getdoc(run) or "",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.parse_args(argv)
+    return run()
+
+
+if __name__ == '__main__':
+    main()
     

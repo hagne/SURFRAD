@@ -9,14 +9,12 @@ TODO
 =====
 
 """
-import productomator.lab as prolab
-import surfradpy.radflux2netcdf as srfr2nc
-
-import pandas as pd
+import argparse
+import inspect
 import warnings
 
 #### Functions that are executed by the scripts!    
-def main():
+def run():
     """
     This is the product that tries to converd radflux to netcdf format ... daily.
 
@@ -25,6 +23,9 @@ def main():
     None.
 
     """
+    import productomator.lab as prolab
+    import surfradpy.radflux2netcdf as srfr2nc
+
     reporter = prolab.Reporter('radflux2netcdf',
                              log_folder='/home/grad/htelg/.processlogs/',
                              reporting_frequency=(6, 'h'),
@@ -65,3 +66,16 @@ def main():
     
     reporter.wrapup()
     return reporter
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description=inspect.getdoc(run) or "",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.parse_args(argv)
+    return run()
+
+
+if __name__ == '__main__':
+    main()
