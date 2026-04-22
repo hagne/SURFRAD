@@ -8,9 +8,15 @@ Created 2026-04-10
 This script performs spectral and cosine calibrations on SURFRAD MFRSR raw data (netcdf version).
 """
 
-import pandas as pd
-import surfradpy.products.mfrsr_cosinecorrection as srfcc
-import productomator.lab as prolab
+import argparse
+import inspect
+
+
+class _RawDefaultsHelpFormatter(
+    argparse.ArgumentDefaultsHelpFormatter,
+    argparse.RawDescriptionHelpFormatter,
+):
+    pass
 
 
 def run(prefix = '/nfs/grad/',
@@ -21,6 +27,31 @@ def run(prefix = '/nfs/grad/',
         test = False,
         raise_errors = False,
         verbose = True,):
+    """Run SURFRAD MFRSR spectral and cosine calibration across all sites.
+
+    Parameters
+    ----------
+    prefix : str, optional
+        Filesystem prefix used to build input/output paths.
+    log_folder : str, optional
+        Folder where process logs are written.
+    start : str or pandas.Timestamp, optional
+        Start date/time. If not provided, computed as `end - noofdays`.
+    end : str or pandas.Timestamp, optional
+        End date/time. Defaults to current time.
+    noofdays : int, optional
+        Number of days to process when `start` is not given.
+    test : bool, optional
+        If True, process only one test row and stop.
+    raise_errors : bool, optional
+        If True, raise processing errors from the worker.
+    verbose : bool, optional
+        Print progress information.
+    """
+    import pandas as pd
+    import productomator.lab as prolab
+    import surfradpy.products.mfrsr_cosinecorrection as srfcc
+
     if verbose:
         print("start surfrad_mfrsr_cosinecalibration")
     out = {}
@@ -79,3 +110,40 @@ def run(prefix = '/nfs/grad/',
     reporter.wrapup()
     out['reporter'] = reporter
     return out
+
+
+def _build_parser():
+    parser = argparse.ArgumentParser(
+        description=inspect.getdoc(run) or "",
+        formatter_class=_RawDefaultsHelpFormatter,
+    )
+    parser.add_argument('--prefix', default='/nfs/grad/')
+    parser.add_argument('--log-folder', default='/home/grad/htelg/.processlogs/')
+    parser.add_argument('--start', default=None)
+    parser.add_argument('--end', default=None)
+    parser.add_argument('--noofdays', type=int, default=60)
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--raise-errors', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
+    parser.add_argument('--no-verbose', action='store_false', dest='verbose')
+    parser.set_defaults(verbose=True)
+    return parser
+
+
+def main(argv=None):
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+    return run(
+        prefix=args.prefix,
+        log_folder=args.log_folder,
+        start=args.start,
+        end=args.end,
+        noofdays=args.noofdays,
+        test=args.test,
+        raise_errors=args.raise_errors,
+        verbose=args.verbose,
+    )
+
+
+if __name__ == "__main__":
+    main()
