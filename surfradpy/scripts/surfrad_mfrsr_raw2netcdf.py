@@ -20,7 +20,7 @@ class _RawDefaultsHelpFormatter(
     pass
 
 
-def run(prefix = '/nfs/grad/', 
+def run(prefix = '/nfs', 
         db_path=None, 
         log_folder='/home/grad/htelg/.processlogs/',
         start = None,
@@ -33,7 +33,7 @@ def run(prefix = '/nfs/grad/',
     Parameters
     ----------
     prefix : str, optional
-        The prefix for the input and output paths. Default is '/nfs/grad/'.
+        The prefix for the input and output paths. Default is '/nfs'.
     db_path : str, optional
         Path to the SURFRAD database. 
     log_folder : str, optional
@@ -66,7 +66,7 @@ def run(prefix = '/nfs/grad/',
             f"Set SURFRAD_DB_PATH or add [database] path to {cfg_path}."
         )
 
-    reporter = prolab.Reporter('surfrad_mfr_raw2netcdf', 
+    reporter = prolab.Reporter('surfrad_mfr_raw2netcdf0.4', 
                                 log_folder=log_folder,
                                 reporting_frequency=(6, 'h'),
                                 
@@ -92,8 +92,8 @@ def run(prefix = '/nfs/grad/',
 
     for site in sites:
         print(site)
-        ci = mfr_r2nc.MfrsrRawToNetcdf(path_in = f'{prefix}/Inst/MFR/SURFRAD/{{site}}/mfrsr/raw/',
-                                        path_out = f'{prefix}/Inst/MFR/SURFRAD/{{site}}/mfrsr/raw.netcdf/v{{version}}',
+        ci = mfr_r2nc.MfrsrRawToNetcdf(path_in = f'{prefix}/grad/Inst/MFR/SURFRAD/{{site}}/mfrsr/raw/',
+                                        path_out = f'{prefix}/grad/Inst/MFR/SURFRAD/{{site}}/mfrsr/raw.netcdf/v{{version}}',
                                         date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])),
                                         name_pattern_netcdf = '{year}/{site}_mfrsr_raw_{date}.nc',
                                         glob_pattern_raw = "*.xmd",
@@ -125,7 +125,7 @@ def _build_parser():
         description=inspect.getdoc(run) or "",
         formatter_class=_RawDefaultsHelpFormatter,
     )
-    parser.add_argument('--prefix', default='/nfs/grad/')
+    parser.add_argument('--prefix', default='/nfs')
     parser.add_argument('--db-path', default=None)
     parser.add_argument('--log-folder', default='/home/grad/htelg/.processlogs/')
     parser.add_argument('--start', default=None)

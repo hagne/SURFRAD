@@ -55,7 +55,7 @@ def run(prefix = '/nfs',
     if verbose:
         print("start surfrad_mfrsr_cosinecalibration")
     out = {}
-    reporter = prolab.Reporter('surfrad_mfrsr_cosinecalibraton', 
+    reporter = prolab.Reporter('surfrad_mfrsr_cosinecalibraton_0.2', 
                                 log_folder=log_folder,
                                 reporting_frequency=(6, 'h'),
                             )
