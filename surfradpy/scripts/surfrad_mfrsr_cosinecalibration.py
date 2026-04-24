@@ -61,9 +61,14 @@ def run(prefix = '/nfs',
                             )
 
     if end is None:
-         end = pd.Timestamp.now()
+        end = pd.Timestamp.now()
+    else:
+        end = pd.to_datetime(end)
     if start is None:
-         start = end - pd.to_timedelta(noofdays, 'D')
+        start = end - pd.to_timedelta(noofdays, 'D')
+    else:
+        start = pd.to_datetime(start)
+
 
     sites = ['bnd',
             'dra',
@@ -89,6 +94,7 @@ def run(prefix = '/nfs',
                                         # glob_pattern_raw = "*.xmd",
                                         start = start,
                                         end = end,
+                                        prefix = prefix,
                                         # site = site,
                                         # version = '0.3', # this is actually 0.3.1 but i don't want to rerun everything.
                                         # path2surfrad_database = db_path,

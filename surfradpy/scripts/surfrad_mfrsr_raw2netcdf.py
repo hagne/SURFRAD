@@ -72,7 +72,8 @@ def run(prefix = '/nfs/grad/',
                                 
                             )
 
-    sites = ['bnd',
+    sites = ['inl',
+             'bnd',
             'dra',
             'gwn',
             'psu', 

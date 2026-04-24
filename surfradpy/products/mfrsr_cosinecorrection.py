@@ -62,7 +62,7 @@ class CalibrateMFRSR(pm.worker.Workplanner):
         ## Do some processing here, e.g. add attributes, format the dataset, etc.
         # get last calibration files
 
-        p2fld_cal = pl.Path(f'/Volumes/grad/Calibration_facilities/cucf/NOAA_GRAD_VisMFRSRs/V0{ds_raw.sn_mfrsr}/Reported/')
+        p2fld_cal = pl.Path(f'{self.prefix}/grad/Calibration_facilities/cucf/NOAA_GRAD_VisMFRSRs/V0{ds_raw.sn_mfrsr}/Reported/')
         assert(p2fld_cal.is_dir()), f'Folder containing calibration files, {p2fld_cal}, does not exist.'
         
         # get the .cos and .spr file with the closest date prior to the currently processed file
