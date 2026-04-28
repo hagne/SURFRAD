@@ -9,6 +9,7 @@ import socket
 class CalibrateMFRSR(pm.worker.Workplanner):
     def __init__(self,*args, **kwargs):
         kwargs['version'] = '0.2'
+        kwargs['file_complete_check'] = True
         super().__init__(*args, **kwargs)
         
     def process_row(self, row = None, iloc = None, loc = None, save = True):
@@ -144,7 +145,8 @@ class CalibrateMFRSR(pm.worker.Workplanner):
         # Format the dataset attributes
         #########
         dropattrs = [
-                    'day_complete','latitude','longitude','elevation',
+                    # 'day_complete', #keep that for to test if overwriting is required
+                    'latitude','longitude','elevation',
                     'path2file',
                     'source',
                     ]
@@ -159,6 +161,7 @@ class CalibrateMFRSR(pm.worker.Workplanner):
         ds.attrs['calibration_file_cosine'] = p2fcos.as_posix()
         ds.attrs['calibration_file_spectral'] = p2fspr.as_posix()
         ds.attrs['version'] = self.version
+
         ## Save the output file
         if save:
             row.p2f_out.parent.mkdir(parents = True, exist_ok = True)

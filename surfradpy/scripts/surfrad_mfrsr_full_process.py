@@ -29,6 +29,7 @@ def run(prefix = '/nfs', verbose = False):
         Base filesystem prefix used by downstream processing scripts, by default '/nfs'
     verbose : bool, optional
         Enable verbose output, by default False"""
+    verbose = not verbose # flip the bool for testing... change back or change code to make permament
     if verbose:
         print(f'Running MFRSR full process with prefix={prefix}')
     raw2nc.run(prefix=prefix, verbose=verbose)
