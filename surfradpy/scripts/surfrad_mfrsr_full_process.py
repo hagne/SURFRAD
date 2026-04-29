@@ -12,9 +12,9 @@ independently.
 
 import argparse
 import surfradpy.scripts.surfrad_mfrsr_raw2netcdf as raw2nc
-import surfradpy.scripts.surfrad_mfrsr_cosine_calibration as cosine_cal
+import surfradpy.scripts.surfrad_mfrsr_cosinecalibration as cosine_cal
 
-def run(prefix = '/nfs/grad/', verbose = False):
+def run(prefix = '/nfs', verbose = False):
     """Run the full SURFRAD MFRSR processing chain. Including raw2netcdf, cosine calibration
 
     Changes
@@ -26,9 +26,10 @@ def run(prefix = '/nfs/grad/', verbose = False):
     Parameters
     ----------
     prefix : str, optional
-        Base filesystem prefix used by downstream processing scripts, by default '/nfs/grad/'
+        Base filesystem prefix used by downstream processing scripts, by default '/nfs'
     verbose : bool, optional
         Enable verbose output, by default False"""
+    verbose = not verbose # flip the bool for testing... change back or change code to make permament
     if verbose:
         print(f'Running MFRSR full process with prefix={prefix}')
     raw2nc.run(prefix=prefix, verbose=verbose)
@@ -45,7 +46,7 @@ def main(argv=None):
     )
     parser.add_argument(
         '--prefix',
-        default='/nfs/grad/',
+        default='/nfs',
         help='Base filesystem prefix used by downstream processing scripts.',
     )
     parser.add_argument(

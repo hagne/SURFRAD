@@ -55,15 +55,20 @@ def run(prefix = '/nfs',
     if verbose:
         print("start surfrad_mfrsr_cosinecalibration")
     out = {}
-    reporter = prolab.Reporter('surfrad_mfrsr_cosinecalibraton', 
+    reporter = prolab.Reporter('surfrad_mfrsr_cosinecalibraton_0.2', 
                                 log_folder=log_folder,
                                 reporting_frequency=(6, 'h'),
                             )
 
     if end is None:
-         end = pd.Timestamp.now()
+        end = pd.Timestamp.now()
+    else:
+        end = pd.to_datetime(end)
     if start is None:
-         start = end - pd.to_timedelta(noofdays, 'D')
+        start = end - pd.to_timedelta(noofdays, 'D')
+    else:
+        start = pd.to_datetime(start)
+
 
     sites = ['bnd',
             'dra',
@@ -89,6 +94,7 @@ def run(prefix = '/nfs',
                                         # glob_pattern_raw = "*.xmd",
                                         start = start,
                                         end = end,
+                                        prefix = prefix,
                                         # site = site,
                                         # version = '0.3', # this is actually 0.3.1 but i don't want to rerun everything.
                                         # path2surfrad_database = db_path,

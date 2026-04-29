@@ -15,7 +15,7 @@ Core dependencies:
 
 .. code-block:: console
 
-   conda install -c conda-forge numpy pandas xarray netcdf4 setproctitle
+   conda install -c conda-forge numpy pandas xarray netcdf4 setproctitle pvlib
    pip install .
 
 Use -e keyword for editable/development install.
