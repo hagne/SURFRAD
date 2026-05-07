@@ -70,7 +70,8 @@ def run(prefix = '/nfs',
         start = pd.to_datetime(start)
 
 
-    sites = ['bnd',
+    sites = ['inl',
+             'bnd',
             'dra',
             'gwn',
             'psu', 
