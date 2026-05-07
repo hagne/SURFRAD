@@ -8,18 +8,19 @@ import surfradpy.database as sfp_db
 import socket
 import surfradpy.file_io.mfrsr as srpmfrsrio
 import productomator.worker as prowo
+import atmPy.data_archives.NOAA_ESRL_GMD_GRAD.surfrad.surfrad as atmsrf
 
 class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
     def __init__(self, 
                  path_in = '/nfs/grad/Inst/MFR/SURFRAD/{site}/mfrsr/raw/',
                  path_out = '/nfs/grad/Inst/MFR/SURFRAD/{site}/mfrsr/raw.netcdf/v{version}',
-                 date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])),
-                 name_pattern_netcdf = '{year}/{site}_mfrsr_raw_{date}.nc',
-                 glob_pattern_raw = "*.xmd",
+                #  date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])),
+                #  name_pattern_netcdf = '{year}/{site}_mfrsr_raw_{date}.nc',
+                #  glob_pattern_raw = "*.xmd",
                  start = None,
                  end = None,
                  site = None,
-                 version = '0.4', # this is actually 0.3.1 but i don't want to rerun everything.
+                #  version = '0.4', 
                  path2surfrad_database = None,
                  reporter = None,
                  verbose = True,
@@ -30,6 +31,10 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
 
         Changelog
         ---------
+        v 0.4 after 20260501:
+            - some of the options are now hardcoded as they should!
+            - the time from the filename is local standard time. To get all files its now converted to UTC first.
+
         v0.4: Bugfix in raw reader resulst in a 20 second shift in the timestamps. 
 
         Parameters
@@ -72,6 +77,14 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
         None.
 
         """ 
+        version = '0.4'
+        siteinst = atmsrf.network.stations.find_site('tbl')
+        time_offset = pd.to_timedelta(- siteinst.time_zone['diff2UTC_of_standard_time'], 'h')
+        date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])) + time_offset
+        name_pattern_netcdf = '{year}/{site}_mfrsr_raw_{date}.nc'
+        glob_pattern_raw = "*.xmd"
+
+
         super().__init__(
                         p2fld_in = path_in,
                         p2fld_out = path_out,
