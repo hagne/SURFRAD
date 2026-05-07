@@ -27,6 +27,7 @@ def run(prefix = '/nfs',
         noofdays = 60,
         end = None,
         test = False,
+        raise_errors = False,
         verbose = True,):
     """Run SURFRAD MFRSR raw to netCDF conversion for all operational sites.
 
@@ -48,6 +49,8 @@ def run(prefix = '/nfs',
         If 1, stop after generating one site workplan.
         If 2, only the first row of the workplan is processed. 
         `False` or 0 processes full workplans.
+    raise_errors : bool, optional
+        If True, raise processing errors from the worker.
     verbose : bool, optional
         Print progress information.
     """
@@ -112,7 +115,7 @@ def run(prefix = '/nfs',
             last_processed = ci.process_row(iloc = 1, save=False)
             break
         else:
-            last_processed = ci.process()
+            last_processed = ci.process(raise_errors = raise_errors)
     out['product_instance'] = ci
     out['last_processed'] = last_processed
     reporter.wrapup()
@@ -138,6 +141,7 @@ def _build_parser():
         default=0,
         help='Test mode: 0=full run, 1=workplan only, 2=process first row only.',
     )
+    parser.add_argument('--raise-errors', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
     parser.add_argument('--no-verbose', action='store_false', dest='verbose')
     parser.set_defaults(verbose=True)
@@ -156,6 +160,7 @@ def main(argv=None):
         end=args.end,
         noofdays=args.noofdays,
         test=args.test,
+        raise_errors=args.raise_errors,
         verbose=args.verbose,
     )
 

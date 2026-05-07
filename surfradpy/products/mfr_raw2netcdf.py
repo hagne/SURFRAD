@@ -205,6 +205,7 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
 
         ## get site metadata
         query = f'SELECT * FROM sites WHERE abb="{self.site}"'
+        assert(self.surfrad_db.execute_query(query).shape[0] !=0), f'No database entry found for site with abb {self.site}.'
         site_meta = self.surfrad_db.execute_query(query).iloc[0]
 
         self.tp_ds_rawlist = ds_rawlist
