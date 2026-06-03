@@ -109,7 +109,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-notebooks/.DS_Store
+# macOS
+.DS_Store
+
 notebooks/databases/~$MFRSR_History.xlsx
-.DS_Store
-.DS_Store

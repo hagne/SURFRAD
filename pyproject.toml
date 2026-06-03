@@ -28,6 +28,7 @@ submit2gaw_surfrad_aod = "surfradpy.scripts.submit2gaw_surfrad_aod"
 produce_surfrad_mfrsr_full = "surfradpy.scripts.surfrad_mfrsr_full_process:main"
 produce_surfrad_mfrsr2nc = "surfradpy.scripts.surfrad_mfrsr_raw2netcdf:main"
 produce_surfrad_mfrsr_cosinecal = "surfradpy.scripts.surfrad_mfrsr_cosinecalibration:main"
+produce_surfrad_cl61 = "surfradpy.scripts.surfrad_ceilometer_cl61:main"
 produce_aod2netcdf = "surfradpy.scripts.aod2netcdf:main"
 qcrad2ncei = "surfradpy.scripts.qcrad2ncei:main"
 aodinv1 = 'surfradpy.scripts.aodinversion:produce_aodinversion1_01'

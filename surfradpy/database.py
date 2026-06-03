@@ -193,3 +193,26 @@ class SurfradDatabase:
             finally:
                 cur.close()
         return pd.DataFrame(rows, columns=col_names)
+    
+    def find_site_info(self, site_code: str):
+        """
+        Find site information for a given site code from the database.
+
+        Parameters
+        ----------
+        site_code : str
+            The site code to look up.
+
+        Returns
+        -------
+        dict
+            A dictionary containing site information such as name, latitude, and longitude.
+        """
+        query = f"SELECT * FROM sites WHERE abb = '{site_code}'"
+        df = self.execute_query(query)
+        if df.empty:
+            raise ValueError(f"No site found with code {site_code}")
+        elif len(df) > 1:
+            raise ValueError(f"Multiple sites found with code {site_code}, expected only one.")
+        row = df.iloc[0]
+        return row

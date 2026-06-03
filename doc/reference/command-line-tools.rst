@@ -8,6 +8,7 @@ Available commands
 ------------------
 
 - ``produce_surfrad_mfrsr2nc`` → ``surfradpy.scripts.surfrad_mfrsr_raw2netcdf:run``
+- ``produce_surfrad_cl61`` → ``surfradpy.scripts.surfrad_ceilometer_cl61:main``
 - ``produce_aod2netcdf`` → ``surfradpy.scripts.aod2netcdf:run``
 - ``qcrad2ncei`` → ``surfradpy.scripts.qcrad2ncei:main``
 - ``aodinv1`` → ``surfradpy.scripts.aodinversion:produce_aodinversion1_01``
@@ -40,6 +41,36 @@ Defaults (from ``surfradpy.scripts.surfrad_mfrsr_raw2netcdf``):
 This entry point does not parse command-line arguments. To change inputs,
 edit the defaults in the script or call ``surfradpy.scripts.surfrad_mfrsr_raw2netcdf.run``
 directly from Python with your own parameters.
+
+produce_surfrad_cl61
+--------------------
+
+Generate the SURFRAD CL61 ceilometer cloud product level 1 output for the INL
+site. By default, it processes the last 60 days.
+
+Defaults (from ``surfradpy.scripts.surfrad_ceilometer_cl61``):
+
+- ``prefix``: ``/nfs``
+- ``db_path``: from ``SURFRAD_DB_PATH`` or the configured database path
+- ``log_folder``: ``/home/grad/htelg/.processlogs/``
+- ``noofdays``: ``60``
+- ``test``: ``0`` (full run)
+- ``verbose``: ``True``
+
+Key arguments
+^^^^^^^^^^^^^
+
+- ``--prefix``: base filesystem prefix for input and output paths
+- ``--db-path``: path to the SURFRAD database
+- ``--log-folder``: folder for process logs
+- ``--start`` / ``--end``: processing date range
+- ``--noofdays``: number of days to process when ``--start`` is not set
+- ``--test``: ``0`` full run, ``1`` workplan only, ``2`` first row without
+  saving, ``3`` first row with saving
+- ``--raise-errors``: raise worker errors instead of collecting them
+- ``-v / --verbose`` and ``--no-verbose``: control progress output
+
+Run ``produce_surfrad_cl61 --help`` to see the full CLI.
 
 produce_aod2netcdf
 ------------------
