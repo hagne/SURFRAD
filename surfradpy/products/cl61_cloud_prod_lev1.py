@@ -6,6 +6,8 @@ created on 2026-02-06
 This module contains the code to process the CL61 ceilometer cloud product from row to level 1. 
 """
 
+from importlib import resources
+
 from attr import attrs
 import xarray as xr
 import pandas as pd
@@ -43,11 +45,9 @@ class Cl61CloudLevel1_v0_1(prowo.WorkplannerDaily):
     @property
     def ncvariables(self):
         if self._ncvars is None:
-            # load the table that describes how variables are handled
-            p2fattrs = 'CL61_netcdf_variables.csv'
-            df = pd.read_csv(p2fattrs, 
-                             # index_col= 0,
-                            )
+            p2fattrs = resources.files(__package__).joinpath('CL61_netcdf_variables.csv')
+            with p2fattrs.open('rb') as fname:
+                df = pd.read_csv(fname)
             df.columns = [c.replace(' ', '_') for c in df.columns]
             #remove the empty lines and the group names
             df = df[~df.variable.isin(['/status/', '/monitoring/', np.nan])]
