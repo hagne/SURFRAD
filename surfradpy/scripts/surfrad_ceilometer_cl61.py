@@ -105,7 +105,9 @@ def run(prefix = '/nfs',
         start = start,
         end = end,
         glob_pattern='*.nc',
-        verbose = verbose)
+        verbose = verbose,
+        reporter = reporter,
+        )
     
     print(f'{site} workplan.shape: {ci.workplan.shape}')
     if test == 1:

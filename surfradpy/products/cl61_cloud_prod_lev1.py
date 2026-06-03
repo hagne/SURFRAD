@@ -167,6 +167,8 @@ class Cl61CloudLevel1_v0_1(prowo.WorkplannerDaily):
             row.p2f_out.parent.mkdir(exist_ok=True)
             if self.verbose:
                 print(f'Saving output file to {row.p2f_out}')
+            if row.p2f_out.exists():
+                row.p2f_out.unlink()
             ds.to_netcdf(row.p2f_out)
             
         dsall.close()
