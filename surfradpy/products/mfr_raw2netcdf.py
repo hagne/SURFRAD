@@ -151,7 +151,7 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
             #     print(f'Corrupt file encountered: {row_in.p2f_in.as_posix()}.')
             #     continue
             except Exception as e:
-                print(f'Error {e} encountered when opening file: {row.p2f_in.as_posix()}. Try next file.')
+                print(f'Error {e} encountered when opening file: {fp.as_posix()}. Try next file.')
                 if not isinstance(self.reporter, type(None)):
                     self.reporter.errors_increment()
                 continue
