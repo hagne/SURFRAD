@@ -6,6 +6,7 @@ created on 2026-02-06
 This module contains the code to process the CL61 ceilometer cloud product from row to level 1. 
 """
 
+from attr import attrs
 import xarray as xr
 import pandas as pd
 import productomator.worker as prowo
@@ -158,10 +159,16 @@ class Cl61CloudLevel1_v0_1(prowo.WorkplannerDaily):
         gattrs['site_code'] = self.site_code
         gattrs['site_latitude'] = self.lat
         gattrs['site_longitude'] = self.lon
-
+        gattrs['day_complete'] = row.day_complete.__str__()
         ds.attrs = gattrs
         ## Save the output file
         if save:
+            # create parent directories 3 levels up if they do not exist
+            row.p2f_out.parent.parent.parent.mkdir(exist_ok=True)
+            row.p2f_out.parent.parent.mkdir(exist_ok=True)
+            row.p2f_out.parent.mkdir(exist_ok=True)
+            if self.verbose:
+                print(f'Saving output file to {row.p2f_out}')
             ds.to_netcdf(row.p2f_out)
             
         dsall.close()
