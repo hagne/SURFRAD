@@ -7,8 +7,6 @@ This module contains the code to process the CL61 ceilometer cloud product from 
 """
 
 from importlib import resources
-
-from attr import attrs
 import xarray as xr
 import pandas as pd
 import productomator.worker as prowo
