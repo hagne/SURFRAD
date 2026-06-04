@@ -7,9 +7,9 @@ Created 2026-06-02
 """
 import argparse
 import inspect
-
 import surfradpy.config as sfp_config
-
+import surfradpy.file_io.rsync as sfprsync
+import pathlib as pl
 
 class _RawDefaultsHelpFormatter(
     argparse.ArgumentDefaultsHelpFormatter,
@@ -93,9 +93,11 @@ def run(prefix = '/nfs',
         start = pd.to_datetime(start)
 
 
+    p2fld_out_ftp = f'{prefix}/iftp/aftp/g-rad/surfrad/products_level1/cl61_cloud_prod_lev1/v{{version}}/'
+    p2fld_out = f'{prefix}/grad/surfrad/products_level1/cl61_cloud_prod_lev1/v{{version}}/{site}/'
     ci = srfcl61.Cl61CloudLevel1_v0_1(
         p2fld_in =  f'{prefix}/grad/Inst/Ceil/SURFRAD/{site.upper()}/CL61_Daily/',
-        p2fld_out = f'{prefix}/grad/surfrad/products_level1/cl61_cloud_prod_lev1/v{{version}}/{site}/',
+        p2fld_out = p2fld_out,
         date_from_name = lambda name: pd.to_datetime(name.split('_')[-1].split('.')[0]),
         output_file_format = f'{{year}}/{site}.cl61.cloud_prod{{date}}.nc',
         site_code = site_info.abb,
@@ -124,6 +126,18 @@ def run(prefix = '/nfs',
 
     out['product_instance'] = ci
     out['last_processed'] = last_processed
+
+    #####
+    # rsync
+    sfprsync.rsync_folder(
+        pl.Path(p2fld_out.format(version=ci.version)).parent, # parent, otherwise only the last site will be rsynced.
+        p2fld_out_ftp.format(version=ci.version),
+        reporter=reporter,
+        verbose=verbose,
+    )
+
+    ####
+    # wrap up
     reporter.wrapup()
     out['reporter'] = reporter
     return out
