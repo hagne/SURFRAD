@@ -1,4 +1,4 @@
-surfradpy.file\_io.mfrsr
+﻿surfradpy.file\_io.mfrsr
 ========================
 
 .. automodule:: surfradpy.file_io.mfrsr
@@ -10,6 +10,7 @@ surfradpy.file\_io.mfrsr
    
       open_rsr
       rsr_j2unix
+      tempcal
    
    .. rubric:: Classes
 

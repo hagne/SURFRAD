@@ -1,4 +1,4 @@
-surfradpy.scripts.aod2netcdf
+﻿surfradpy.scripts.aod2netcdf
 ============================
 
 .. automodule:: surfradpy.scripts.aod2netcdf
@@ -8,5 +8,6 @@ surfradpy.scripts.aod2netcdf
 
    .. autosummary::
    
+      main
       run
    

@@ -1,4 +1,4 @@
-surfradpy.scripts.radflux2netcdf
+﻿surfradpy.scripts.radflux2netcdf
 ================================
 
 .. automodule:: surfradpy.scripts.radflux2netcdf
@@ -9,4 +9,5 @@ surfradpy.scripts.radflux2netcdf
    .. autosummary::
    
       main
+      run
    

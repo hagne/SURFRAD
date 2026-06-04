@@ -1,4 +1,4 @@
-surfradpy.scripts.createlangleys
+﻿surfradpy.scripts.createlangleys
 ================================
 
 .. automodule:: surfradpy.scripts.createlangleys
@@ -9,4 +9,5 @@ surfradpy.scripts.createlangleys
    .. autosummary::
    
       main
+      run
    

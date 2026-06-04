@@ -1,4 +1,4 @@
-surfradpy.scripts.radiation2netcdf
+﻿surfradpy.scripts.radiation2netcdf
 ==================================
 
 .. automodule:: surfradpy.scripts.radiation2netcdf
@@ -9,4 +9,5 @@ surfradpy.scripts.radiation2netcdf
    .. autosummary::
    
       main
+      run
    
