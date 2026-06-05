@@ -162,7 +162,7 @@ class SurfradDatabase:
         out['deployments'] = deployments
         return out
     
-    def execute_query(self, query: str):
+    def execute_query(self, query: str, *args):
         """
         Execute a custom SQL query on the database and return the result as a pandas DataFrame.
 
@@ -184,7 +184,7 @@ class SurfradDatabase:
         with sqlite3.connect(self.path2db) as db:
             cur = db.cursor()
             try:
-                cur.execute(query)
+                cur.execute(query, *args)
                 if cur.description is None:
                     db.commit()
                     return None
@@ -194,7 +194,7 @@ class SurfradDatabase:
                 cur.close()
         return pd.DataFrame(rows, columns=col_names)
     
-    def find_site_info(self, site_code: str):
+    def find_site_info(self, abb = None, site_id = None, name = None, allow_multiple = False):
         """
         Find site information for a given site code from the database.
 
@@ -208,11 +208,31 @@ class SurfradDatabase:
         dict
             A dictionary containing site information such as name, latitude, and longitude.
         """
-        query = f"SELECT * FROM sites WHERE abb = '{site_code}'"
-        df = self.execute_query(query)
+
+        # only one of the parameters should be provided
+        if sum([abb is not None, site_id is not None, name is not None]) != 1:
+            raise ValueError("Exactly one of abb, site_id, or name must be provided.")
+        # which one is provided?
+        if abb is not None:
+            column = 'abb'
+            value = abb
+        elif site_id is not None:
+            column = 'site_id'
+            value = site_id
+        elif name is not None:
+            column = 'name'
+            value = name
+        else:
+            raise ValueError("This should never happen, but exactly one of abb, site_id, or name must be provided.")
+        
+        query = f"SELECT * FROM sites WHERE {column} = ?"
+        df = self.execute_query(query, (value,))
         if df.empty:
-            raise ValueError(f"No site found with code {site_code}")
+            raise ValueError(f"No site found with {column} {value}")
         elif len(df) > 1:
-            raise ValueError(f"Multiple sites found with code {site_code}, expected only one.")
+            if not allow_multiple:
+                raise ValueError(f"Multiple sites found with {column} {value}, expected only one. Set allow_multiple=True to return the full dataframe.")
+            else:
+                return df
         row = df.iloc[0]
         return row
