@@ -1,0 +1,78 @@
+variable,Quicklooks,use with name,remove time coordinate,report as attribute,CL51 product equivalent,units,long_name,standard_name,averaging_time_in_seconds,comment
+cloud_base_heights,,cloud_base_heights,FALSE,FALSE,cloud_data,m,Heights (range) of the detected cloud bases.,,,
+vertical_visibility,,vertical_visibility,FALSE,FALSE,,m,visibility in the direction of the instrument beam,,,
+p_pol,,,FALSE,FALSE,,1/(m*sr),parallel-polarized component of the backscattered light,,120,
+x_pol,,,FALSE,FALSE,,1/(m*sr),cross-polarized component of the backscattered light,,120,
+beta_att,,backscatter_profile,FALSE,FALSE,backscatter_profile,1/(m*sr),attenuated volume backscatter coefficient,,120,
+linear_depol_ratio,,linear_depol_ratio,FALSE,FALSE,,,linear depolarisation ratio of the backscatter volume,,120,
+elevation,,,FALSE,FALSE,,m,elevation,ground_level_altitude,,"measurement site height above or below a fixed reference point, most commonly a reference geoid"
+azimuth_angle,,,FALSE,FALSE,,degrees,measurement azimuth angle,sensor_azimuth_angle,,reference direction: north
+beta_att_sum,,,FALSE,FALSE,,1/(10^4*sr),scaled integral of the attenuated volume backscatter coefficient,,,
+beta_att_noise_level,,,FALSE,FALSE,,,a unitless number describing the noise level of the attenuated volume backscatter coefficient,,,
+tilt_correction,,,FALSE,FALSE,,,tilt correction,,,on/off (1/0)
+tilt_angle,,,FALSE,FALSE,,degrees,instrument tilt angle from the vertical,zenith_angle,,
+height_offset,,,FALSE,FALSE,,m,instrument height offset to reference level,,,"positive, if the instrument is placed e.g. on the roof of a building. Negative, if the instrument is placed below the ground level altitude e.g. in a pit. This value will be added to the cloud base height results."
+airplane_filter_max_range,,,FALSE,FALSE,,m,airplane filter max range,,,"user configured value, zero for not in use, otherwise the configured range"
+sky_condition_total_cloud_cover,,,FALSE,FALSE,,oktas,total amount of cloud cover,,,aggregated across layers
+sky_condition_cloud_layer_covers,,,FALSE,FALSE,,oktas,amount of cloud cover in different cloud layers,,,for up to 5 layers
+sky_condition_cloud_layer_heights,,,FALSE,FALSE,,m,height of different cloud layers,,,for up to 5 layers
+cloud_penetration_depth,,,FALSE,FALSE,,m,cloud penetration depth in the direction of the instrument beam,,,
+cloud_thickness,,,FALSE,FALSE,,m,cloud thickness in the direction of the instrument beam,,,
+precipitation_detection,,precipitation_detection,FALSE,FALSE,,,detection of ground reaching precipitation,,,detected/not-detected (1/0)
+fog_detection,,fog_detection,FALSE,FALSE,,,detection of fog,,,detected/not-detected (1/0)
+receiver_gain,,,FALSE,FALSE,,,receiver gain status,,,high-gain/low-gain (1/0)
+range_resolution,,range_resolution_m,FALSE,TRUE,,m,range resolution,,,distance between consecutive profile elements
+cloud_calibration_factor,,,FALSE,FALSE,,,factory cloud calibration value,,,instrument specific beta_att calibration value measured at the factory
+cloud_calibration_factor_user,,,FALSE,FALSE,,,user set cloud calibration value,,,"instrument specific beta_att calibration value set by the user, same as the factory value by default"
+overlap_function,,,FALSE,FALSE,,,instrument specific overlap function,,,shares the vertical resolution of profiles
+,,,FALSE,FALSE,,,,,,
+/monitoring/,,,FALSE,FALSE,,,,,,
+window_condition,x,window_condition,TRUE,FALSE,,percent,window condition averaged over the day,,,"100 for a clean, 0 for a totally dirty window"
+laser_power_percent,x,laser_power_percent,FALSE,FALSE,,percent,laser power percent,,,
+background_radiance,,,FALSE,FALSE,,,background radiance,,,
+internal_temperature,,,FALSE,FALSE,,celsius,internal temperature,,,
+internal_humidity,,,FALSE,FALSE,,RH,internal humidity,,,percent (% RH)
+internal_pressure,,,FALSE,FALSE,,hPa,internal pressure,,,
+laser_temperature,,,FALSE,FALSE,,celsius,laser temperature,,,
+window_blower,,,FALSE,FALSE,,,window blower,,,on/off (1/0)
+internal_heater,,,FALSE,FALSE,,,internal heater,,,on/off (1/0)
+window_blower_heater,,,FALSE,FALSE,,,window blower heater,,,on/off (1/0)
+transmitter_enclosure_temperature,,,FALSE,FALSE,,celsius,transmitter enclosure temperature,,,
+,,,FALSE,FALSE,,,,,,
+/status/,,,FALSE,FALSE,,,,,,
+Device_controller_temperature,,,FALSE,FALSE,,,Device_controller_temperature,,,
+Device_controller_electronics,,,FALSE,FALSE,,,Device_controller_electronics,,,
+Device_controller_overall,,,FALSE,FALSE,,,Device_controller_overall,,,
+Optics_unit_accelerometer,,,FALSE,FALSE,,,Optics_unit_accelerometer,,,
+Optics_unit_accelerometer,,,FALSE,FALSE,,,Optics_unit_accelerometer,,,
+Optics_unit_overall,,,FALSE,FALSE,,,Optics_unit_overall,,,
+Optics_unit_memory,,,FALSE,FALSE,,,Optics_unit_memory,,,
+Optics_unit_tilt_angle,,,FALSE,FALSE,,,Optics_unit_tilt_angle,,,
+Receiver_electronics,,,FALSE,FALSE,,,Receiver_electronics,,,
+Receiver_overall,,,FALSE,FALSE,,,Receiver_overall,,,
+Receiver_memory,,,FALSE,FALSE,,,Receiver_memory,,,
+Receiver_voltage,,,FALSE,FALSE,,,Receiver_voltage,,,
+Receiver_solar_saturation,,,FALSE,FALSE,,,Receiver_solar_saturation,,,
+Window_blocking,,,FALSE,FALSE,,,Window_blocking,,,
+Window_condition,,,FALSE,FALSE,,,Window_condition,,,
+Window_blower_fan,,,FALSE,FALSE,,,Window_blower_fan,,,
+Window_blower_heater,,,FALSE,FALSE,,,Window_blower_heater,,,
+Servo_drive_electronics,,,FALSE,FALSE,,,Servo_drive_electronics,,,
+Servo_drive_overall,,,FALSE,FALSE,,,Servo_drive_overall,,,
+Servo_drive_control,,,FALSE,FALSE,,,Servo_drive_control,,,
+Servo_drive_ready,,,FALSE,FALSE,,,Servo_drive_ready,,,
+Transmitter_electronics,,,FALSE,FALSE,,,Transmitter_electronics,,,
+Transmitter_light_source,,,FALSE,FALSE,,,Transmitter_light_source,,,
+Transmitter_light_source_power,,,FALSE,FALSE,,,Transmitter_light_source_power,,,
+Transmitter_overall,,,FALSE,FALSE,,,Transmitter_overall,,,
+Transmitter_light_source_safety,,,FALSE,FALSE,,,Transmitter_light_source_safety,,,
+Transmitter_memory,,,FALSE,FALSE,,,Transmitter_memory,,,
+Maintenance_overall,,,FALSE,FALSE,,,Maintenance_overall,,,
+Device_overall,,,FALSE,FALSE,,,Device_overall,,,
+Recently_started,,,FALSE,FALSE,,,Recently_started,,,
+Measurement_status,,,FALSE,FALSE,,,Measurement_status,,,
+Datacom_overall,,,FALSE,FALSE,,,Datacom_overall,,,
+Measurement_data_destination_not_set,,,FALSE,FALSE,,,Measurement_data_destination_not_set,,,
+Inside_heater,,,FALSE,FALSE,,,Inside_heater,,,
+Receiver_sensitivity,,,FALSE,FALSE,,,Receiver_sensitivity,,,
+Data_generation_status,,,FALSE,FALSE,,,Data_generation_status,,,

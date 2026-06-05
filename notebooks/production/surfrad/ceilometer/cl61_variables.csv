@@ -1,0 +1,27 @@
+,variable,averaging_time_in_seconds,comment,long_name,standard_name,units
+0,cloud_base_heights,,,heights (range) of the detected cloud bases,,m
+0,vertical_visibility,,,visibility in the direction of the instrument beam,,m
+0,p_pol,120,,parallel-polarized component of the backscattered light,,1/(m*sr)
+0,x_pol,120,,cross-polarized component of the backscattered light,,1/(m*sr)
+0,beta_att,120,,attenuated volume backscatter coefficient,,1/(m*sr)
+0,linear_depol_ratio,120,,linear depolarisation ratio of the backscatter volume,,
+0,elevation,,"measurement site height above or below a fixed reference point, most commonly a reference geoid",elevation,ground_level_altitude,m
+0,azimuth_angle,,reference direction: north,measurement azimuth angle,sensor_azimuth_angle,degrees
+0,beta_att_sum,,,scaled integral of the attenuated volume backscatter coefficient,,1/(10^4*sr)
+0,beta_att_noise_level,,,a unitless number describing the noise level of the attenuated volume backscatter coefficient,,
+0,tilt_correction,,on/off (1/0),tilt correction,,
+0,tilt_angle,,,instrument tilt angle from the vertical,zenith_angle,degrees
+0,height_offset,,"positive, if the instrument is placed e.g. on the roof of a building. Negative, if the instrument is placed below the ground level altitude e.g. in a pit. This value will be added to the cloud base height results.",instrument height offset to reference level,,m
+0,airplane_filter_max_range,,"user configured value, zero for not in use, otherwise the configured range",airplane filter max range,,m
+0,sky_condition_total_cloud_cover,,aggregated across layers,total amount of cloud cover,,oktas
+0,sky_condition_cloud_layer_covers,,for up to 5 layers,amount of cloud cover in different cloud layers,,oktas
+0,sky_condition_cloud_layer_heights,,for up to 5 layers,height of different cloud layers,,m
+0,cloud_penetration_depth,,,cloud penetration depth in the direction of the instrument beam,,m
+0,cloud_thickness,,,cloud thickness in the direction of the instrument beam,,m
+0,precipitation_detection,,detected/not-detected (1/0),detection of ground reaching precipitation,,
+0,fog_detection,,detected/not-detected (1/0),detection of fog,,
+0,receiver_gain,,high-gain/low-gain (1/0),receiver gain status,,
+0,range_resolution,,distance between consecutive profile elements,range resolution,,m
+0,cloud_calibration_factor,,instrument specific beta_att calibration value measured at the factory,factory cloud calibration value,,
+0,cloud_calibration_factor_user,,"instrument specific beta_att calibration value set by the user, same as the factory value by default",user set cloud calibration value,,
+0,overlap_function,,shares the vertical resolution of profiles,instrument specific overlap function,,

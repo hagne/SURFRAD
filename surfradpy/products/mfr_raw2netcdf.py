@@ -17,6 +17,7 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
                 #  date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])),
                 #  name_pattern_netcdf = '{year}/{site}_mfrsr_raw_{date}.nc',
                 #  glob_pattern_raw = "*.xmd",
+                 date_from_name = None,
                  start = None,
                  end = None,
                  site = None,
@@ -47,6 +48,8 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
             Path where the daily NetCDF files will be stored. Can contain
             placeholders for kwargs (e.g., '{serialnumber}', '{version}').
             example: '/nfs/grad/Inst/MFR/Campaign/frc/2025/mfrsr/{serialnumber}.netcdf/v{version}/'
+        date_from_name: function, optional
+            A function that takes the input filename and extracts the datetime from the name. If None, it defaults to SURFRAD MFRSR raw file name format.
         name_pattern_netcdf: str
             Filename pattern for the output NetCDF files. Can contain
             placeholders for year, month, day, and kwargs
@@ -80,7 +83,8 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
         version = '0.4'
         siteinst = atmsrf.network.stations.find_site('tbl')
         time_offset = pd.to_timedelta(- siteinst.time_zone['diff2UTC_of_standard_time'], 'h')
-        date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])) + time_offset
+        if date_from_name is None:
+            date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])) + time_offset
         name_pattern_netcdf = '{year}/{site}_mfrsr_raw_{date}.nc'
         glob_pattern_raw = "*.xmd"
 
