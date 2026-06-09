@@ -176,21 +176,6 @@ def angstrom_exponent(self):
     return self.ds.angstrom_exponent
 ```
 
-## Tests
-
-- Add or update focused `unittest` tests under `tests/` for changed calculations.
-- Treat expected numerical values as regression baselines. Do not update expected numbers just to make tests pass after a code change.
-- Change established expected values only when the scientific/algorithmic change is deliberate, documented, and approved by the maintainer.
-- Prioritize tests that verify scientific results and numerical data values over tests that only verify structure, metadata, or implementation details.
-- Do not add many trivial asserts. Prefer a few meaningful assertions that test the scientific result, numerical behavior, and key coordinates/metadata only when relevant.
-- Run:
-
-```bash
-./run_tests.sh
-```
-
-- Stub optional dependencies in tests when a unit test does not need the real package.
-
 ## Final Response
 
 Keep final responses concise:
