@@ -252,6 +252,9 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
             pass
         else:
             p2f_out.parent.mkdir(parents=True, exist_ok=True)
+            if p2f_out.exists():
+                print(f'File exists, removing: {p2f_out}')
+                p2f_out.unlink()
             dsout.to_netcdf(p2f_out)
             if not isinstance(self.reporter, type(None)):
                 self.reporter.clean_increment()
