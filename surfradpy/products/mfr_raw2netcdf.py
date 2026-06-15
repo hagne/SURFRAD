@@ -16,7 +16,8 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
                  path_out = '/nfs/grad/Inst/MFR/SURFRAD/{site}/mfrsr/raw.netcdf/v{version}',
                 #  date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])),
                 #  name_pattern_netcdf = '{year}/{site}_mfrsr_raw_{date}.nc',
-                #  glob_pattern_raw = "*.xmd",
+                # #  glob_pattern_raw = "*.xmd",
+                # input_directory_structure = 'yearly',
                  date_from_name = None,
                  start = None,
                  end = None,
@@ -81,11 +82,11 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
 
         """ 
         version = '0.4'
-        siteinst = atmsrf.network.stations.find_site('tbl')
+        siteinst = atmsrf.network.stations.find_site(site) #todo: get site info from database instead of atmpy (this will eventually go away)
         time_offset = pd.to_timedelta(- siteinst.time_zone['diff2UTC_of_standard_time'], 'h')
         if date_from_name is None:
             date_from_name = lambda name: pd.to_datetime(' '.join(name.split('.')[0].split('_')[-2:])) + time_offset
-        name_pattern_netcdf = '{year}/{site}_mfrsr_raw_{date}.nc'
+        name_pattern_netcdf = '{site}_mfrsr_raw_{date}.nc'
         glob_pattern_raw = "*.xmd"
 
 
@@ -95,6 +96,7 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
                         date_from_name = date_from_name,
                         output_file_format = name_pattern_netcdf,
                         glob_pattern_in=glob_pattern_raw,
+                        input_directory_structure = 'yearly',
                         start=start,
                         end=end,
                         reporter=reporter,
@@ -186,9 +188,10 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
 
         # check metadata consistency inculding database information
         ## get metadata from surfrad database
-        query = f'SELECT * FROM instruments_mfrsr WHERE Logger_ID="${dsout.logger_id}"'
+        # query = f'SELECT * FROM instruments_mfrsr WHERE Logger_ID="${dsout.logger_id}"'
+        query = f'SELECT * FROM instruments_mfrsr WHERE Head_ID="${dsout.head_id}"'
         db_meta = self.surfrad_db.execute_query(query)
-        assert(db_meta.shape[0] == 1), f'No unique entry found in instruments_mfrsr for Logger_ID = {dsout.logger_id}. Found {db_meta.shape[0]} entries.'
+        assert(db_meta.shape[0] == 1), f'No unique entry found in instruments_mfrsr for Head_ID = {dsout.head_id}. Found {db_meta.shape[0]} entries.'
         db_meta = db_meta.iloc[0]
 
         ## where was the instrument deployed at the time of interest
@@ -242,15 +245,16 @@ class MfrsrRawToNetcdf(prowo.WorkplannerDaily):
         self.tp_dsout = dsout
         if dsout.datetime.shape[0] == 0:
             if self.verbose:
-                print('no data in dataset, skip saving')
+                print('no data in dataset')
+            if self.reporter is not None:
+                self.reporter.warnings_increment()
+        if not save:
+            pass
         else:
-            if not save:
-                pass
-            else:
-                p2f_out.parent.mkdir(parents=True, exist_ok=True)
-                dsout.to_netcdf(p2f_out)
-                if not isinstance(self.reporter, type(None)):
-                    self.reporter.clean_increment()
-                    self.reporter.log()
+            p2f_out.parent.mkdir(parents=True, exist_ok=True)
+            dsout.to_netcdf(p2f_out)
+            if not isinstance(self.reporter, type(None)):
+                self.reporter.clean_increment()
+                self.reporter.log()
         return {'dsout': dsout, 'p2f_out': p2f_out,}
     

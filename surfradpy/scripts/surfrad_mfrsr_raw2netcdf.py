@@ -47,7 +47,8 @@ def run(prefix = '/nfs',
         End date/time. Defaults to current time.
     test : int or bool, optional
         If 1, stop after generating one site workplan.
-        If 2, only the first row of the workplan is processed. 
+        If 2, calculates workplans for each sites. If verbose the shapes of the workplans will be returned.
+        If 3, only the first row of the workplan is processed. 
         `False` or 0 processes full workplans.
     raise_errors : bool, optional
         If True, raise processing errors from the worker.
@@ -112,6 +113,9 @@ def run(prefix = '/nfs',
         if test == 1:
             return ci
         if test == 2:
+            last_processed = None
+            continue
+        if test == 3:
             last_processed = ci.process_row(iloc = 1, save=False)
             break
         else:
