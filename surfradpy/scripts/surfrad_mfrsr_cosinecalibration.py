@@ -42,7 +42,8 @@ def run(prefix = '/nfs',
     noofdays : int, optional
         Number of days to process when `start` is not given.
     test : bool, optional
-        If True, process only one test row and stop.
+        If 1, creates workplan at first site and returns si
+        If 2, process  one test of the first site row and stop.
     raise_errors : bool, optional
         If True, raise processing errors from the worker.
     verbose : bool, optional
@@ -88,10 +89,11 @@ def run(prefix = '/nfs',
             print('-----')
         p2fld_in = f'{prefix}/grad/Inst/MFR/SURFRAD/{site}/mfrsr/raw.netcdf/v{version_in}/'
         p2fld_out = f'{prefix}/grad/Inst/MFR/SURFRAD/{site}/mfrsr/cosine_corrected/v{{version}}/'
+        # print('\n\nasefiahseflihasldkfhasldkhfj\n\n')
         ci = srfcc.CalibrateMFRSR(p2fld_in  = p2fld_in,
                                         p2fld_out = p2fld_out,
                                         date_from_name = lambda name: pd.to_datetime(name.split('_')[-1].replace('.nc', '')),
-                                        output_file_format = f'{{year}}/{site}_mfrsr_cosinecorrected_{{date}}.nc',
+                                        output_file_format = f'{site}_mfrsr_cosinecorrected_{{date}}.nc',
                                         # glob_pattern_raw = "*.xmd",
                                         start = start,
                                         end = end,
@@ -103,7 +105,10 @@ def run(prefix = '/nfs',
                                         verbose = verbose,
                                 )
         print(f'{site} workplan.shape: {ci.workplan.shape}')
-        if test:
+        if test == 1:
+            last_processed = None
+            break
+        elif test == 2:
             last_processed = ci.process_row(iloc = 1, save=False)
             break
         else:

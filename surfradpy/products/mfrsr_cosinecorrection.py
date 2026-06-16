@@ -8,8 +8,12 @@ import socket
 
 class CalibrateMFRSR(pm.worker.Workplanner):
     def __init__(self,*args, **kwargs):
+        print('blaasds')
+        print(kwargs)
+        print('========')
         kwargs['version'] = '0.2'
         kwargs['file_complete_check'] = True
+        kwargs['input_directory_structure'] = 'yearly'
         super().__init__(*args, **kwargs)
         
     def process_row(self, row = None, iloc = None, loc = None, save = True):
