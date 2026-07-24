@@ -12,6 +12,7 @@ import functools
 import getpass
 import inspect
 import json
+import re
 import sqlite3
 import pathlib as pl
 import pandas as pd
@@ -332,12 +333,45 @@ class SurfradDatabase:
             self.execute_query(sql, site)
 
     @audit_db_call()
-    def add_table(self, tbl_name):
+    def add_table(self, tbl_name, columns=None):
         """
         Create a new table in the database.
+
+        ``columns`` may be an iterable of column names or a mapping of column
+        names to SQLite type declarations. An integer primary key named ``id``
+        is always included.
+
+        Parameters
+        ----------
+        tbl_name : str
+            Name of the table to create.
+        columns : iterable or dict, optional
+            Column names or a mapping of column names to SQLite type declarations.
+            example: 
+                -{'name': 'TEXT', 'age': 'INTEGER'}
+                -['name', 'age']
         """
         tbl_name = _quote_identifier(tbl_name)
-        self.execute_query(f"CREATE TABLE {tbl_name} (id INTEGER PRIMARY KEY)")
+        column_definitions = ['"id" INTEGER PRIMARY KEY']
+        if columns is None:
+            pass
+        elif isinstance(columns, dict):
+            for name, sql_type in columns.items():
+                if name.lower() == "id":
+                    continue
+                if not isinstance(sql_type, str) or not re.fullmatch(r"[\w (),]+", sql_type):
+                    raise ValueError(f"Invalid SQLite type declaration: {sql_type}")
+                column_definitions.append(f"{_quote_identifier(name)} {sql_type}")
+        else:
+            column_definitions.extend(
+                _quote_identifier(name)
+                for name in columns
+                if name.lower() != "id"
+            )
+
+        self.execute_query(
+            f"CREATE TABLE {tbl_name} ({', '.join(column_definitions)})"
+        )
 
     @audit_db_call()
     def remove_table(self, tbl_name):
