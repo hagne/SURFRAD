@@ -123,7 +123,7 @@ def run(
     elif test == 3:
         last_processed = product.process_row(iloc=0, save=True)
     else:
-        last_processed = product.process(raise_errors=raise_errors)
+        last_processed = product.process(raise_errors=raise_errors, break_on_granules_not_found = True)
 
     reporter.wrapup()
     return {

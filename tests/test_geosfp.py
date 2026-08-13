@@ -2,6 +2,7 @@ import sqlite3
 
 import numpy as np
 import pandas as pd
+import productomator.worker as prowo
 import xarray as xr
 
 from surfradpy.products import geosfp
@@ -83,6 +84,9 @@ def test_product_downloads_only_to3_interpolates_and_writes(tmp_path):
         verbose=False,
     )
     product._geos_fp = FakeGeosFp()
+    assert isinstance(product, prowo.Workplanner)
+    assert product.p2fld_in is None
+    assert product.file_complete_check is True
     result = product.process_row(iloc=0, save=True)
 
     start, end, download_kwargs = calls[0]
@@ -110,9 +114,31 @@ def test_product_downloads_only_to3_interpolates_and_writes(tmp_path):
         assert saved.attrs["interpolation_method"] == (
             "linear latitude-longitude"
         )
+        assert saved.attrs["day_complete"] == "True"
         assert saved.attrs["parent_files"].endswith(
             "geos_fp_to3_subset.nc4"
         )
+
+    assert product.workplan.empty
+
+
+def test_file_complete_check_reprocesses_incomplete_output(tmp_path):
+    database_path = tmp_path / "surfrad.db"
+    _create_site_database(database_path)
+    product = geosfp.GeosFpSurfrad(
+        path_out=tmp_path / "output" / "v{version}",
+        start="2024-01-02",
+        end="2024-01-02",
+        path2surfrad_database=database_path,
+        verbose=False,
+    )
+    output_path = product.masterplan.iloc[0].p2f_out
+    output_path.parent.mkdir(parents=True)
+    xr.Dataset(attrs={"day_complete": "False"}).to_netcdf(output_path)
+
+    assert product.workplan.index.tolist() == [pd.Timestamp("2024-01-02")]
+
+    xr.Dataset(attrs={"day_complete": "True"}).to_netcdf(output_path)
 
     assert product.workplan.empty
 

@@ -349,8 +349,15 @@ class Merra2Surfrad:
             temporary_path.replace(row.p2f_out)
         return {"dsout": dsout, "p2f_out": row.p2f_out}
 
-    def process(self, raise_errors=False):
-        """Process all missing daily files and return the last result."""
+    def process(self, raise_errors=False, break_on_granules_not_found=True):
+        """Process all missing daily files and return the last result.
+        Parameters
+        ----------
+        raise_errors : bool, optional
+            If True, raise processing errors from the product. Otherwise, print the error and continue.
+        break_on_granules_not_found : bool, optional
+            If True, stop processing when no granules are found for a day. This basically assumes that MERRA-2 data is not available from this day onwards. 
+        """
         last_processed = None
         for date, row in self.workplan.iterrows():
             try:
@@ -358,6 +365,12 @@ class Merra2Surfrad:
                 if self.reporter is not None:
                     self.reporter.clean_increment()
             except Exception as error:
+                if (error.args[0] == 'Bad Request') and (error.args[1] == 'Error: No matching granules found.'):
+                    if break_on_granules_not_found:
+                        if self.verbose:
+                            print(f"Granules not found for {date:%Y-%m-%d}. It is assumed that MERRA-2 data is not available from this day onwards. Stopping processing.")
+                        break
+
                 if self.reporter is not None:
                     self.reporter.errors_increment()
                 if raise_errors:

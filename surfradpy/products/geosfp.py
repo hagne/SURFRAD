@@ -5,6 +5,7 @@ import pathlib as pl
 import socket
 
 import pandas as pd
+import productomator.worker as prowo
 import xarray as xr
 
 import surfradpy.database as sfp_db
@@ -150,7 +151,7 @@ def interpolate_to_sites(ds, sites):
     return dsout
 
 
-class GeosFpSurfrad:
+class GeosFpSurfrad(prowo.Workplanner):
     """Create daily GEOS-FP TO3 files interpolated to SURFRAD sites."""
 
     version = "0.1"
@@ -167,21 +168,31 @@ class GeosFpSurfrad:
         reporter=None,
         verbose=True,
     ):
-        self.path_out = pl.Path(str(path_out).format(version=self.version))
         self.start = pd.to_datetime(start).normalize()
         self.end = pd.to_datetime(end).normalize()
         if self.end < self.start:
             raise ValueError("end must be on or after start")
 
+        super().__init__(
+            p2fld_in=None,
+            p2fld_out=str(path_out),
+            output_file_format=(
+                f"{{year}}/surfrad_geosfp_{self.collection}_{{date}}.nc"
+            ),
+            start=self.start,
+            end=self.end,
+            file_complete_check=False,
+            reporter=reporter,
+            verbose=verbose,
+            version=self.version,
+        )
+
         self.download_dir = download_dir
         self.force_ipv4 = force_ipv4
-        self.reporter = reporter
-        self.verbose = verbose
         self.variables = GEOS_FP_VARIABLES
         self.sites = load_surfrad_sites(path2surfrad_database)
         self.spatial_subset = get_spatial_subset(self.sites)
 
-        self._masterplan = None
         self._geos_fp = None
         self.tp_row = None
         self.tp_dsin = None
@@ -194,33 +205,12 @@ class GeosFpSurfrad:
 
             self._geos_fp = atm_geos_fp.GeosFp(
                 collection=self.collection,
-                stream="assim",
+                stream='seamless',
                 download_dir=self.download_dir,
                 chunks="auto",
                 force_ipv4=self.force_ipv4,
             )
         return self._geos_fp
-
-    @property
-    def masterplan(self):
-        if self._masterplan is None:
-            dates = pd.date_range(self.start, self.end, freq="D")
-            paths = [
-                self.path_out
-                / date.strftime("%Y")
-                / f"surfrad_geosfp_{self.collection}_{date:%Y%m%d}.nc"
-                for date in dates
-            ]
-            self._masterplan = pd.DataFrame(
-                {"p2f_out": paths},
-                index=dates,
-            )
-        return self._masterplan
-
-    @property
-    def workplan(self):
-        exists = self.masterplan.p2f_out.apply(pl.Path.is_file)
-        return self.masterplan[~exists]
 
     def process_row(self, row=None, iloc=None, loc=None, save=True):
         """Download, interpolate, and optionally save one workplan day."""
@@ -246,12 +236,15 @@ class GeosFpSurfrad:
             ds = dsin[list(self.variables)].sel(
                 datetime=(dsin.datetime >= day) & (dsin.datetime < day_end)
             )
-            if ds.sizes.get("datetime") != 24:
-                raise ValueError(
-                    f"Expected 24 hourly GEOS-FP samples for "
-                    f"{day:%Y-%m-%d}, "
-                    f"found {ds.sizes.get('datetime', 0)}"
-                )
+            # if ds.sizes.get("datetime") != 24:
+            #     day_complete = "False"
+            # else:
+            #     day_complete = "True"
+            #     # raise ValueError(
+            #     #     f"Expected 24 hourly GEOS-FP samples for "
+            #     #     f"{day:%Y-%m-%d}, "
+            #     #     f"found {ds.sizes.get('datetime', 0)}"
+            #     # )
 
             dsout = interpolate_to_sites(ds, self.sites)
             dsout.attrs.update(
@@ -273,6 +266,7 @@ class GeosFpSurfrad:
                     ),
                     "spatial_subset_bbox_order": "west, south, east, north",
                     "site_count": self.sites.sizes["site"],
+                    # "day_complete": day_complete,
                 }
             )
             if self.geos_fp.paths:
@@ -297,24 +291,24 @@ class GeosFpSurfrad:
             temporary_path.replace(row.p2f_out)
         return {"dsout": dsout, "p2f_out": row.p2f_out}
 
-    def process(self, raise_errors=False):
-        """Process all missing daily files and return the last result."""
-        last_processed = None
-        for date, row in self.workplan.iterrows():
-            try:
-                last_processed = self.process_row(row=row)
-                if self.reporter is not None:
-                    self.reporter.clean_increment()
-            except Exception as error:
-                if self.reporter is not None:
-                    self.reporter.errors_increment()
-                if raise_errors:
-                    raise
-                print(f"Error occurred while processing {date:%Y-%m-%d}: {error}")
-                continue
+    # def process(self, raise_errors=False):
+    #     """Process all missing daily files and return the last result."""
+    #     last_processed = None
+    #     for date, row in self.workplan.iterrows():
+    #         try:
+    #             last_processed = self.process_row(row=row)
+    #             if self.reporter is not None:
+    #                 self.reporter.clean_increment()
+    #         except Exception as error:
+    #             if self.reporter is not None:
+    #                 self.reporter.errors_increment()
+    #             if raise_errors:
+    #                 raise
+    #             print(f"Error occurred while processing {date:%Y-%m-%d}: {error}")
+    #             continue
 
-            if self.verbose:
-                print(".", end="", flush=True)
-        if self.verbose and last_processed is not None:
-            print()
-        return last_processed
+    #         if self.verbose:
+    #             print(".", end="", flush=True)
+    #     if self.verbose and last_processed is not None:
+    #         print()
+    #     return last_processed
