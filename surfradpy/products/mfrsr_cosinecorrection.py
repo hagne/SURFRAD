@@ -8,6 +8,13 @@ import atmPy.radiation.instrumentation.mfrsr_tools as atmmt
 
 
 class CalibrateMFRSR(pm.worker.Workplanner):
+    """
+    Changelog
+    ---------
+    rc v0.3:
+        shadowband misalignment check added. 
+    v0.2: 
+        -..."""
     def __init__(self,*args, **kwargs):
         print('blaasds')
         print(kwargs)
