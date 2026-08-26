@@ -4,6 +4,7 @@ import pandas as pd
 import pathlib as pl
 import atmPy.radiation.instrumentation.spectral as atmspc
 import socket
+import atmPy.radiation.instrumentation.mfrsr_tools as atmmt
 
 
 class CalibrateMFRSR(pm.worker.Workplanner):
@@ -117,6 +118,20 @@ class CalibrateMFRSR(pm.worker.Workplanner):
         # pass raw data for calibration
         dscc = instrument.raw2calibrated(ds_raw)
         ds = dscc.dataset
+
+        # perform shadowband misalignment check
+        try:
+            out = atmmt.check_shadowband_misalignment(ds)
+            if out['detected']:
+                ds.attrs['shadowband_misalignment_detected'] = "True"
+            else:
+                ds.attrs['shadowband_misalignment_detected'] = "False"
+        except Exception as e:
+            print(f'Error in shadowband misalignment check: {e}')
+            if self.reporter is not None:
+                self.reporter.warnings_increment()
+            ds.attrs['shadowband_misalignment_detected'] = "Failed"
+
 
         # Format the dataset for export
         # dropvars = ['alltime', 'zenith_geometric', 'elevation_geometric', 'elevation', 'equation_of_time', 'airmass_absolute','direct_horizontal','azimuth','zenith']
