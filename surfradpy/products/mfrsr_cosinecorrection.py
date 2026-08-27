@@ -65,6 +65,8 @@ class CalibrateMFRSR(pm.worker.Workplanner):
         #######
         ## Open input files
         #######
+        if self.verbose:
+            print(f'Processing {row.p2f_in}')
         ds = xr.open_dataset(row.p2f_in)
         ds.attrs['site_latitude'] = ds.attrs['latitude']
         ds.attrs['site_longitude'] = ds.attrs['longitude']
@@ -119,7 +121,8 @@ class CalibrateMFRSR(pm.worker.Workplanner):
                                 spectral_calibration = p2fspr,
                                 logger_calibration = None, # note needed, we are not doing absolute calibration, meaning consant cal-facotors will be corrected in the langley calibration step
                                 head_calibration = None , # note needed, we are not doing absolute calibration, meaning consant cal-facotors will be corrected in the langley calibration step
-                                cosine_responds = p2fcos
+                                cosine_responds = p2fcos,
+                                verbose = self.verbose
                                 )
 
         # pass raw data for calibration
