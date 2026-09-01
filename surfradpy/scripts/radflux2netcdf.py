@@ -43,7 +43,7 @@ def run():
     rfi = srfr2nc.Convert(path2fld_in='/nfs/iftp/aftp/g-rad/surfrad/RadFlux/',    
                           path2fld_out='/nfs/grad/surfrad/products_level4/radflux/v{version}/',    
                           sites=['tbl', 'dra', 'fpk', 'gwn', 'psu', 'sxf', 'bon'],    
-                          start='180 days',    
+                          start='360 days',    
                           overwrite=False,
                           reporter = reporter)
     # run = sfraodinv.AODInversion( version=1.0,

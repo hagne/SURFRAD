@@ -292,10 +292,11 @@ class Convert(object):
                  path2fld_in='/nfs/iftp/aftp/g-rad/surfrad/RadFlux/',
                  path2fld_out='/nfs/grad/surfrad/products_level4/radflux/v{version}/',
                  sites=['tbl', 'dra', 'fpk', 'gwn', 'psu', 'sxf', 'bon'],
-                 file_extension = 'lwl',
+                 file_extension = 'lw1',
                  start = None,
                  overwrite = False,
-                 reporter = None
+                 reporter = None,
+                 verbose = False,
                  ):
         self.version = '1.0'
         self.p2fld_in = pl.Path(path2fld_in)
@@ -306,6 +307,9 @@ class Convert(object):
         self.reporter = reporter
         self.file_extension = file_extension
         self._workplan = None
+        self.verbose = verbose
+        if self.verbose:
+            print('starting convert')
 
     def process(self, verbose=False, error_handling='raise'):
         self.p2fld_out.mkdir(exist_ok=True, parents=True)
@@ -343,6 +347,7 @@ class Convert(object):
                     # Try parsing timedelta first
                     td = pd.to_timedelta(start)
                     start_dt = pd.Timestamp.now() - td
+                    
                 except ValueError:
                     try:
                         # If timedelta fails, try parsing as datetime
@@ -350,20 +355,27 @@ class Convert(object):
                     except ValueError:
                         raise ValueError(f"Unable to parse '{start}' as either timedelta or datetime")
 
+                    if self.verbose:
+                        print(f'processing files starting from {start_dt}')
+
                 patterns = [f'{y:04d}/*.{self.file_extension}' for y in range(start_dt.year, pd.Timestamp.now().year + 1)]
-                
+
+            if self.verbose:
+                print(f'patterns: {patterns}')
+            
+            
             self.tp_patterns = patterns    
             
             wp = pd.DataFrame()
             # loop over sites
-            verbose = True
+            fld_val = []
             for fld in self.p2fld_in.glob('*'):
-                if verbose:
+                if self.verbose:
                     print(f'checking: {fld}')
                 if not fld.is_dir():
                     continue
                 elif fld.name not in self.sites:
-                    if verbose:
+                    if self.verbose:
                         print(f'{fld.name} not in {self.sites}')
                     continue
                 
@@ -371,8 +383,7 @@ class Convert(object):
                     wpt = pd.DataFrame(fld.glob(pat), columns=['p2f_in'])
                     wpt['site'] = fld.name
                     wp = pd.concat([wp, wpt])
-                
-            
+
             # generate the time (or date) index
             wp.index = wp.apply(lambda row: pd.to_datetime(row.p2f_in.name[:8]), 
                                 axis=1)
