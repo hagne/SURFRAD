@@ -1,6 +1,7 @@
 import argparse
 import inspect
 import warnings
+import pathlib as pl
 warnings.simplefilter(action='ignore')
 
 def run(prefix = '/nfs',
@@ -30,9 +31,16 @@ def run(prefix = '/nfs',
             "fpk",
     ]
     for site in sites:
+
+        p2fld_in=f'{prefix}/aftp/data/radiation/surfrad/{site}'
+        if not pl.Path(p2fld_in).exists():
+            p2fld_in=f'{prefix}/iftp/aftp/data/radiation/surfrad/{site}'
+            if not pl.Path(p2fld_in).exists():
+                raise FileNotFoundError(f'Folder does not exist: {p2fld_in}.')
+
         wi = srfrad.SurfradRadiation2netcdf(
             site=site,
-            p2fld_in=f'{prefix}/aftp/data/radiation/surfrad/{site}',
+            p2fld_in=p2fld_in,
             p2fld_out=f'{prefix}/grad/surfrad/products_level1/radiation_netcdf/v{{version}}/{{site}}',
             file_name_format='*{date:%y%j}*',
             output_file_format='srf_rad_full_{site}_{date}.nc',
