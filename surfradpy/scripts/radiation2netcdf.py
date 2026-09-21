@@ -27,7 +27,7 @@ def run(prefix = '/nfs',
             "psu",
             "sxf",
             "tbl",
-            "fpe",
+            "fpk",
     ]
     for site in sites:
         wi = srfrad.SurfradRadiation2netcdf(
