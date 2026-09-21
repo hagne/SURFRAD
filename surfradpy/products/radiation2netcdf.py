@@ -12,6 +12,7 @@ import pathlib as pl
 # import ipywidgets as widgets
 # from IPython.display import display
 import xarray as xr
+import socket
 
 def read_surfrad(p2f):
     # https://gml.noaa.gov/aftp/data/radiation/surfrad/dra/README
@@ -153,7 +154,11 @@ def generate_netcdfs(p2fld = '/nfs/iftp/aftp/data/radiation/surfrad/',
             fns = pd.DataFrame(p2fldsy.glob('*'), columns = ['p2f'])
             fns.index = fns.apply(lambda row: pd.to_datetime(f'{year}{row.p2f.name.split(".")[0][-3:]}', format = '%Y%j'), axis = 1)
             yearcontent.append(fns)
-    
+
+        if len(out) == 0:
+            if verbose:
+                print(f'No files found for {site} in {p2fldsy}')
+            continue
         fns = pd.concat(yearcontent)
         fns.sort_index(inplace=True)
     
@@ -247,3 +252,98 @@ def concat2hourlymean(gui = False):
             # break
             # time.sleep(1)
             dsrs.to_netcdf(p2fnout)
+
+import productomator.worker as prowo
+class SurfradRadiation2netcdf(prowo.Workplanner):
+    def __init__(self, 
+            site = 'tbl',
+            p2fld_in='/Volumes/aftp/data/radiation/surfrad/tbl',
+            p2fld_out='/Volumes/grad/surfrad/products_level1/radiation_netcdf/v{version}/{site}',
+            file_name_format = '*{date:%y%j}*',    
+            output_file_format='srf_rad_full_{site}_{date}.nc',
+            start=None,
+            end=None,
+            days = 90,
+            input_directory_structure='yearly',
+            reporter=None,
+            verbose=False,
+            **kwargs):
+        """
+        for troubleshooting use: ./notebooks/production/surfrad/radiation/radiation2netcdf.ipynb 
+        """
+        args = dict(site = site,
+                    p2fld_in=p2fld_in,
+                    p2fld_out=p2fld_out,
+                    file_name_format = file_name_format,
+                    output_file_format=output_file_format,
+                    start=start,
+                    end=end,
+                    days = days,
+                    input_directory_structure=input_directory_structure,
+                    reporter=reporter,
+                    verbose=verbose,)
+        version = '1.1'
+        kwargs['version'] = version
+        super().__init__(**args, 
+                         **kwargs)
+
+    def process_row(self, row = None, iloc = None, loc = None, save = True):
+        """This is the method that does the particular work and will need to be overwritten in your subclass.
+        Typical components:
+        1. read the input file(s) (row.p2f_in)
+        3. convert to xarray dataset (if needed)
+        2. format the netcdf file
+            2.1 add dataset attributes, creation datetime, creation software, server, site details, etc.
+            2.2 add variable attributes, units, long_name, standard_name, etc.
+        3. save the output file (row.p2f_out)
+        
+        Parameters
+        ----------
+        row : pandas.Series, optional
+            A row from the workplan dataframe. This is how the process method callse this function.
+        iloc : int, optional
+            An integer index to select a row from the workplan dataframe.
+        loc : index label, optional
+            select a row by timestamp.
+            """
+        
+        if iloc is not None:
+            row = self.workplan.iloc[iloc]
+        elif loc is not None:
+            row = self.workplan.loc[loc]
+        self.tp_row = row
+
+
+        #######
+        ## Open input files
+        #######
+        ds = read_surfrad(row.p2f_in)
+
+        ## Do some processing here, e.g. add attributes, format the dataset, etc.
+        #####
+        # Format the dataset variables, this includes reordering and dropping variables.
+        # reorg = ['','','','','',]
+        # ds = ds[reorg]
+
+        #########
+        # Format the dataset attributes
+        #########
+        dropattrs = [
+                    # '','','','','',
+                    ]
+        for a in dropattrs:
+            ds.attrs.pop(a)
+
+        ds.attrs['parent_files'] = row.p2f_in.as_posix()
+        ds.attrs['processing_date'] = pd.Timestamp.now().isoformat()
+        ds.attrs['processing_server'] = socket.gethostname()
+        ds.attrs['processing_class'] = f"This file was generated using{self.__class__.__module__}.{self.__class__.__qualname__}"
+        ds.attrs['product_version'] = self.version
+        ## Save the output file
+        if save:
+            if not row.p2f_out.parent.parent.exists():
+                raise FileNotFoundError(f'Path {row.p2f_out.parent.parent} does not exist, create it!')
+            row.p2f_out.parent.mkdir(exist_ok=True)
+            ds.to_netcdf(row.p2f_out)
+        ds.close()
+        return ds

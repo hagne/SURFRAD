@@ -3,10 +3,55 @@ import inspect
 import warnings
 warnings.simplefilter(action='ignore')
 
-def run():
+def run(prefix = '/nfs',
+        start = None,
+        end = None,
+        days = 90,
+        verbose = True,
+        raise_errors = False,
+        ):
     """Convert SURFRAD radiation text products to netCDF files."""
     import productomator.lab as prolab
-    import surfradpy.radiation as srfrad
+    import surfradpy.products.radiation2netcdf as srfrad
+
+    reporter = prolab.Reporter(
+                'radiation2netcdf',
+                log_folder='/home/grad/htelg/.processlogs/',
+                verbose=True,
+                reporting_frequency=(1, 'h'),
+            )
+    sites = ["inl",
+            "bon",
+            "dra",
+            "gwn",
+            "psu",
+            "sxf",
+            "tbl",
+            "fpe",
+    ]
+    for site in sites:
+        wi = srfrad.SurfradRadiation2netcdf(
+            site=site,
+            p2fld_in=f'{prefix}/aftp/data/radiation/surfrad/{site}',
+            p2fld_out=f'{prefix}/grad/surfrad/products_level1/radiation_netcdf/v{{version}}/{{site}}',
+            file_name_format='*{date:%y%j}*',
+            output_file_format='srf_rad_full_{site}_{date}.nc',
+            start=start,
+            end=end,
+            days=days,
+            input_directory_structure='yearly',
+            reporter=reporter,
+            verbose=verbose,
+        )
+        wi.process(raise_errors = raise_errors)
+
+    reporter.wrapup()
+    return
+
+def run_deprecated():
+    """Convert SURFRAD radiation text products to netCDF files."""
+    import productomator.lab as prolab
+    import surfradpy.products.radiation2netcdf as srfrad
 
     reporter = prolab.Reporter(
                 'radiation2netcdf',
@@ -34,8 +79,21 @@ def main(argv=None):
         description=inspect.getdoc(run) or "",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.parse_args(argv)
-    return run()
+    parser.add_argument('--start', default=None)
+    parser.add_argument('--end', default=None)
+    parser.add_argument('--days', type=int, default=360)
+    parser.add_argument('--raise-errors', action='store_true')
+    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
+    parser.add_argument('--no-verbose', action='store_false', dest='verbose')
+    parser.set_defaults(verbose=True)
+    args = parser.parse_args(argv)
+    return run(
+        start=args.start,
+        end=args.end,
+        days=args.days,
+        verbose=args.verbose,
+        raise_errors=args.raise_errors,
+    )
 
 
 if __name__ == '__main__':
