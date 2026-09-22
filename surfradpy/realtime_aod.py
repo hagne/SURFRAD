@@ -13,7 +13,7 @@ import numpy as np
 import atmPy.data_archives.NOAA_ESRL_GMD_GRAD.surfrad.surfrad as atmsrf
 import atmPy.aerosols.physics.column_optical_properties as atmcop
 import traceback
-import surfradpy.radiation as srfrad
+import surfradpy.products.radiation2netcdf as srfrad
 
 
 class mfrsr_AOD_lev0(object):

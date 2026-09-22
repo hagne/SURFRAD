@@ -9,7 +9,6 @@ import atmPy.radiation.retrievals.broadband_shortwave_radiation as atmbrad
 import atmPy.general.measurement_site as atmsite
 import socket
 import atmPy.radiation.radflux.radflux_db as atmraddb
-import surfradpy.database as srfdb
 
 class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
     def __init__(self, *args, radflux_parameters_db, path2raflux_setting,site, **kwargs):
@@ -24,21 +23,18 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
         """
         self.version = '0.1'
         kwargs['version'] = self.version
-        db = srfdb.SurfradDatabase(srfdb.get_default_db_path())
-        site = db.find_site_info(abb = site)
+        site_info = site
         self.radflux_parameters_db = pl.Path(radflux_parameters_db.format(version = self.version))
         kwargs['database'] = (self.radflux_parameters_db, 'radflux_parameters',
-                            #   'row_timesta
-                            # mp', 
                               'local_day',
                               'None')# 'input_file')
         super().__init__(*args, **kwargs)
         self.site = atmsite.Station(
-                lat=site.latitude,
-                lon=site.longitude,
-                alt=site.elevation,
-                name=site.name,
-                abbreviation=site.abb,
+                lat=site_info.latitude,
+                lon=site_info.longitude,
+                alt=site_info.elevation,
+                name=site_info['name'],
+                abbreviation=site_info.abb,
                 active=None,
                 operation_period=None,
                 info=None,
@@ -58,6 +54,12 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
             ds = xr.open_mfdataset(row.p2f_in)
         else:
             ds = xr.open_dataset(row.p2f_in)
+        bbi_rename_dict = {'dw_solar': 'global_horizontal',
+                        'diffuse': 'diffuse_horizontal',
+                        'direct_n': 'direct_normal',
+                        # 'time':'datetime',
+                        }
+        ds = ds.rename(bbi_rename_dict)
         return ds
 
     def process_row(self, row = None, iloc = None, loc = None, save = True, test  = False):
@@ -78,11 +80,7 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
 
         self.tp_ds = ds.copy()
 
-        bbi_rename_dict = {'down_short_hemisp': 'global_horizontal',
-                        'down_short_diffuse_hemisp': 'diffuse_horizontal',
-                        'down_short_direct_hemisp': 'direct_horizontal',
-                        'time':'datetime'}
-        ds = ds.rename(bbi_rename_dict)
+
         bbicore = atmbrad.CombinedGlobalDiffuseDirect(ds, site= self.site, verbose = self.verbose)
 
         ####
@@ -109,7 +107,6 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
             next_day_needed = True
 
             dsnext = self.open_p2f_in(row_next)
-            dsnext = dsnext.rename(bbi_rename_dict)
             bbinext = atmbrad.CombinedGlobalDiffuseDirect(dsnext, site= self.site, verbose = self.verbose)
             bbinext.sun_position #just to trigger the calculation of sun position
             dsnext = dsnext.sel(datetime = slice(None,dsnext.solar_elevation.idxmin()))

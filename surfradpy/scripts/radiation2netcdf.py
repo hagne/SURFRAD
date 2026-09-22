@@ -1,3 +1,12 @@
+"""
+Dependencies
+=============
+xarray
+netcdf4
+pandas
+
+"""
+
 import argparse
 import inspect
 import warnings
