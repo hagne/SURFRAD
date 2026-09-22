@@ -13,7 +13,7 @@ Requirements:
 - pandas
 - netcdf4  
 - atmpy
-- sklearn
+- scikit-learn
 - productomator
 """
 
