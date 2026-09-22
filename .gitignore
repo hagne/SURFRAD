@@ -115,3 +115,4 @@ venv.bak/
 notebooks/databases/~$MFRSR_History.xlsx
 notebooks/production/surfrad/mfrsr/archive/*
 notebooks/production/surfrad/mfrsr/calibration_cosine_vs_tu/*
+notebooks/production/surfrad/radiation/databases/
