@@ -171,7 +171,7 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
         return out
         
 
-class BnfRadsys43m60sS10C1(prowo.Workplanner):
+class Radflux(prowo.Workplanner):
     """BNF Radsys value added product for the tower system.
     Features
     --------
@@ -191,17 +191,18 @@ class BnfRadsys43m60sS10C1(prowo.Workplanner):
     version 0.3:
          - implement new radflux retrieval (testing equivalent to the real radflux)
        """
-    def __init__(self, *args, radflux_parameters_db, path2raflux_setting, real_time = False, **kwargs):
-        self.version = '0.3'
+    def __init__(self, *args, radflux_parameters_db, path2raflux_setting, site, real_time = False, **kwargs):
+        self.version = '0.1'
         kwargs['version'] = self.version
         self.radflux_parameters_db = atmraddb.RadfluxParameterDatabase(radflux_parameters_db)
         super().__init__(*args, **kwargs)
+        site_info = site
         self.site = atmsite.Station(
-                lat=34.3437276,
-                lon=-87.35044401,
-                alt=284,
-                name='tower',
-                abbreviation='S10_top',
+                lat=site_info.latitude,
+                lon=site_info.longitude,
+                alt=site_info.elevation,
+                name=site_info['name'],
+                abbreviation=site_info.abb,
                 active=None,
                 operation_period=None,
                 info=None,
@@ -214,6 +215,20 @@ class BnfRadsys43m60sS10C1(prowo.Workplanner):
         self.path2raflux_setting = pl.Path(path2raflux_setting)
         assert(self.path2raflux_setting.exists()), f"Path does not exist: {self.path2raflux_setting}. Copy the example file from .../atm-py/atmPy/radiation/radflux/resources/clear_sky_shortwave.example.toml"
         self.real_time = real_time
+
+    def open_p2f_in(self, row):
+        """Opens the input file(s) for a given row and returns an xarray dataset."""
+        if isinstance(row.p2f_in, list):
+            ds = xr.open_mfdataset(row.p2f_in)
+        else:
+            ds = xr.open_dataset(row.p2f_in)
+        bbi_rename_dict = {'dw_solar': 'global_horizontal',
+                        'diffuse': 'diffuse_horizontal',
+                        'direct_n': 'direct_normal',
+                        # 'time':'datetime',
+                        }
+        ds = ds.rename(bbi_rename_dict)
+        return ds
 
     @property
     def workplan(self):
