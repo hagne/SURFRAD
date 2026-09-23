@@ -13,7 +13,7 @@ Requirements:
 - pandas
 - netcdf4  
 - atmpy
-# - scikit-learn
+# - scikit-learn not sure if this is needed
 - productomator
 """
 
@@ -71,7 +71,11 @@ def run(prefix = '/nfs',
     if verbose:
         print("start surfrad_mfrsr_cosinecalibration")
     out = {}
-    reporter = prolab.Reporter('surfrad_radflux', 
+    if real_time:
+        logname = 'surfrad_radflux_real_time'
+    else:
+        logname = 'surfrad_radflux'
+    reporter = prolab.Reporter(logname, 
                                 log_folder=log_folder,
                                 reporting_frequency=(6, 'h'),
                             )
