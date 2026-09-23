@@ -54,6 +54,8 @@ def run(prefix = '/nfs',
         Run only for this site. If not provided, runs for all sites.
     days : int, optional
         Number of days to process when `start` is not given.
+    real_time : bool, optional
+        If True, run in real-time mode.
     test : bool, optional
         If 1, creates workplan at first site and returns si
         If 2, process  one test of the first site row and stop.
