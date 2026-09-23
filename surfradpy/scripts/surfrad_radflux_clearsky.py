@@ -33,6 +33,7 @@ def run(prefix = '/nfs',
         start = None,
         end = None,
         days = 90,
+        site = None,
         test = 0,
         raise_errors = False,
         verbose = True,):
@@ -48,6 +49,8 @@ def run(prefix = '/nfs',
         Start date/time. If not provided, computed as `end - days`.
     end : str or pandas.Timestamp, optional
         End date/time. Defaults to current time.
+    site : str, optional
+        Run only for this site. If not provided, runs for all sites.
     days : int, optional
         Number of days to process when `start` is not given.
     test : bool, optional
@@ -72,23 +75,25 @@ def run(prefix = '/nfs',
                                 reporting_frequency=(6, 'h'),
                             )
 
-
-    sites = ['inl',
-             'bon',
-            'dra',
-            'gwn',
-            'psu', 
-            'sxf',
-            'tbl',
-            'fpk',
-    ]
+    if site is not None:
+        sites = [site]
+    else:
+        sites = ['inl',
+                'bon',
+                'dra',
+                'gwn',
+                'psu', 
+                'sxf',
+                'tbl',
+                'fpk',
+        ]
 
     for site in sites:
         if verbose:
             print(site)
             print('-----')
         #todo: this try/except should not be necessary, fix in worker.
-        try:
+        if 1:
             db = srfdb.SurfradDatabase(srfdb.get_default_db_path())
             site_info = db.find_site_info(abb = site)
             p2fld_in = f'{prefix}/grad/surfrad/products_level1/radiation_netcdf/v1.1/{site}'
@@ -125,8 +130,8 @@ def run(prefix = '/nfs',
                 last_processed = ci.process(raise_errors = raise_errors)
                 # except:
                 #     return ci
-        except:
-            continue
+        # except:
+        #     continue
     out['product_instance'] = ci
     out['last_processed'] = last_processed
     reporter.wrapup()
@@ -144,6 +149,7 @@ def _build_parser():
     parser.add_argument('--start', default=None)
     parser.add_argument('--end', default=None)
     parser.add_argument('--days', type=int, default=60)
+    parser.add_argument('--site', default=None)
     parser.add_argument('--test', type=int, default=0)
     parser.add_argument('--raise-errors', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
@@ -163,6 +169,7 @@ def main(argv=None):
         days=args.days,
         test=args.test,
         raise_errors=args.raise_errors,
+        site=args.site,
         verbose=args.verbose,
     )
 
