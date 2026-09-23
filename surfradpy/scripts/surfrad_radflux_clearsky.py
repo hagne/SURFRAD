@@ -32,8 +32,9 @@ def run(prefix = '/nfs',
         log_folder='/home/grad/htelg/.processlogs/',
         start = None,
         end = None,
-        days = 60,
-        test = False,
+        days = 90,
+        site = None,
+        test = 0,
         raise_errors = False,
         verbose = True,):
     """Run SURFRAD MFRSR spectral and cosine calibration across all sites.
@@ -45,10 +46,12 @@ def run(prefix = '/nfs',
     log_folder : str, optional
         Folder where process logs are written.
     start : str or pandas.Timestamp, optional
-        Start date/time. If not provided, computed as `end - noofdays`.
+        Start date/time. If not provided, computed as `end - days`.
     end : str or pandas.Timestamp, optional
         End date/time. Defaults to current time.
-    noofdays : int, optional
+    site : str, optional
+        Run only for this site. If not provided, runs for all sites.
+    days : int, optional
         Number of days to process when `start` is not given.
     test : bool, optional
         If 1, creates workplan at first site and returns si
@@ -72,60 +75,63 @@ def run(prefix = '/nfs',
                                 reporting_frequency=(6, 'h'),
                             )
 
-
-    sites = ['inl',
-             'bon',
-            'dra',
-            'gwn',
-            'psu', 
-            'sxf',
-            'tbl',
-            'fpk',
-    ]
-    version_in = '0.4'
-    # version_out = '0.2'
+    if site is not None:
+        sites = [site]
+    else:
+        sites = ['inl',
+                'bon',
+                'dra',
+                'gwn',
+                'psu', 
+                'sxf',
+                'tbl',
+                'fpk',
+        ]
 
     for site in sites:
         if verbose:
             print(site)
             print('-----')
+        #todo: this try/except should not be necessary, fix in worker.
+        if 1:
+            db = srfdb.SurfradDatabase(srfdb.get_default_db_path())
+            site_info = db.find_site_info(abb = site)
+            p2fld_in = f'{prefix}/grad/surfrad/products_level1/radiation_netcdf/v1.1/{site}'
+            radflux_parameters_db = f'{prefix}/grad/surfrad/products_level2/radflux_rd/radflux_params_{site}_{{version}}.db'
+            path2raflux_setting = f'{prefix}/grad/surfrad/products_level2/radflux_rd/radflux_settings_{site}.toml'
+            ci = srfrf.RadfluxClearskyParameterAnalysis(
+                p2fld_in=p2fld_in,
+                p2fld_out=None,
+                database=None,
+                file_name_format='*{date:%Y%m%d}*',
+                output_file_format=None,
+                start=start,
+                end=end,
+                days = days,
+                input_directory_structure='yearly',
+                output_directory_structure=None,
+                file_complete_check=False,
+                reporter=reporter,
+                verbose=verbose,
+                radflux_parameters_db = radflux_parameters_db,
+                path2raflux_setting = path2raflux_setting,
+                site = site_info
+            )
+            print(f'{site} workplan.shape: {ci.workplan.shape}')
+            if test == 1:
+                last_processed = None
+                break
+            elif test == 2:
+                last_processed = ci.process_row(iloc = 1, save=False)
+                break
+            else:
+                # try:
 
-        db = srfdb.SurfradDatabase(srfdb.get_default_db_path())
-        site_info = db.find_site_info(abb = site)
-        p2fld_in = f'/{prefix}/grad/surfrad/products_level1/radiation_netcdf/v1.1/{site}'
-        radflux_parameters_db = f'/{prefix}/grad/surfrad/products_level2/radflux_rd/radflux_params_{site}_{{version}}.db'
-        path2raflux_setting = f'/{prefix}/grad/surfrad/products_level2/radflux_rd/radflux_settings_{site}.toml'
-        ci = srfrf.RadfluxClearskyParameterAnalysis(
-            p2fld_in=p2fld_in,
-            p2fld_out=None,
-            database=None,
-            file_name_format='*{date:%Y%m%d}*',
-            output_file_format=None,
-            start=start,
-            end=end,
-            days = days,
-            input_directory_structure='yearly',
-            output_directory_structure=None,
-            file_complete_check=False,
-            reporter=reporter,
-            verbose=verbose,
-            radflux_parameters_db = radflux_parameters_db,
-            path2raflux_setting = path2raflux_setting,
-            site = site_info
-        )
-        print(f'{site} workplan.shape: {ci.workplan.shape}')
-        if test == 1:
-            last_processed = None
-            break
-        elif test == 2:
-            last_processed = ci.process_row(iloc = 1, save=False)
-            break
-        else:
-            # try:
-
-            last_processed = ci.process(raise_errors = raise_errors)
-            # except:
-            #     return ci
+                last_processed = ci.process(raise_errors = raise_errors)
+                # except:
+                #     return ci
+        # except:
+        #     continue
     out['product_instance'] = ci
     out['last_processed'] = last_processed
     reporter.wrapup()
@@ -143,7 +149,8 @@ def _build_parser():
     parser.add_argument('--start', default=None)
     parser.add_argument('--end', default=None)
     parser.add_argument('--days', type=int, default=60)
-    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--site', default=None)
+    parser.add_argument('--test', type=int, default=0)
     parser.add_argument('--raise-errors', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
     parser.add_argument('--no-verbose', action='store_false', dest='verbose')
@@ -159,9 +166,10 @@ def main(argv=None):
         log_folder=args.log_folder,
         start=args.start,
         end=args.end,
-        noofdays=args.noofdays,
+        days=args.days,
         test=args.test,
         raise_errors=args.raise_errors,
+        site=args.site,
         verbose=args.verbose,
     )
 
