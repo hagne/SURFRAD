@@ -194,7 +194,7 @@ class Radflux(prowo.Workplanner):
     def __init__(self, *args, radflux_parameters_db, path2raflux_setting, site, real_time = False, **kwargs):
         self.version = '0.1'
         kwargs['version'] = self.version
-        kwargs['site'] = site
+        kwargs['site'] = site.abb
         self.radflux_parameters_db = atmraddb.RadfluxParameterDatabase(radflux_parameters_db)
         super().__init__(*args, **kwargs)
         self.site_info = atmsite.Station(
