@@ -15,6 +15,7 @@ Requirements:
 - atmpy
 # - scikit-learn not sure if this is needed
 - productomator
+- dask
 """
 
 import argparse
@@ -146,7 +147,7 @@ def run(prefix = '/nfs',
                 real_time=real_time,
                 input_directory_structure='yearly',
                 # output_directory_structure=None,
-                file_complete_check=True,
+                # file_complete_check=True,
                 reporter=None,
                 verbose=True,
                 radflux_parameters_db = radflux_parameters_db,
