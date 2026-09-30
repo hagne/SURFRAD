@@ -62,7 +62,7 @@ def run(prefix = '/nfs',
         )
         wi.process(raise_errors = raise_errors)
 
-    reporter.wrapup()
+    reporter.wrapup(print_dagster_report=True)
     return
 
 def run_deprecated():

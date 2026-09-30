@@ -54,7 +54,9 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
             ds = xr.open_mfdataset(row.p2f_in)
         else:
             ds = xr.open_dataset(row.p2f_in)
-        bbi_rename_dict = {'dw_solar': 'global_horizontal',
+        global_horizontal = ((ds.direct_n * np.cos(np.deg2rad(ds.zen))) + ds.diffuse)
+        ds['global_horizontal'] = global_horizontal
+        bbi_rename_dict = {#'dw_solar': 'global_horizontal',
                         'diffuse': 'diffuse_horizontal',
                         'direct_n': 'direct_normal',
                         # 'time':'datetime',
@@ -270,9 +272,13 @@ class Radflux(prowo.Workplanner):
             ds = xr.open_mfdataset(input_files)
         else:
             ds = xr.open_dataset(input_files)
-        bbi_rename_dict = {'dw_solar': 'global_horizontal',
+
+        global_horizontal = ((ds.direct_n * np.cos(np.deg2rad(ds.zen))) + ds.diffuse)
+        ds['global_horizontal'] = global_horizontal
+        bbi_rename_dict = {#'dw_solar': 'global_horizontal',
                         'diffuse': 'diffuse_horizontal',
                         'direct_n': 'direct_normal',
+                        # 'time':'datetime',
                         }
         ds = ds.rename(bbi_rename_dict)
         return ds
