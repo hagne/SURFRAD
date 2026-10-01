@@ -136,7 +136,9 @@ def run(prefix = '/nfs',
     out['last_processed'] = last_processed
     reporter.wrapup(print_dagster_report=True)
     out['reporter'] = reporter
-    return out
+    if test == 3:
+        return out
+    return 
 
 
 def _build_parser():
