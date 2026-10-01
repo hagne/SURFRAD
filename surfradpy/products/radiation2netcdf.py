@@ -14,7 +14,7 @@ import pathlib as pl
 import xarray as xr
 import socket
 
-def read_surfrad(p2f):
+def read_surfrad(p2f, header=False):
     # https://gml.noaa.gov/aftp/data/radiation/surfrad/dra/README
     # make the column names
     collab = """year			integer	year, i.e., 1995
@@ -50,7 +50,11 @@ def read_surfrad(p2f):
     collab = [c.split()[0] for c in collab]
 
     # read the file
-    df = pd.read_csv(p2f, skiprows=2, sep= r'\s+',
+    if header:
+        skiprows = 3
+    else:
+        skiprows = 2
+    df = pd.read_csv(p2f, skiprows=skiprows, sep= r'\s+',
                     #  delim_whitespace = True, 
                      names = range(48))#, names = collab)
     
