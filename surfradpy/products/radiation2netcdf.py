@@ -14,7 +14,26 @@ import pathlib as pl
 import xarray as xr
 import socket
 
-def read_surfrad(p2f, header=False):
+def read_calmps3(p2f):
+    """This is for Logan's formatted data (202610), it comes with a header!"""
+    if not isinstance(p2f, list):
+        p2f = [p2f]
+    df = pd.concat([pd.read_csv(f) for f in p2f])
+    if "TIMESTAMP" in df.columns:
+        df.index = pd.to_datetime(df.TIMESTAMP)
+        df.drop(columns=['TIMESTAMP'], inplace=True)
+    elif "DateTime" in df.columns:
+        df.index = pd.to_datetime(df.DateTime)
+        df.drop(columns=['DateTime'], inplace=True)
+    else:
+        raise ValueError("No timestamp column found in the DataFrame. Tried 'TIMESTAMP' and 'DateTime'")
+    df.index.name = 'datetime'
+    ds = df.to_xarray()
+    return ds
+
+
+def read_surfrad(p2f):
+    """This is for Johns formatted radiation data without a header"""
     # https://gml.noaa.gov/aftp/data/radiation/surfrad/dra/README
     # make the column names
     collab = """year			integer	year, i.e., 1995
@@ -45,16 +64,12 @@ def read_surfrad(p2f, header=False):
     windspd		real	wind speed (ms^-1)
     winddir		real	wind direction (degrees, clockwise from north)
     pressure		real	station pressure (mb)"""
-    
+
+    sep = r'\s+'
     collab = collab.split('\n')
     collab = [c.split()[0] for c in collab]
-
-    # read the file
-    if header:
-        skiprows = 3
-    else:
-        skiprows = 2
-    df = pd.read_csv(p2f, skiprows=skiprows, sep= r'\s+',
+    skiprows = 2
+    df = pd.read_csv(p2f, skiprows=skiprows, sep= sep,
                     #  delim_whitespace = True, 
                      names = range(48))#, names = collab)
     
@@ -65,6 +80,7 @@ def read_surfrad(p2f, header=False):
     df.columns = collab
     
     # generate a datetime index
+    # return df
     df.index = df.apply(lambda row: pd.to_datetime(f'{row.year:0.0f}{row.jday:03.0f}', format = '%Y%j')+pd.to_timedelta(row['dt'], unit = 'h'), axis = 1)
 
     # remove columns that are no longer needed
@@ -291,6 +307,8 @@ class SurfradRadiation2netcdf(prowo.Workplanner):
         super().__init__(**args, 
                          **kwargs)
 
+    read_file = staticmethod(read_surfrad)
+
     def process_row(self, row = None, iloc = None, loc = None, save = True):
         """This is the method that does the particular work and will need to be overwritten in your subclass.
         Typical components:
@@ -321,7 +339,9 @@ class SurfradRadiation2netcdf(prowo.Workplanner):
         #######
         ## Open input files
         #######
-        ds = read_surfrad(row.p2f_in)
+        if self.verbose:
+            print(f"Opening input file: {row.p2f_in}")
+        ds = self.read_file(row.p2f_in)
 
         ## Do some processing here, e.g. add attributes, format the dataset, etc.
         #####
@@ -338,7 +358,10 @@ class SurfradRadiation2netcdf(prowo.Workplanner):
         for a in dropattrs:
             ds.attrs.pop(a)
 
-        ds.attrs['parent_files'] = row.p2f_in.as_posix()
+        if isinstance(row.p2f_in, list):
+            ds.attrs['parent_files'] = ','.join([f.as_posix() for f in row.p2f_in])
+        else:
+            ds.attrs['parent_files'] = row.p2f_in.as_posix()
         ds.attrs['processing_date'] = pd.Timestamp.now().isoformat()
         ds.attrs['processing_server'] = socket.gethostname()
         ds.attrs['processing_class'] = f"This file was generated using{self.__class__.__module__}.{self.__class__.__qualname__}"
@@ -351,3 +374,8 @@ class SurfradRadiation2netcdf(prowo.Workplanner):
             ds.to_netcdf(row.p2f_out)
         ds.close()
         return ds
+
+
+
+class Clamps3Radiation2netcdf(SurfradRadiation2netcdf):
+    read_file = staticmethod(read_calmps3)
