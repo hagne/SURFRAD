@@ -23,26 +23,29 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
         """
         self.version = '0.1'
         kwargs['version'] = self.version
-        site_info = site
         self.radflux_parameters_db = pl.Path(radflux_parameters_db.format(version = self.version))
         kwargs['database'] = (self.radflux_parameters_db, 'radflux_parameters',
                               'local_day',
                               'None')# 'input_file')
         super().__init__(*args, **kwargs)
-        self.site = atmsite.Station(
-                lat=site_info.latitude,
-                lon=site_info.longitude,
-                alt=site_info.elevation,
-                name=site_info['name'],
-                abbreviation=site_info.abb,
-                active=None,
-                operation_period=None,
-                info=None,
-                state='',
-                country='',
-                parent_network=None,
-                # **kwargs,
-            )
+        if type(site).__name__ == 'Station':
+            self.site = site
+        else:
+            site_info = site
+            self.site = atmsite.Station(
+                    lat=site_info.latitude,
+                    lon=site_info.longitude,
+                    alt=site_info.elevation,
+                    name=site_info['name'],
+                    abbreviation=site_info.abb,
+                    active=None,
+                    operation_period=None,
+                    info=None,
+                    state='',
+                    country='',
+                    parent_network=None,
+                    # **kwargs,
+                )
         # self.combine_masterplan_duplicates()
         self.radflux_db = atmraddb.RadfluxParameterDatabase(self.radflux_parameters_db, create_if_not_exist=True, verbose=self.verbose, version = self.version)
         self.path2raflux_setting = pl.Path(path2raflux_setting)
