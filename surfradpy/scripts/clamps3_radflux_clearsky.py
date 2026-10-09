@@ -30,7 +30,7 @@ class _RawDefaultsHelpFormatter(
 
 def run(prefix = '/nfs',
         log_folder='/home/grad/htelg/.processlogs/',
-        start = '2025-09-02',
+        start = '2025-09-03',
         end = None,
         days = None,
         test = 0,
@@ -129,7 +129,7 @@ def _build_parser():
     )
     parser.add_argument('--prefix', default='/nfs')
     parser.add_argument('--log-folder', default='/home/grad/htelg/.processlogs/')
-    parser.add_argument('--start', default='2025-09-02')
+    parser.add_argument('--start', default='2025-09-03')
     parser.add_argument('--end', default=None)
     parser.add_argument('--days', type=int, default=None)
     parser.add_argument('--test', type=int, default=0)
