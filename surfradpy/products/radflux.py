@@ -10,6 +10,45 @@ import atmPy.general.measurement_site as atmsite
 import socket
 import atmPy.radiation.radflux.radflux_db as atmraddb
 
+def open_surfrad(p2f_in):
+    """Opens the input file(s) for a given row and returns an xarray dataset."""
+    if isinstance(p2f_in, list):
+        ds = xr.open_mfdataset(p2f_in)
+    else:
+        ds = xr.open_dataset(p2f_in)
+    global_horizontal = ((ds.direct_n * np.cos(np.deg2rad(ds.zen))) + ds.diffuse)
+    ds['global_horizontal'] = global_horizontal
+    bbi_rename_dict = {#'dw_solar': 'global_horizontal',
+                    'diffuse': 'diffuse_horizontal',
+                    'direct_n': 'direct_normal',
+                    # 'time':'datetime',
+                    }
+    ds = ds.rename(bbi_rename_dict)
+    return ds
+
+def open_clamps3(p2f_in):
+    """Opens the input file(s) for a given row and returns an xarray dataset."""
+    if isinstance(p2f_in, list):
+        ds = xr.open_mfdataset(p2f_in)
+    else:
+        ds = xr.open_dataset(p2f_in)
+
+    if 'SPN1_Diffuse' in ds:
+        bbi_rename_dict = {}
+        bbi_rename_dict['SPN1_Diffuse'] = 'SPN1_diffuse'
+        bbi_rename_dict['SPN1_Total'] = 'SPN1_total'
+        bbi_rename_dict['DW_Global1'] = 'global_horizontal'
+    else:
+        bbi_rename_dict = {'DW_Global': 'global_horizontal'
+                }
+    ds = ds.rename(bbi_rename_dict)
+
+    ratio = ds.SPN1_diffuse/ds.SPN1_total
+    ds['diffuse_horizontal'] = ds.global_horizontal * ratio
+    ds['direct_horizontal'] = ds.global_horizontal - ds.diffuse_horizontal
+    return ds
+
+
 class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
     def __init__(self, *args, radflux_parameters_db, path2raflux_setting,site, **kwargs):
         """Radflux analysis processor for SURFRAD data. Applied to a single site at a time. Only determines the clearsky parameters for each day and saves them to a database
@@ -51,21 +90,7 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
         self.path2raflux_setting = pl.Path(path2raflux_setting)
         assert(self.path2raflux_setting.exists()), f"Path does not exist: {self.path2raflux_setting}. Copy the example file from .../atm-py/atmPy/radiation/radflux/resources/clear_sky_shortwave.example.toml"
 
-    def open_p2f_in(self, row):
-        """Opens the input file(s) for a given row and returns an xarray dataset."""
-        if isinstance(row.p2f_in, list):
-            ds = xr.open_mfdataset(row.p2f_in)
-        else:
-            ds = xr.open_dataset(row.p2f_in)
-        global_horizontal = ((ds.direct_n * np.cos(np.deg2rad(ds.zen))) + ds.diffuse)
-        ds['global_horizontal'] = global_horizontal
-        bbi_rename_dict = {#'dw_solar': 'global_horizontal',
-                        'diffuse': 'diffuse_horizontal',
-                        'direct_n': 'direct_normal',
-                        # 'time':'datetime',
-                        }
-        ds = ds.rename(bbi_rename_dict)
-        return ds
+    open_p2f_in = staticmethod(open_surfrad)
 
     def process_row(self, row = None, iloc = None, loc = None, save = True, test  = False):
         out = {}
@@ -78,11 +103,26 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
         clearsky_parameters_previous = self.radflux_db.get_clearsky_parameters(row.name, method='previous')
         self.tp_previous_clearsky_parameters = clearsky_parameters_previous
 
+        processing_date = pd.Timestamp.now().isoformat()
+        processing_server = socket.gethostname()
         #######
         ## Open input files
         #######
-        ds = self.open_p2f_in(row)
-
+        ds = self.open_p2f_in(row.p2f_in)
+        if ds.datetime.shape[0] == 0:
+            if self.verbose:
+                print('Dataset is empty ... skipping')
+            if save:
+                self.radflux_db.write_radflux_parameters(
+                    date = row.name,
+                    path2file = row.p2f_in,
+                    clearsky_parameters = None,
+                    processing_date = processing_date,
+                    processing_server = processing_server,
+                    # bbi.dataset.attrs.get('clear_sky_params_optimized'),
+                    next_day_needed = False,
+                )
+            return out
         self.tp_ds = ds.copy()
 
 
@@ -110,13 +150,17 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
                 return None
             
             next_day_needed = True
-
-            dsnext = self.open_p2f_in(row_next)
+            self.tp_row_next = row_next
+            dsnext = self.open_p2f_in(row_next.p2f_in)
             bbinext = atmbrad.CombinedGlobalDiffuseDirect(dsnext, site= self.site, verbose = self.verbose)
             bbinext.sun_position #just to trigger the calculation of sun position
-            dsnext = dsnext.sel(datetime = slice(None,dsnext.solar_elevation.idxmin()))
-            dslist.append(dsnext)
             self.tp_dsnext = dsnext.copy()
+            if dsnext.datetime.shape[0] == 0:
+                if self.verbose:
+                    print('Next day dataset is empty ... skipping')
+            else:
+                dsnext = dsnext.sel(datetime = slice(None,dsnext.solar_elevation.idxmin()))
+                dslist.append(dsnext)
 
         ds_wholeday = xr.concat(dslist, dim = 'datetime')
         ds_wholeday = ds_wholeday.where(ds_wholeday.solar_elevation > 0, drop = True)
@@ -159,8 +203,7 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
 
         out['radflux_res'] = radflux_res
 
-        processing_date = pd.Timestamp.now().isoformat()
-        processing_server = socket.gethostname()
+
 
         if save:
             self.radflux_db.write_radflux_parameters(
@@ -174,8 +217,11 @@ class  RadfluxClearskyParameterAnalysis(prowo.Workplanner):
             )
 
         return out
-        
 
+class RadfluxClearskyParameterAnalysis_Clamps3(RadfluxClearskyParameterAnalysis):
+    open_p2f_in = staticmethod(open_clamps3)
+    
+        
 class Radflux(prowo.Workplanner):
     """BNF Radsys value added product for the tower system.
     Features
