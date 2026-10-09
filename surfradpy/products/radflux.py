@@ -41,6 +41,16 @@ def open_clamps3(p2f_in):
     else:
         bbi_rename_dict = {'DW_Global': 'global_horizontal'
                 }
+
+    if '2m_t' in ds:
+        bbi_rename_dict['2m_t'] = 'temp'
+    if '2m_rh' in ds:
+        bbi_rename_dict['2m_rh'] = 'rh'
+    if 'Vaisala_T' in ds:
+        bbi_rename_dict['Vaisala_T'] = 'temp'
+    if 'Vaisala_RH' in ds:
+        bbi_rename_dict['Vaisala_RH'] = 'rh'
+
     ds = ds.rename(bbi_rename_dict)
 
     ratio = ds.SPN1_diffuse/ds.SPN1_total
@@ -248,20 +258,26 @@ class Radflux(prowo.Workplanner):
         kwargs['site'] = site.abb
         self.radflux_parameters_db = atmraddb.RadfluxParameterDatabase(radflux_parameters_db)
         super().__init__(*args, **kwargs)
-        self.site_info = atmsite.Station(
-                lat=site.latitude,
-                lon=site.longitude,
-                alt=site.elevation,
-                name=site['name'],
-                abbreviation=site.abb,
-                active=None,
-                operation_period=None,
-                info=None,
-                state='',
-                country='',
-                parent_network=None,
-                # **kwargs,
-            )
+
+        if type(site).__name__ == 'Station':
+            self.site = site
+            # self.site_info = 
+        else:
+            site_info = site
+            self.site = atmsite.Station(
+                    lat=site_info.latitude,
+                    lon=site_info.longitude,
+                    alt=site_info.elevation,
+                    name=site_info['name'],
+                    abbreviation=site_info.abb,
+                    active=None,
+                    operation_period=None,
+                    info=None,
+                    state='',
+                    country='',
+                    parent_network=None,
+                    # **kwargs,
+                )
         self.combine_masterplan_duplicates()
         self.path2raflux_setting = pl.Path(path2raflux_setting)
         assert(self.path2raflux_setting.exists()), f"Path does not exist: {self.path2raflux_setting}. Copy the example file from .../atm-py/atmPy/radiation/radflux/resources/clear_sky_shortwave.example.toml"
@@ -314,23 +330,24 @@ class Radflux(prowo.Workplanner):
                 #     assert(False), f'found unexpected status {clearsky_parameters["status"]} on {row.name}'
             return wp
 
-    @staticmethod
-    def open_input_files(input_files):
-        """Opens the input file(s) for a given row and returns an xarray dataset."""
-        if isinstance(input_files, list):
-            ds = xr.open_mfdataset(input_files)
-        else:
-            ds = xr.open_dataset(input_files)
+    open_input_files = staticmethod(open_surfrad)
+    # @staticmethod
+    # def open_input_files(input_files):
+    #     """Opens the input file(s) for a given row and returns an xarray dataset."""
+    #     if isinstance(input_files, list):
+    #         ds = xr.open_mfdataset(input_files)
+    #     else:
+    #         ds = xr.open_dataset(input_files)
 
-        global_horizontal = ((ds.direct_n * np.cos(np.deg2rad(ds.zen))) + ds.diffuse)
-        ds['global_horizontal'] = global_horizontal
-        bbi_rename_dict = {#'dw_solar': 'global_horizontal',
-                        'diffuse': 'diffuse_horizontal',
-                        'direct_n': 'direct_normal',
-                        # 'time':'datetime',
-                        }
-        ds = ds.rename(bbi_rename_dict)
-        return ds
+    #     global_horizontal = ((ds.direct_n * np.cos(np.deg2rad(ds.zen))) + ds.diffuse)
+    #     ds['global_horizontal'] = global_horizontal
+    #     bbi_rename_dict = {#'dw_solar': 'global_horizontal',
+    #                     'diffuse': 'diffuse_horizontal',
+    #                     'direct_n': 'direct_normal',
+    #                     # 'time':'datetime',
+    #                     }
+    #     ds = ds.rename(bbi_rename_dict)
+    #     return ds
 
     # def process(self, raise_errors = False):
     #     si = None
@@ -416,7 +433,7 @@ class Radflux(prowo.Workplanner):
         self.tp_dslist = dslist
         ds = xr.concat(dslist, dim = 'datetime')
 
-        bbi = atmbrad.CombinedGlobalDiffuseDirect(ds, site= self.site_info, verbose = self.verbose)
+        bbi = atmbrad.CombinedGlobalDiffuseDirect(ds, site= self.site, verbose = self.verbose)
         bbi = bbi.convert2RadFlux()
         self.tp_bbi = bbi
 
@@ -615,9 +632,9 @@ class Radflux(prowo.Workplanner):
                 ds.attrs.pop(a)
             except KeyError:
                 print(f"Attribute '{a}' not found in dataset attributes.")
-        ds.attrs['lat'] = self.site_info.lat
-        ds.attrs['lon'] = self.site_info.lon
-        ds.attrs['alt'] = self.site_info.alt
+        ds.attrs['lat'] = self.site.lat
+        ds.attrs['lon'] = self.site.lon
+        ds.attrs['alt'] = self.site.alt
         if isinstance(row.p2f_in, list):
             input_files = ', '.join([p2f.name for p2f in row.p2f_in])
         else:
@@ -750,3 +767,6 @@ class Radflux(prowo.Workplanner):
         out['row'] = row
         return out 
     
+class RadfluxClamps3(Radflux):
+    """Radflux analysis for Clamps3 site."""
+    open_input_files = staticmethod(open_clamps3)
