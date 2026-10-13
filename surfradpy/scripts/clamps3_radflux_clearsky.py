@@ -78,8 +78,8 @@ def run(prefix = '/nfs',
 
     site = atmms.Station(lat=39.94713, lon = -105.19635, alt = 1742.04, name = 'clamps3 at Marshall', abbreviation='clamps3', state = 'CO')
     p2fld_in = f'{prefix}/grad/gradobs/raw/short_term/clamps3/radsys/netcdf/radiation/v1.1/'
-    radflux_parameters_db = f'{prefix}/grad/gradobs/raw/short_term/clamps3/radsys/netcdf/radiation/radflux_params_1.0.db'
-    path2raflux_setting = f'{prefix}/grad/gradobs/raw/short_term/clamps3/radsys/netcdf/radiation/radflux_settings_1.0.toml'
+    radflux_parameters_db = f'{prefix}/grad/gradobs/raw/short_term/clamps3/radsys/netcdf/radflux_rd/radflux_params_1.0.db'
+    path2raflux_setting = f'{prefix}/grad/gradobs/raw/short_term/clamps3/radsys/netcdf/radflux_rd/radflux_settings_1.0.toml'
     ci = srfrf.RadfluxClearskyParameterAnalysis_Clamps3(
         p2fld_in=p2fld_in,
         p2fld_out=None,
