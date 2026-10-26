@@ -116,13 +116,15 @@ def run(
     else:
         last_processed = product.process(raise_errors=raise_errors)
 
-    reporter.wrapup()
-    return {
-        "product_instance": product,
-        "last_processed": last_processed,
-        "reporter": reporter,
-    }
-
+    reporter.wrapup(print_dagster_report = True)
+    if test != 0:
+        return {
+            "product_instance": product,
+            "last_processed": last_processed,
+            "reporter": reporter,
+        }
+    else:
+        return 
 
 def _build_parser():
     parser = argparse.ArgumentParser(
