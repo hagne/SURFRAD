@@ -143,6 +143,11 @@ def main(argv=None):
         help="Number of days to include in the processing window.",
     )
     parser.add_argument(
+        "--realtime",
+        action="store_true",
+        help="Use near-real-time date defaults, logs, and output database.",
+    )
+    parser.add_argument(
         "--site",
         default=None,
         help="SURFRAD site code to process; omit to process every site.",
@@ -183,6 +188,7 @@ def main(argv=None):
         start=args.start,
         end=args.end,
         days=args.days,
+        realtime=args.realtime,
         site=args.site,
         test=args.test,
         raise_errors=args.raise_errors,
