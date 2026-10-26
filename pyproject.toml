@@ -27,6 +27,8 @@ tag_regex = '^v(?P<version>\d+(?:\.\d+){0,2})$'
 git_describe_command = "git describe --tags --long --match v*"
 
 [project.scripts]
+surfrad_mfrsr_langley_analysis = 'surfradpy.scripts.surfrad_mfrsr_langley_analysis:main'
+surfrad_mfrsr_langleyTS2V0 = 'surfradpy.scripts.surfrad_mfrsr_langleyTS2V0:main'
 clamps3_radflux = 'surfradpy.scripts.clamps3_radflux:main'
 clamps3_radflux_clearsky = 'surfradpy.scripts.clamps3_radflux_clearsky:main'
 clamps3_radiation2netcdf = 'surfradpy.scripts.clamps3_radiation2netcdf:main'

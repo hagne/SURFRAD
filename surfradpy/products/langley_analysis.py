@@ -152,13 +152,13 @@ class LangleyAnalysis(prowo.Workplanner):
 class V0prediction(prowo.Workplanner):
     def __init__(self,
                  path2database_in, #currently this is site specific, so the site kwarg has no effect on this
-                 database=('test.db', 'gam_V0_prediction','date',"None"),
+                 database=('test_v{version}.db', 'gam_V0_prediction','date',"None"),
                  start=None, #pd.to_datetime(pd.Timestamp.now().date()) - pd.to_timedelta(80, 'D'),
                  end=None, #pd.Timestamp.now(),
                  days=None,
+                 realtime = False, 
                  reporter=None,
                  verbose=True,
-                 site = 'tmp', #only needed if multiple sites will be saved in the database
                  ):
         super().__init__(
             database=database,
@@ -169,8 +169,10 @@ class V0prediction(prowo.Workplanner):
             verbose=verbose,
         )
         self.path2database_in = path2database_in
-        self.site = site
         self.langley_analysis_version = '0.1'
+        self.database[0] = self.database[0].format(version = self.langley_analysis_version)
+        self.realtime = realtime
+
         return
 
     def process_row(self, row = None, iloc = None, loc = None, save = True):
@@ -203,6 +205,7 @@ class V0prediction(prowo.Workplanner):
         #######
         ## test if input database contains the right data, this should probably go into the workplan property? Unless this is causing en error anyway?!?
         #######
+        
         with sqlite3.connect(self.path2database_in) as con:
             db_max = pd.read_sql("SELECT MAX(local_day) FROM langley_results;", con)
             db_min = pd.read_sql("SELECT MIN(local_day) FROM langley_results;", con)
@@ -212,7 +215,8 @@ class V0prediction(prowo.Workplanner):
         
         # not sure if this should be prevented earlier? basically when the retrieval is called in the first place?!?
         daystodbend = ((db_max - row.name) / pd.to_timedelta(1, 'D')) 
-        assert(daystodbend> 60), f'Final run should only be run 2 month later, last database entry is only {daystodbend} days old.'
+        if not self.realtime:
+            assert(daystodbend> 60), f'Final run should only be run 2 month later, last database entry is only {daystodbend} days old.'
         
         # determine the range to use for the gam analysis, the range that is taken from the input database
         daysingamanalysis = 3*356
@@ -238,19 +242,42 @@ class V0prediction(prowo.Workplanner):
         
         bla= [{'date': row.name,
             'channel': p['channel'], 
-            'V0': p['prediction'].prediction.data, 
-            'V0_uncertainty': p['prediction'].prediction_confidence.data,
-            'langley_analysis_version': self.langley_analysis_version,
+            'V0': float(p['prediction'].prediction.data),
+            'V0_uncertainty': float(p['prediction'].prediction_confidence.data),
             'input_db': pl.Path(self.path2database_in).name,
-            'site': self.site,
+            'days2valid_langley_before':float(p['prediction'].days_to_next_valid_langley.sel(direction = 'before', drop = True).data),
+            'days2valid_langley_after':float(p['prediction'].days_to_next_valid_langley.sel(direction = 'after', drop = True).data),
             } 
             for p in pred]
         res_formatted = pd.DataFrame(bla)
         
         out_table_name = 'gam_V0_prediction'
-
         if save:
+            date = pd.Timestamp(row.name).normalize()
+            next_date = date + pd.DateOffset(days=1)
             with sqlite3.connect(self.database[0]) as con:
-                res_formatted.to_sql(out_table_name, con, if_exists='append')
+                con.execute("BEGIN IMMEDIATE")
+                table_exists = con.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+                    (out_table_name,),
+                ).fetchone()
+                if table_exists:
+                    con.execute(
+                        f'CREATE INDEX IF NOT EXISTS "{out_table_name}_date_idx" '
+                        f'ON "{out_table_name}" ("date")'
+                    )
+                    date_exists = con.execute(
+                        f'SELECT 1 FROM "{out_table_name}" '
+                        'WHERE "date" >= ? AND "date" < ? LIMIT 1',
+                        (date.date().isoformat(), next_date.date().isoformat()),
+                    ).fetchone()
+                    if date_exists:
+                        raise ValueError(f'{date.date()} already exists in {out_table_name}.')
+                res_formatted.to_sql(out_table_name, con, if_exists='append', index=False)
+                if not table_exists:
+                    con.execute(
+                        f'CREATE INDEX "{out_table_name}_date_idx" '
+                        f'ON "{out_table_name}" ("date")'
+                    )
         out['res_formatted'] = res_formatted
         return out
