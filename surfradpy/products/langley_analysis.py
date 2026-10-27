@@ -239,7 +239,7 @@ class V0prediction(prowo.Workplanner):
         lts = atmlc.read_langleys_from_database(self.path2database_in,start = start, end = end)
         out['lts'] = lts
         pred = lts.makev0prediction4date(row.name)
-        
+        print(f'pred.data: {p['prediction'].prediction.data}')
         bla= [{'date': row.name,
             'channel': p['channel'], 
             'V0': float(p['prediction'].prediction.data),

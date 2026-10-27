@@ -24,6 +24,8 @@ installed. Add ``pip`` to the Conda environment only when using it to install
 those projects; it is not a runtime dependency.
 """
 
+import argparse
+
 import productomator.lab as prolab
 import surfradpy.products.langley_analysis  as srfla
 
@@ -103,9 +105,86 @@ def run(prefix = '/nfs',
         return out
     return 
 
-#todo: pupulate main with argument parsing and call run with those arguments. Add some documentation for meaningfull --help.
-def main():
-    return 
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description=(
+            "Run morning and afternoon Langley analyses for SURFRAD MFRSR "
+            "cosine-corrected data."
+        ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--prefix",
+        default="/nfs",
+        help="Base filesystem prefix containing SURFRAD data products.",
+    )
+    parser.add_argument(
+        "--log-folder",
+        default="/home/grad/htelg/.processlogs/",
+        help="Directory in which processing logs are stored.",
+    )
+    parser.add_argument(
+        "--start",
+        default=None,
+        help="Start date or datetime for the processing window.",
+    )
+    parser.add_argument(
+        "--end",
+        default=None,
+        help="End date or datetime for the processing window.",
+    )
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=90,
+        help="Number of days to include in the processing window.",
+    )
+    parser.add_argument(
+        "--site",
+        default=None,
+        help="SURFRAD site code to process; omit to process every site.",
+    )
+    parser.add_argument(
+        "--test",
+        type=int,
+        choices=(0, 1, 2, 3),
+        default=0,
+        help=(
+            "Test mode: 0=full run, 1=build workplan only, "
+            "2=process one row without saving, 3=process one row and save."
+        ),
+    )
+    parser.add_argument(
+        "--raise-errors",
+        action="store_true",
+        help="Propagate processing errors instead of handling them internally.",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        dest="verbose",
+        help="Print processing progress.",
+    )
+    parser.add_argument(
+        "--no-verbose",
+        action="store_false",
+        dest="verbose",
+        help="Suppress processing progress.",
+    )
+    parser.set_defaults(verbose=True)
+    args = parser.parse_args(argv)
+    return run(
+        prefix=args.prefix,
+        log_folder=args.log_folder,
+        start=args.start,
+        end=args.end,
+        days=args.days,
+        site=args.site,
+        test=args.test,
+        raise_errors=args.raise_errors,
+        verbose=args.verbose,
+    )
 
 if __name__ == "__main__":
     main()

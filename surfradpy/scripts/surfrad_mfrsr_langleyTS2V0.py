@@ -49,9 +49,9 @@ def run(prefix = '/nfs',
     
     if (start is None) and (end is None):
         if realtime:
-            end = pd.to_datetime(pd.Timestamp().now().date())
+            end = pd.to_datetime(pd.Timestamp.now().date())
         else:
-            end = pd.to_datetime(pd.Timestamp().now().date()) - pd.to_timedelta(60, 'D')
+            end = pd.to_datetime(pd.Timestamp.now().date()) - pd.to_timedelta(60, 'D')
         start = end-pd.to_timedelta(days, 'D')
 
             
