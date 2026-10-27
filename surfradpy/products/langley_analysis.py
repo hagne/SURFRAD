@@ -194,7 +194,7 @@ class V0prediction(prowo.Workplanner):
         loc : index label, optional
             select a row by timestamp.
             """
-        out = {}
+        self.out = {}
         if iloc is not None:
             row = self.workplan.iloc[iloc]
         elif loc is not None:
@@ -237,9 +237,10 @@ class V0prediction(prowo.Workplanner):
         ########
         
         lts = atmlc.read_langleys_from_database(self.path2database_in,start = start, end = end)
-        out['lts'] = lts
+        self.out['lts'] = lts
         pred = lts.makev0prediction4date(row.name)
-        print(f'pred.data: {p['prediction'].prediction.data}')
+        # print(f'pred.data: {p['prediction'].prediction.data}')
+        self.out['pred'] = pred
         bla= [{'date': row.name,
             'channel': p['channel'], 
             'V0': float(p['prediction'].prediction.data),
@@ -279,5 +280,5 @@ class V0prediction(prowo.Workplanner):
                         f'CREATE INDEX "{out_table_name}_date_idx" '
                         f'ON "{out_table_name}" ("date")'
                     )
-        out['res_formatted'] = res_formatted
-        return out
+        self.out['res_formatted'] = res_formatted
+        return self.out
