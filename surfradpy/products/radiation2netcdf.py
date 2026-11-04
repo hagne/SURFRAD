@@ -364,7 +364,7 @@ class SurfradRadiation2netcdf(prowo.Workplanner):
             ds.attrs['parent_files'] = row.p2f_in.as_posix()
         ds.attrs['processing_date'] = pd.Timestamp.now().isoformat()
         ds.attrs['processing_server'] = socket.gethostname()
-        ds.attrs['processing_class'] = f"This file was generated using{self.__class__.__module__}.{self.__class__.__qualname__}"
+        ds.attrs['processing_class'] = f"This file was generated using {self.__class__.__module__}.{self.__class__.__qualname__}"
         ds.attrs['product_version'] = self.version
         ## Save the output file
         if save:
