@@ -152,11 +152,12 @@ class LangleyAnalysis(prowo.Workplanner):
 class V0prediction(prowo.Workplanner):
     def __init__(self,
                  path2database_in, #currently this is site specific, so the site kwarg has no effect on this
-                 database=('test_v{version}.db', 'gam_V0_prediction','date',"None"),
+                 database=('test_v{version}.db', 'gam_V0_prediction','date',None),
                  start=None, #pd.to_datetime(pd.Timestamp.now().date()) - pd.to_timedelta(80, 'D'),
                  end=None, #pd.Timestamp.now(),
                  days=None,
                  realtime = False, 
+                 drop_channels = None,
                  reporter=None,
                  verbose=True,
                  ):
@@ -172,6 +173,7 @@ class V0prediction(prowo.Workplanner):
         self.langley_analysis_version = '0.1'
         self.database[0] = self.database[0].format(version = self.langley_analysis_version)
         self.realtime = realtime
+        self.drop_channels = drop_channels
 
         return
 
@@ -237,6 +239,8 @@ class V0prediction(prowo.Workplanner):
         ########
         
         lts = atmlc.read_langleys_from_database(self.path2database_in,start = start, end = end)
+        if not self.drop_channels is None:
+            lts.dataset = lts.dataset.drop_sel(channel = self.drop_channels)
         self.out['lts'] = lts
         pred = lts.makev0prediction4date(row.name)
         # print(f'pred.data: {p['prediction'].prediction.data}')
@@ -252,7 +256,8 @@ class V0prediction(prowo.Workplanner):
             for p in pred]
         res_formatted = pd.DataFrame(bla)
         
-        out_table_name = 'gam_V0_prediction'
+        # out_table_name = 'gam_V0_prediction'
+        out_table_name = self.database[1]
         if save:
             date = pd.Timestamp(row.name).normalize()
             next_date = date + pd.DateOffset(days=1)

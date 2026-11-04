@@ -84,39 +84,41 @@ def run(prefix = '/nfs',
 
         li = srfla.V0prediction(
                  p2db_in,
-                 database=[p2db_out, 'gam_V0_prediction', 'date', 'None'],
+                 database=[p2db_out, 'gam_V0_prediction', 'date', None],
                  start = start,
                  end = end,
                  days = days,
                  realtime=realtime,
                  reporter = reporter,
                  verbose = verbose,
+                 drop_channels = [940]
         )
         print(f'{site} workplan.shape: {li.workplan.shape}')
         if test == 1:
             last_processed = None
             break
         elif test == 2:
-            last_processed = li.process_row(iloc = 1, save=False)
+            last_processed = li.process_row(iloc = 0, save=False)
             break
         elif test == 3:
-            last_processed = li.process_row(iloc = 1, save=True)
+            last_processed = li.process_row(iloc = 0, save=True)
             break
         else:
             # try:
 
             last_processed = li.process(raise_errors = raise_errors)
-            predlist = []
-            for pred in last_processed['pred']:
-                gam = pred['gam']
-                dst = xr.Dataset()
-                dst['prediction'] = gam.prediction.prediction.rename({'datetime_full':'datetime'})
-                dst['V0'] = gam.data.y
-                dst = dst.drop_duplicates('datetime')
-                dst = dst.expand_dims({'channel': [int(pred['channel'])]})
-                predlist.append(dst)
-            ds = xr.concat(predlist, 'channel')
-            ds.to_netcdf(p2lastgamres)
+            if not last_processed is None:
+                predlist = []
+                for pred in last_processed['pred']:
+                    gam = pred['gam']
+                    dst = xr.Dataset()
+                    dst['prediction'] = gam.prediction.prediction.rename({'datetime_full':'datetime'})
+                    dst['V0'] = gam.data.y
+                    dst = dst.drop_duplicates('datetime')
+                    dst = dst.expand_dims({'channel': [int(pred['channel'])]})
+                    predlist.append(dst)
+                ds = xr.concat(predlist, 'channel')
+                ds.to_netcdf(p2lastgamres)
     out['product_instance'] = li
     out['last_processed'] = last_processed
     reporter.wrapup(print_dagster_report=True)

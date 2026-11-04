@@ -88,10 +88,10 @@ def run(prefix = '/nfs',
             last_processed = None
             break
         elif test == 2:
-            last_processed = li.process_row(iloc = 1, save=False)
+            last_processed = li.process_row(iloc = 0, save=False)
             break
         elif test == 3:
-            last_processed = li.process_row(iloc = 1, save=True)
+            last_processed = li.process_row(iloc = 0, save=True)
             break
         else:
             # try:
