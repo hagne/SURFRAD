@@ -1,10 +1,16 @@
-"""
-Dependencies
-=============
-xarray
-netcdf4
-pandas
+"""Convert Smolder RMNP26 radiation CSV files to NetCDF.
 
+Runtime dependencies are Python 3.11+, NumPy, pandas, xarray, netCDF4,
+``productomator``, and this ``surfradpy`` package. Create and populate a Conda
+environment with::
+
+    conda create -n smolder-radiation -c conda-forge \
+        'python>=3.11' numpy pandas xarray netcdf4 pip
+    conda activate smolder-radiation
+    python -m pip install /path/to/productomator /path/to/SURFRAD
+
+``argparse``, ``inspect``, ``pathlib``, ``socket``, and ``warnings`` are part of
+the Python standard library.
 """
 
 import argparse
@@ -72,7 +78,7 @@ def main(argv=None):
     parser.add_argument('--prefix', default='/nfs')
     parser.add_argument('--start', default=None)
     parser.add_argument('--end', default=None)
-    parser.add_argument('--days', type=int, default=90)
+    parser.add_argument('--days', type=int, default=None)
     parser.add_argument('--test', type=int, choices=(0, 1, 2), default=0)
     parser.add_argument('--raise-errors', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
