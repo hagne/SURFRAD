@@ -23,6 +23,7 @@ import argparse
 import productomator.lab as prolab
 import surfradpy.products.langley_analysis  as srfla
 import pandas as pd
+import xarray as xr
 
 
 def run(prefix = '/nfs',
@@ -79,6 +80,8 @@ def run(prefix = '/nfs',
 
         p2db_in = f'{prefix}/grad/surfrad/products_level2/aod/langley_analysis_{site}_v{langley_analysis_version}.db'
         p2db_out = f'{prefix}/grad/surfrad/products_level2/aod/v0_prediction_{site}_v{{version}}_{realtimeindicator}.db'
+        p2lastgamres = f'{prefix}/grad/surfrad/products_level2/aod/tmp/last_V0_gam_{site}_{realtimeindicator}.nc'
+
         li = srfla.V0prediction(
                  p2db_in,
                  database=[p2db_out, 'gam_V0_prediction', 'date', 'None'],
@@ -103,6 +106,17 @@ def run(prefix = '/nfs',
             # try:
 
             last_processed = li.process(raise_errors = raise_errors)
+            predlist = []
+            for pred in last_processed['pred']:
+                gam = pred['gam']
+                dst = xr.Dataset()
+                dst['prediction'] = gam.prediction.prediction.rename({'datetime_full':'datetime'})
+                dst['V0'] = gam.data.y
+                dst = dst.drop_duplicates('datetime')
+                dst = dst.expand_dims({'channel': [int(pred['channel'])]})
+                predlist.append(dst)
+            ds = xr.concat(predlist, 'channel')
+            ds.to_netcdf(p2lastgamres)
     out['product_instance'] = li
     out['last_processed'] = last_processed
     reporter.wrapup(print_dagster_report=True)
