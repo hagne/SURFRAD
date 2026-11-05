@@ -6,7 +6,7 @@ Required packages are Python 3.11+, NumPy, pandas, xarray, netCDF4, SciPy,
 pvlib, Ibis, ``atmPy``, ``productomator``, and ``surfradpy``. Create the Conda
 environment with::
 
-    conda create -n surfrad-mfrsr-aod -c conda-forge 'python>=3.11' numpy pandas xarray netcdf4 scipy pvlib ibis-framework pip
+    conda create -n surfrad_mfrsr_aod -c conda-forge 'python>=3.13' numpy pandas xarray netcdf4 scipy pvlib ibis-framework pip
 
 Install the local ``atmPy``, ``productomator``, and ``surfradpy`` projects into
 that environment with pip.
