@@ -62,7 +62,7 @@ def run(prefix = '/nfs',
     verbose : bool, optional
         Print progress information.
     """
-
+    assert(real_time), "only realtime is implemented so far"
     #todo: remove when non-realime is implemented
     real_time = True
     if verbose:
@@ -167,7 +167,6 @@ def run(prefix = '/nfs',
         return out
     return 
 
-
 def _build_parser():
     parser = argparse.ArgumentParser(
         description=inspect.getdoc(run) or "",
@@ -177,10 +176,12 @@ def _build_parser():
     parser.add_argument('--log-folder', default='/home/grad/htelg/.processlogs/')
     parser.add_argument('--start', default=None)
     parser.add_argument('--end', default=None)
-    parser.add_argument('--days', type=int, default=60)
-    parser.add_argument('--real-time', action='store_true', dest='real_time')
+    parser.add_argument('--days', type=int, default=90)
+    parser.add_argument(
+        '--real-time', action='store_true', required=True, dest='real_time'
+    )
     parser.add_argument('--site', default=None)
-    parser.add_argument('--test', type=int, default=0)
+    parser.add_argument('--test', type=int, choices=(0, 1, 2, 3), default=0)
     parser.add_argument('--raise-errors', action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
     parser.add_argument('--no-verbose', action='store_false', dest='verbose')
