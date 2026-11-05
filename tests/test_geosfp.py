@@ -53,6 +53,9 @@ def _source_dataset():
     return xr.Dataset(
         {
             "to3": (("datetime", "lat", "lon"), values.copy()),
+            "tqv": (("datetime", "lat", "lon"), values.copy()),
+            "t2m": (("datetime", "lat", "lon"), values.copy()),
+            "ps": (("datetime", "lat", "lon"), values.copy()),
             "extra": (("datetime", "lat", "lon"), values.copy()),
         },
         coords={"datetime": datetime, "lat": lat, "lon": lon},
@@ -63,7 +66,7 @@ def _source_dataset():
     )
 
 
-def test_product_downloads_only_to3_interpolates_and_writes(tmp_path):
+def test_product_downloads_variables_interpolates_and_writes(tmp_path):
     database_path = tmp_path / "surfrad.db"
     _create_site_database(database_path)
     calls = []
@@ -92,7 +95,7 @@ def test_product_downloads_only_to3_interpolates_and_writes(tmp_path):
     start, end, download_kwargs = calls[0]
     assert start.isoformat() == "2024-01-02"
     assert end.isoformat() == "2024-01-02"
-    assert download_kwargs["variables"] == ["to3"]
+    assert download_kwargs["variables"] == list(geosfp.GEOS_FP_VARIABLES)
     assert download_kwargs["bbox"] == (-116.25, 34.25, -77.75, 48.5)
 
     expected_path = (
@@ -105,11 +108,17 @@ def test_product_downloads_only_to3_interpolates_and_writes(tmp_path):
     assert result["p2f_out"] == expected_path
     assert expected_path.is_file()
     assert result["dsout"].sizes == {"datetime": 24, "site": 8}
-    assert list(result["dsout"].data_vars) == ["to3"]
+    assert list(result["dsout"].data_vars) == list(
+        geosfp.GEOS_FP_VARIABLES
+    )
+    for variable, units in geosfp.GEOS_FP_VARIABLE_UNITS.items():
+        assert result["dsout"][variable].attrs["units"] == units
 
     with xr.open_dataset(expected_path) as saved:
-        assert list(saved.data_vars) == ["to3"]
-        assert saved.to3.dims == ("datetime", "site")
+        assert list(saved.data_vars) == list(geosfp.GEOS_FP_VARIABLES)
+        for variable, units in geosfp.GEOS_FP_VARIABLE_UNITS.items():
+            assert saved[variable].dims == ("datetime", "site")
+            assert saved[variable].attrs["units"] == units
         assert saved.attrs["product_version"] == "0.1"
         assert saved.attrs["interpolation_method"] == (
             "linear latitude-longitude"

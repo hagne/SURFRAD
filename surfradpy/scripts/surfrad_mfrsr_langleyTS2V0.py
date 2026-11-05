@@ -67,7 +67,7 @@ def run(prefix = '/nfs',
                 'gwn',
                 'psu', 
                 'sxf',
-                # 'inl',
+                # 'inl',# this will not work for a while until we get some years of data
                 'fpe',
         ]
 

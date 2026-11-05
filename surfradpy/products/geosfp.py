@@ -12,7 +12,14 @@ import surfradpy.database as sfp_db
 
 
 GEOS_FP_COLLECTION = "tavg1_2d_slv_Nx"
-GEOS_FP_VARIABLES = ("to3",)
+
+GEOS_FP_VARIABLES = ("to3", "tqv", "t2m", "ps")
+GEOS_FP_VARIABLE_UNITS = {
+    "to3": "Dobsons",
+    "tqv": "kg m-2",
+    "t2m": "K",
+    "ps": "Pa",
+}
 
 SURFRAD_SITE_CODES = (
     "inl",
@@ -152,7 +159,8 @@ def interpolate_to_sites(ds, sites):
 
 
 class GeosFpSurfrad(prowo.Workplanner):
-    """Create daily GEOS-FP TO3 files interpolated to SURFRAD sites."""
+    """Create daily GEOS-FP TO3 files interpolated to SURFRAD sites.
+    """
 
     version = "0.1"
     collection = GEOS_FP_COLLECTION
@@ -247,6 +255,8 @@ class GeosFpSurfrad(prowo.Workplanner):
             #     # )
 
             dsout = interpolate_to_sites(ds, self.sites)
+            for variable in self.variables:
+                dsout[variable].attrs["units"] = GEOS_FP_VARIABLE_UNITS[variable]
             dsout.attrs.update(
                 {
                     "title": (

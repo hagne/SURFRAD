@@ -56,7 +56,7 @@ def run(prefix = '/nfs',
                 'gwn',
                 'psu', 
                 'sxf',
-                # 'inl',
+                'inl',
                 'fpe',
         ]
 
