@@ -5,6 +5,8 @@ Created 2026-02-02
 
 @author: Hagen Telg
 
+Deprecated: In future versions this should be simply split up int its subcomponents
+
 This scirpt runs the complete processing chain of MFRSRs from raw files all the way to the highest level process. 
 As most processes depends on the successfull completion of a previous step it does so successively. Each process can be run
 independently.

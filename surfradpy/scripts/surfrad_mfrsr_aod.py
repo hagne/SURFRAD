@@ -3,10 +3,10 @@
 """Produce SURFRAD MFRSR aerosol optical depth products for one or all sites.
 
 Required packages are Python 3.11+, NumPy, pandas, xarray, netCDF4, SciPy,
-pvlib, Ibis, ``atmPy``, ``productomator``, and ``surfradpy``. Create the Conda
+pvlib, Ibis, ``atmPy``, ``productomator``, ``openpyxl``, and ``surfradpy``. Create the Conda
 environment with::
 
-    conda create -n surfrad_mfrsr_aod -c conda-forge 'python>=3.13' numpy pandas xarray netcdf4 scipy pvlib ibis-framework pip
+    conda create -n surfrad_mfrsr_aod -c conda-forge 'python>=3.13' numpy pandas xarray netcdf4 scipy pvlib ibis-framework pip openpyxl
 
 Install the local ``atmPy``, ``productomator``, and ``surfradpy`` projects into
 that environment with pip.
@@ -120,12 +120,13 @@ def run(prefix = '/nfs',
                                 'file_name_format': '*{date:%Y%m%d}*',
                                 'input_directory_structure':'yearly'}
             sup_met = {'name': 'met',
-                    'path2folder': f'/Volumes/grad/surfrad/scaled/{site_alt(site)}/',# 2026/gradobs-scaled.{site}.20261019.dat',
+                    'path2folder': f'{prefix}/grad/surfrad/scaled/{site_alt(site)}/',# 2026/gradobs-scaled.{site}.20261019.dat',
                     'file_name_format': '*{date:%Y%m%d}*',
                     'input_directory_structure':'yearly'}
             supplemental_data = [sup_model, sup_met]
             ci = srfaod.AOD(p2fld_in=p2fld_in,
                     supplemental_data=supplemental_data,
+                    path2absorption_correction_coeff_1625 = f'{prefix}/grad/surfrad/products_level2/aod/1625nm_absorption_correction_coefficience.nc',
                     p2fld_out=p2fld_out,
                     path2v0database = p2fdb,
                         output_file_format='{site}_mfrsr_aod_{date}.nc',
@@ -178,7 +179,7 @@ def _build_parser():
     parser.add_argument('--end', default=None)
     parser.add_argument('--days', type=int, default=90)
     parser.add_argument(
-        '--real-time', action='store_true', required=True, dest='real_time'
+        '--realtime', action='store_true', required=True, dest='real_time'
     )
     parser.add_argument('--site', default=None)
     parser.add_argument('--test', type=int, choices=(0, 1, 2, 3), default=0)

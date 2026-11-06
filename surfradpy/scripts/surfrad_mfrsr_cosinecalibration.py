@@ -119,9 +119,9 @@ def run(prefix = '/nfs',
             #     return ci
     out['product_instance'] = ci
     out['last_processed'] = last_processed
-    reporter.wrapup()
+    reporter.wrapup(print_dagster_report=True)
     out['reporter'] = reporter
-    return out
+    return 
 
 
 def _build_parser():
