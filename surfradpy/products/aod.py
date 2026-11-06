@@ -213,7 +213,7 @@ class AOD(prowo.Workplanner):
                      "langley_calibration_v0",
                      "days_since_last_valid_langley_calibration",
                      "irradiance_top_of_atmosphere",
-                    # "precipitable_water",
+                    "precipitable_water",
                     "transmission",
                     "global_horizontal",
                     "diffuse_horizontal",
@@ -229,9 +229,9 @@ class AOD(prowo.Workplanner):
                     "solar_zenith_angle",
                     "solar_azimuth_angle",
                      "airmass",
-                    # "pressure",
+                    "pressure",
                     # "temperature",
-                    # "ozone",
+                    "ozone",
                     ]]
         
         

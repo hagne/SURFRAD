@@ -31,6 +31,7 @@ def run(prefix = '/nfs',
         start = None,
         end = None,
         days = 90,
+        skip_last_days = 2,
         site = None,
         real_time = False,
         test = 0,
@@ -52,6 +53,8 @@ def run(prefix = '/nfs',
         Run only for this site. If not provided, runs for all sites.
     days : int, optional
         Number of days to process when `start` is not given.
+    skip_last_days: int or None, optional
+        Number of days to cut of of the end the worplan. This is unfortunatly still necessary as the radiation data is not comming in on time. Todo: where is the real realtime data?
     real_time : bool, optional
         If True, run in real-time mode.
     test : bool, optional
@@ -154,7 +157,16 @@ def run(prefix = '/nfs',
                 break
             else:
                 # try:
+                # this will cut of the last days of the workplan
+                if not skip_last_days is None:
+                    wp = ci.workplan
+                    for i in range(skip_last_days):
+                        if wp.shape[0] == 0:
+                            break
+                        wp = wp.iloc[:-1]
+                    ci.workplan = wp
 
+                
                 last_processed = ci.process(raise_errors = raise_errors)
                 # except:
                 #     return ci
